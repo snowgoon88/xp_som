@@ -15,6 +15,12 @@ int main( int argc, char *argv[] )
 {
   Reservoir res( 2, 3 );
   std::cout << res.str_dump() << std::endl;
+  res.set_spectral_radius( 1.0 );
+  std::cout << "** APRES CALCUL **" << "\n";
+  std::cout << res.str_dump() << std::endl;
+  res.set_spectral_radius( 1.0 );
+  std::cout << "** APRES 2eme CALCUL **" << "\n";
+  std::cout << res.str_dump() << std::endl;
   
   return 0;
 }
