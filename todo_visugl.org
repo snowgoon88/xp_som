@@ -1,0 +1,33 @@
+* Dependance
+** GLFW - Window with OpenGL
+** FTGL - Draw text with OpenGL and FreeType2
+
+* DONE [2/2] Fenêtre GLFW version 3 
+** DONE CMake pour GLFW
+** DONE C++ pour GLFW
+* TODO [5/6] Afficher Graphe
+** TODO Afficher Grille
+** DONE [4/4] Afficher Axes avec ticks et range
+*** DONE Label
+ => Attention, le fait de scaler par rapport au glOrtho fait que les lettres ne sont pas jolie.
+*** DONE Major Ticks
+*** DONE Minor Ticks
+*** DONE Ticks Label
+** DONE Afficher text avec FTGL
+ =>  FTGLTextureFont
+** DONE Taille du texte en fonction de la taille de la fenêtre (ratio).
+** DONE Position du texte en fonction de la taille de la fenètre (ratio)
+** DONE Afficher Courbe
+
+
+* TODO [/] Constructeurs, Copy, Move 
+
+* TODO Rec-SOM
+* TODO Reservoir Computing
+** TODO [0/1] Reservoir
+*** TODO C++ Matrix
+BLAZE : https://code.google.com/p/blaze-lib/
+*** TODO Iterator ??
+http://stackoverflow.com/questions/7758580/writing-your-own-stl-container/7759622#7759622
+
+* TODO Data en séquence
