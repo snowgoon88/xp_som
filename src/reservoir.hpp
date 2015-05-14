@@ -34,7 +34,12 @@ public:
     gsl_rng_set( _rnd, std::time( NULL ) );
 
     // Matrix _output_size lines of _input_size columns
-    // _w_in = gsl_matrix_alloc( output_size, input_size);
+    _w_in = gsl_matrix_alloc( output_size, input_size);
+    for( unsigned int i = 0; i < _w_in->size1; ++i) {
+      for( unsigned int j = 0; j < _w_in->size2; ++j) {
+	gsl_matrix_set( _w_in, i, j, gsl_rng_uniform_pos(_rnd)-0.5 );
+      }
+    }
     // Matrix _output_size lines of _output_size columns
     _w_res = gsl_matrix_alloc( output_size, output_size);
     for( unsigned int i = 0; i < _w_res->size1; ++i) {
@@ -99,6 +104,13 @@ public:
   std::string str_dump()
   {
     std::stringstream dump;
+    dump << "__WEIGHTS_IN__" << std::endl;
+    for( unsigned int i = 0; i < _w_in->size1; ++i) {
+      for( unsigned int j = 0; j < _w_in->size2; ++j) {
+	dump << gsl_matrix_get( _w_in, i, j ) << "; ";
+      }
+      dump << std::endl;
+    }
     dump << "__WEIGHTS_RESERVOIR__" << std::endl;
     for( unsigned int i = 0; i < _w_res->size1; ++i) {
       for( unsigned int j = 0; j < _w_res->size2; ++j) {
@@ -114,6 +126,9 @@ public:
 private:
   //Tinput_size _input_size;
   //Toutput_size _output_size;
+  /** Input weights */
+  Tweights _w_in;
+  /** Reservoir weights */
   Tweights _w_res;
   
   /** Parameters */
