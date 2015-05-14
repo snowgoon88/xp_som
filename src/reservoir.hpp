@@ -22,7 +22,7 @@ public:
   typedef unsigned int        Tinput_size;
   //typedef std::vector<double> Toutput;
   typedef unsigned int        Toutput_size;
-  typedef gsl_matrix*          Tweights;
+  typedef gsl_matrix*         Tweights;
 
   // ****************************************************************** CREATION
   /** Creation */
@@ -53,6 +53,7 @@ public:
   {
     gsl_rng_free( _rnd );
     gsl_matrix_free( _w_res );
+    gsl_matrix_free( _w_in );
   }
 
   // ********************************************************************** INIT
