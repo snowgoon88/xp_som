@@ -18,5 +18,6 @@ foreach(f ${usage_examples})
     target_link_libraries (${exampleName} ${EXAMPLE_LIBS})
     set_target_properties(${exampleName} PROPERTIES LINKER_LANGUAGE CXX)
     #set_target_properties(${exampleName} PROPERTIES COMPILE_FLAGS "${PROJECT_ALL_CFLAGS} ${SHARE_PATH_CFLAGS}" LINK_FLAGS "${PROJECT_ALL_LDFLAGS}")
+    set_target_properties(${exampleName} PROPERTIES COMPILE_FLAGS "${PROJECT_ALL_CFLAGS} ${SHARE_PATH_CFLAGS}")
 endforeach(f)
   
