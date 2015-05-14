@@ -4,6 +4,7 @@
  * test-001-window.cpp
  *
  * Essai pour ouvrir une simple fenêtre avec GLFW
+ * c++ -Wall -std=c++11 -o test test-001-window.cpp -lGL -L/usr/local/lib -lglfw
  */
 
 #include <GLFW/glfw3.h>

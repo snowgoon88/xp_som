@@ -22,15 +22,18 @@ SET(PROJECT_CFLAGS "-Wall -std=c++11")
 
 # cflags added by the pkg-config dependencies contains ';' as separator. This is a fix.
 string(REPLACE ";" " " FTGL_CFLAGS "${FTGL_CFLAGS}")
+string(REPLACE ";" " " GLFW_CFLAGS "${GLFW_CFLAGS}")
 
 # ldflasgs added by the pkg-config dependencies contains ';' as separator. This is a fix.
 string(REPLACE ";" " " GSL_LDFLAGS "${GSL_LDFLAGS}")
+string(REPLACE ";" " " GLFW_LDFLAGS "${GLFW_LDFLAGS}")
 
 # Gathering of all flags
 # (e.g. for compiling examples)
 SET(PROJECT_ALL_CFLAGS  "${PROJECT_CFLAGS} ${FTGL_CFLAGS} ${GLFW_CFLAGS} ${GL_CFLAGS}")
-SET(PROJECT_ALL_LDFLAGS "${PROJECT_LIBS} ${PROJECT_LDFLAGS} -L${CMAKE_BINARY_DIR}/src ${GSL_LDFLAGS} ${FTGL_LDFLAGS} ${GLFW_LDFLAGS} ${GL_LDFLAGS}")
-
+SET(PROJECT_ALL_LDFLAGS "${PROJECT_LIBS} ${PROJECT_LDFLAGS} -L${CMAKE_BINARY_DIR}/src ${GL_LDFLAGS} ${GSL_LDFLAGS} ${FTGL_LDFLAGS} ${GLFW_LDFLAGS}")
+## Set of libraries for examples
+SET(EXAMPLE_LIBS "${GL_LDFLAGS} ${GSL_LDFLAGS} ${FTGL_LDFLAGS} ${GLFW_LDFLAGS}")
 ###################################
 #  Subdirectories
 ###################################
