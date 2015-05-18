@@ -1,8 +1,6 @@
 Visualisation "en ligne" de données.
 
-16/04/2015 - TODO: fenètre GLFW
-
-
+Implémentation de Reservoir Computing
 
 COMPILE
 =======
@@ -16,3 +14,16 @@ Then compile and run test-001-windo for example
 > make test-001-window
 > ./test/test-001-window
 
+DEPENDANCIES
+============
+
+* OpenGL : for visualisation
+* GLFW3 : for graphical window management
+* FTGL : for drawing text with OpenGL
+* GSL : for matrix computation
+
+TODO
+====
+
+* Learning in Reservoir
+* Link with GAML

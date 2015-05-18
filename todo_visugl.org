@@ -24,8 +24,10 @@
 * TODO [/] Constructeurs, Copy, Move 
 
 * TODO Rec-SOM
-* TODO Reservoir Computing
-** TODO [2/4] Reservoir
+* TODO [1/3] Reservoir Computing
+** TODO Serialiser
+** TODO Learn
+** DONE [2/4] Reservoir
 *** DONE GSL => valeurs propres complexes
 Comment c'est fait dans Matlab : Magnitude du complexe
 *** DONE Copie de la matrice avant les calculs
@@ -34,5 +36,6 @@ BLAZE : https://code.google.com/p/blaze-lib/
 Eigen
 *** TODO Iterator ??
 http://stackoverflow.com/questions/7758580/writing-your-own-stl-container/7759622#7759622
+
 
 * TODO Data en séquence
