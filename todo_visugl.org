@@ -25,10 +25,10 @@
 
 * TODO Rec-SOM
 * TODO Reservoir Computing
-** TODO [1/4] Reservoir
+** TODO [2/4] Reservoir
 *** DONE GSL => valeurs propres complexes
 Comment c'est fait dans Matlab : Magnitude du complexe
-*** TODO Copie de la matrice avant les calculs
+*** DONE Copie de la matrice avant les calculs
 *** TODO C++ Matrix
 BLAZE : https://code.google.com/p/blaze-lib/
 Eigen
