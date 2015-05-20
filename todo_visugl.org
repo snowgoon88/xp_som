@@ -24,6 +24,9 @@
 * TODO [/] Constructeurs, Copy, Move 
 
 * TODO Rec-SOM
+* Data
+** DONE McKey-Glass
+
 * TODO [1/3] Reservoir Computing
 ** TODO Serialiser
 ** TODO Learn
