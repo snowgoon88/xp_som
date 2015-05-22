@@ -13,7 +13,7 @@ pkg_search_module(GLFW REQUIRED glfw3)
 pkg_search_module(FTGL REQUIRED ftgl)
 pkg_search_module(GSL REQUIRED gsl)
 pkg_search_module(GAML REQUIRED gaml)
-
+pkg_search_module(EIGEN REQUIRED eigen3)
 #######################################
 # Setting the compilation flags
 #######################################
@@ -32,7 +32,7 @@ string(REPLACE ";" " " GLFW_LDFLAGS "${GLFW_LDFLAGS}")
 
 # Gathering of all flags
 # (e.g. for compiling examples)
-SET(PROJECT_ALL_CFLAGS  "${PROJECT_CFLAGS}  ${GAML_CFLAGS} ${FTGL_CFLAGS} ${GLFW_CFLAGS} ${GL_CFLAGS}")
+SET(PROJECT_ALL_CFLAGS  "${PROJECT_CFLAGS}  ${EIGEN_CFLAGS} ${GAML_CFLAGS} ${FTGL_CFLAGS} ${GLFW_CFLAGS} ${GL_CFLAGS}")
 SET(PROJECT_ALL_LDFLAGS "${PROJECT_LIBS} ${PROJECT_LDFLAGS} -L${CMAKE_BINARY_DIR}/src ${GL_LDFLAGS} ${GSL_LDFLAGS} ${FTGL_LDFLAGS} ${GLFW_LDFLAGS}")
 ## Set of libraries for examples
 SET(EXAMPLE_LIBS "${GL_LDFLAGS} ${GSL_LDFLAGS} ${FTGL_LDFLAGS} ${GLFW_LDFLAGS} ${GAML_LDFLAGS}")
