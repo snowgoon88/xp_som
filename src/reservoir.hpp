@@ -20,8 +20,11 @@
 #include <ctime>                        // std::time
 #include <vector>                       // std::vector
 #include <math.h>                       // tanh
+
+#include "rapidjson/writer.h"           // rapidjson
+#include <json_wrapper.hpp>             // JSON::OStreamWrapper et IStreamWrapper
 // ***************************************************************************
-// ***************************************************************** RESERVOIR
+// ***************************************************************** Reservoir
 // ***************************************************************************
 class Reservoir
 {
@@ -33,7 +36,7 @@ public:
   typedef gsl_matrix*         Tweights;
   typedef gsl_vector*         Tstate;
 
-// ****************************************************************** CREATION
+  // **************************************************************** creation
 /** Creation */
   Reservoir( Tinput_size input_size, Toutput_size output_size,
 	     double input_scaling = 1.0,
@@ -75,7 +78,7 @@ public:
     gsl_matrix_free( _w_in );
     gsl_vector_free( _x_res );
   }
-  // ***************************************************************** OPERATION
+  // *************************************************************** operation
   void forward( const Tinput& in )
   {
     // Verifie bonne taille
@@ -116,7 +119,7 @@ public:
     gsl_vector_free(v_tmp);
     
   }
-  // ********************************************************************** INIT
+  // ******************************************************************** init
   void set_spectral_radius( double radius )
   {
     // Compute spectral radius
@@ -160,7 +163,7 @@ public:
     gsl_matrix_free( _w_tmp );
   }
   
-  // ******************************************************************* DISPLAY
+  // ***************************************************************** display
   /** display string */
   std::string str_dump()
   {
@@ -195,8 +198,49 @@ public:
     }
     return str.str();
   }
-  
-  // **************************************************************** ATTRIBUTES
+  // *************************************************************** serialize
+  void serialize( std::ostream& os )
+  {
+    // rapidjson Wrapper
+    JSON::OStreamWrapper out(os);
+    rapidjson::Writer<JSON::OStreamWrapper> writer(out);
+
+    // Start
+    writer.StartObject();
+    // nb_in, nb_out
+    writer.String("nb_input"); writer.Uint( _w_in->size2 );
+    writer.String("nb_out"); writer.Uint( _w_in->size1 );
+    // Parameters
+    writer.String("input_scaling"); writer.Double( _input_scaling );
+    writer.String("spectral_radius"); writer.Double( _spectral_radius );
+    writer.String("leaking_rate"); writer.Double( _leaking_rate );
+    // Weights
+    writer.String("w_in");
+    writer.StartArray();
+    for( unsigned int i = 0; i < _w_in->size1; ++i) {
+      for( unsigned int j = 0; j < _w_in->size2; ++j) {
+	writer.Double( gsl_matrix_get( _w_in, i, j) );
+      }
+    }
+    writer.EndArray();
+    writer.String("w_res");
+    writer.StartArray();
+    for( unsigned int i = 0; i < _w_res->size1; ++i) {
+      for( unsigned int j = 0; j < _w_res->size2; ++j) {
+	writer.Double( gsl_matrix_get( _w_res, i, j) );
+      }
+    }
+    writer.EndArray();
+    // State
+    writer.String("x_res;");
+    writer.StartArray();
+    for( unsigned int i = 0; i < _x_res->size; ++i) {
+      writer.Double( gsl_vector_get( _x_res, i) );
+    }
+    writer.EndArray();
+    writer.EndObject();
+  };
+  // ************************************************************** attributes
 private:
   //Tinput_size _input_size;
   //Toutput_size _output_size;
