@@ -26,8 +26,8 @@
 * TODO Rec-SOM
 * Data
 ** DONE McKey-Glass
-*** TODO Serialiser avec gaml::make-output_iterator ?
-
+*** DONE Serialiser avec gaml::make-output_iterator ?
+=> son propre reader/writer
 * TODO [1/3] Reservoir Computing
 ** TODO Serialiser
 ** TODO Learn

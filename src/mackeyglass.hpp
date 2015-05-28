@@ -23,10 +23,15 @@
 
 #include <math.h>                       // pow, sqrt
 
+// ***************************************************************************
+// *************************************************************** MackeyGlass
+// ***************************************************************************
 namespace MackeyGlass {
+  // ******************************************************************** Data
   /** Type of data */
   typedef std::vector<double>     Data;               // A sequence of values
-
+  
+  // ********************************************************* create_sequence
   /** Generate a sequence with an initial random vector of size mem_size */
   Data create_sequence( unsigned int nb_pt, double level,
 			double a, double b, double c,
@@ -73,6 +78,22 @@ namespace MackeyGlass {
     }
 
     return seq;
+  }
+  // ****************************************************************** parser
+  /** read/write for Mackeyglass */
+  void read(std::istream& is, Data& data)
+  {
+    double x;
+    while( !is.eof() ) {
+      is >> x;
+      data.push_back( x );
+    }
+  }
+  void write(std::ostream& os, Data& data)
+  {
+    for( auto& x: data) {
+      os << x << std::endl;
+    }
   }
 }
 

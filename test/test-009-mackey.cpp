@@ -12,6 +12,9 @@
 
 #include <gaml.hpp>       // GAML Library
 
+// ******************************************************************** Global
+#define DATA_FILE "mackeyglass.data"
+
 /** Parser for Mackeyglass */
 struct SimpleParser {
   typedef double value_type;
@@ -43,6 +46,26 @@ int main( int argc, char *argv[] )
 	    << std::endl;
   std::copy(data.begin(), data.end(), out1);
 
+  std::cout << "MackeyGlass Writer" << std::endl;
+  MackeyGlass::write( std::cout, data);
+
+  // Essai de sérialisation
+  std::ofstream ofile(DATA_FILE);
+  MackeyGlass::write( ofile, data);
+  ofile.close();
+
+  // Et maintenant on relis
+  MackeyGlass::Data data_read;
+  std::ifstream ifile(DATA_FILE);
+  MackeyGlass::read( ifile, data_read);
+  ifile.close();
+
+  // Compare les deux
+  std::cout << std::endl << "COMPARAISON data =?= read " << std::endl;
+  for( unsigned int i = 0; i < data.size(); ++i) {
+    std::cout << data[i] << "  =?= " << data_read[i] << std::endl;
+  }
+  
   return 0;
 }
 
