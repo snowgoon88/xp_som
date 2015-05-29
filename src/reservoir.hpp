@@ -22,6 +22,7 @@
 #include <math.h>                       // tanh
 
 #include "rapidjson/writer.h"           // rapidjson
+#include "rapidjson/document.h"         // rapidjson's DOM-style API
 #include <json_wrapper.hpp>             // JSON::OStreamWrapper et IStreamWrapper
 // ***************************************************************************
 // ***************************************************************** Reservoir
@@ -37,13 +38,14 @@ public:
   typedef gsl_vector*         Tstate;
 
   // **************************************************************** creation
-/** Creation */
+  /** Creation */
   Reservoir( Tinput_size input_size, Toutput_size output_size,
 	     double input_scaling = 1.0,
 	     double spectral_radius= 0.99,
 	     double leaking_rate = 0.1 ) :
     _input_scaling(input_scaling), _spectral_radius(spectral_radius),
-    _leaking_rate(leaking_rate)
+    _leaking_rate(leaking_rate),
+    _w_in(nullptr), _w_res(nullptr), _x_res(nullptr), _rnd(nullptr)
   {
     // Random generator with seed = time
     _rnd = gsl_rng_alloc( gsl_rng_taus );
@@ -66,14 +68,68 @@ public:
       }
     }
     set_spectral_radius( _spectral_radius );
-
+    
     // RESERVOIR STATE : initialisé à 0
     _x_res = gsl_vector_calloc( output_size );
-  }
+  };
+  /** Creation à partir de JSON format */
+  Reservoir( std::istream& is ) :
+    _w_in(nullptr), _w_res(nullptr), _x_res(nullptr), _rnd(nullptr)
+  {
+    // Wrapper pour lire document
+    JSON::IStreamWrapper instream(is);
+    // Parse into a document
+    rapidjson::Document doc;
+    doc.ParseStream( instream );
+
+    std::cout << "Document read" << std::endl;
+    for (rapidjson::Value::ConstMemberIterator itr = doc.MemberBegin();
+	 itr != doc.MemberEnd(); ++itr) {
+      std::cout << "Doc has " << itr->name.GetString() << std::endl;
+    }
+    // size
+    Tinput_size nb_in =  doc["nb_input"].GetUint();
+    Toutput_size nb_out =  doc["nb_out"].GetUint();
+    // Matrix
+    _w_in = gsl_matrix_alloc( nb_out, nb_in+1 );
+    std::cout << "  read w_in" << std::endl;
+    rapidjson::Value& w = doc["w_in"];
+    assert( w.IsArray() );
+    rapidjson::SizeType idx = 0;
+    for( unsigned int i = 0; i < _w_in->size1; ++i) {
+      for( unsigned int j = 0; j < _w_in->size2; ++j) {
+	assert(w[idx].IsNumber());
+	gsl_matrix_set( _w_in, i, j, w[idx].GetDouble() );
+	idx++;
+      }
+    }
+    _w_res = gsl_matrix_alloc( nb_out, nb_out );
+    w = doc["w_res"];
+    idx = 0;
+    for( unsigned int i = 0; i < _w_res->size1; ++i) {
+      for( unsigned int j = 0; j < _w_res->size2; ++j) {
+    	gsl_matrix_set( _w_res, i, j, w[idx].GetDouble() );
+    	idx++;
+      }
+    }
+    _x_res = gsl_vector_calloc( nb_out );
+    w = doc["x_res"];
+    idx = 0;
+    for( unsigned int i = 0; i < _x_res->size; ++i) {
+      gsl_vector_set( _x_res, i, w[idx].GetDouble() );
+    	idx++;
+    }
+
+    // parameters
+    _input_scaling = doc["input_scaling"].GetDouble();
+    _spectral_radius = doc["spectral_radius"].GetDouble();
+    _leaking_rate = doc["leaking_rate"].GetDouble();
+  };
+  
   /** Destruction */
   ~Reservoir()
   {
-    gsl_rng_free( _rnd );
+    if( _rnd ) gsl_rng_free( _rnd );
     gsl_matrix_free( _w_res );
     gsl_matrix_free( _w_in );
     gsl_vector_free( _x_res );
@@ -174,6 +230,9 @@ public:
     dump << "__WEIGHTS_RESERVOIR__" << std::endl;
     dump << str_mat( _w_res );
 
+    dump << "__STATE_RESERVOIR__" << std::endl;
+    dump << str_vec( _x_res );
+    
     return dump.str();
   };
   /** display vector */
@@ -183,7 +242,6 @@ public:
     for( unsigned int i = 0; i< v->size; ++i) {
       str << gsl_vector_get(v, i) << "; ";
     }
-    str << "}";
     return str.str();
   }
   /** display matrix */
@@ -208,12 +266,13 @@ public:
     // Start
     writer.StartObject();
     // nb_in, nb_out
-    writer.String("nb_input"); writer.Uint( _w_in->size2 );
+    writer.String("nb_input"); writer.Uint( _w_in->size2 - 1 );
     writer.String("nb_out"); writer.Uint( _w_in->size1 );
     // Parameters
     writer.String("input_scaling"); writer.Double( _input_scaling );
     writer.String("spectral_radius"); writer.Double( _spectral_radius );
     writer.String("leaking_rate"); writer.Double( _leaking_rate );
+    os << std::endl;
     // Weights
     writer.String("w_in");
     writer.StartArray();
@@ -223,6 +282,7 @@ public:
       }
     }
     writer.EndArray();
+    os << std::endl;
     writer.String("w_res");
     writer.StartArray();
     for( unsigned int i = 0; i < _w_res->size1; ++i) {
@@ -231,30 +291,32 @@ public:
       }
     }
     writer.EndArray();
+    os << std::endl;
     // State
-    writer.String("x_res;");
+    writer.String("x_res");
     writer.StartArray();
     for( unsigned int i = 0; i < _x_res->size; ++i) {
       writer.Double( gsl_vector_get( _x_res, i) );
     }
     writer.EndArray();
     writer.EndObject();
+    os << std::endl;
   };
   // ************************************************************** attributes
 private:
   //Tinput_size _input_size;
   //Toutput_size _output_size;
+  /** Parameters */
+  double _input_scaling;
+  double _spectral_radius;
+  double _leaking_rate;
   /** Input weights */
   Tweights _w_in;
   /** Reservoir weights */
   Tweights _w_res;
   /** Reservoir state */
   Tstate _x_res;
-  
-  /** Parameters */
-  double _input_scaling;
-  double _spectral_radius;
-  double _leaking_rate;
+
   /** Random generator */
   gsl_rng* _rnd;
 };

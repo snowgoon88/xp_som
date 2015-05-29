@@ -7,8 +7,11 @@
  */
 
 #include <iostream>       // std::cout
-
+#include <fstream>        // std::ofstream
 #include <reservoir.hpp>
+
+// ******************************************************************** Global
+#define RES_FILE "reservoir.data"
 
 //******************************************************************************
 int main( int argc, char *argv[] )
@@ -22,8 +25,17 @@ int main( int argc, char *argv[] )
   res.serialize( std::cout );
   std::cout << std::endl;
 
-  // TODO Write un a file
+  // Write un a file
+  std::ofstream ofile(RES_FILE);
+  res.serialize( ofile );
+  ofile.close();
+
   // TODO Read from file
+  std::ifstream ifile(RES_FILE);
+  Reservoir res_read( ifile );
+  std::cout << "***** RES_READ ***" << "\n";
+  std::cout << res_read.str_dump() << std::endl;
+  std::cout << "***** RES_end ****" << "\n";
   
   return 0;
 }
