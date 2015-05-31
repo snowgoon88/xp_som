@@ -24,7 +24,7 @@ SET(PROJECT_CFLAGS "-Wall -std=c++11")
 # cflags added by the pkg-config dependencies contains ';' as separator. This is a fix.
 string(REPLACE ";" " " FTGL_CFLAGS "${FTGL_CFLAGS}")
 string(REPLACE ";" " " GLFW_CFLAGS "${GLFW_CFLAGS}")
-string(REPLACE ";" " " GAML_CFLAGS "${GAML_CFLAGS}")
+#string(REPLACE ";" " " GAML_CFLAGS "${GAML_CFLAGS}")
 
 # ldflasgs added by the pkg-config dependencies contains ';' as separator. This is a fix.
 string(REPLACE ";" " " GSL_LDFLAGS "${GSL_LDFLAGS}")
