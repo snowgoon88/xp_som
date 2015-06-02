@@ -28,9 +28,10 @@
 ** DONE McKey-Glass
 *** DONE Serialiser avec gaml::make-output_iterator ?
 => son propre reader/writer
-* TODO [1/3] Reservoir Computing
-** TODO Serialiser
+* TODO [2/3] Reservoir Computing
+** DONE Serialiser
 ** TODO Learn
+Faire le lien avec GAML-linear
 ** DONE [2/4] Reservoir
 *** DONE GSL => valeurs propres complexes
 Comment c'est fait dans Matlab : Magnitude du complexe
