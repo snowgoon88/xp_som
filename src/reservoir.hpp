@@ -6,6 +6,7 @@
  * Création d'un réservoir random et uniform, seed depends on std::time().
  *
  * @param _input_scaling : input weights in [-input_scaling,input_sclaing]
+ * @todo : autres params
  */
 
 #include <iostream>                     // std::cout
@@ -24,6 +25,9 @@
 #include "rapidjson/writer.h"           // rapidjson
 #include "rapidjson/document.h"         // rapidjson's DOM-style API
 #include <json_wrapper.hpp>             // JSON::OStreamWrapper et IStreamWrapper
+
+#include <utils_gsl.hpp>                // utils::str_vec, utils::str_mat ...
+using namespace utils;
 // ***************************************************************************
 // ***************************************************************** Reservoir
 // ***************************************************************************
@@ -235,27 +239,6 @@ public:
     
     return dump.str();
   };
-  /** display vector */
-  std::string str_vec(const Tstate v)
-  {
-    std::stringstream str;
-    for( unsigned int i = 0; i< v->size; ++i) {
-      str << gsl_vector_get(v, i) << "; ";
-    }
-    return str.str();
-  }
-  /** display matrix */
-  std::string str_mat(const Tweights m)
-  {
-    std::stringstream str;
-    for( unsigned int i = 0; i < m->size1; ++i) {
-      for( unsigned int j = 0; j < m->size2; ++j) {
-	str << gsl_matrix_get( m, i, j ) << "; ";
-      }
-      str << std::endl;
-    }
-    return str.str();
-  }
   // *************************************************************** serialize
   void serialize( std::ostream& os )
   {
