@@ -36,7 +36,7 @@ class Reservoir
 public:
   typedef std::vector<double> Tinput;
   typedef unsigned int        Tinput_size;
-  //typedef std::vector<double> Toutput;
+  typedef std::vector<double> Toutput;
   typedef unsigned int        Toutput_size;
   typedef gsl_matrix*         Tweights;
   typedef gsl_vector*         Tstate;
@@ -139,7 +139,7 @@ public:
     gsl_vector_free( _x_res );
   }
   // *************************************************************** operation
-  void forward( const Tinput& in )
+  Toutput forward( const Tinput& in )
   {
     // Verifie bonne taille
     if( (in.size()+1) != _w_in->size2 ) {
@@ -177,8 +177,15 @@ public:
     // Libère la mémoire
     gsl_vector_free(v_input);
     gsl_vector_free(v_tmp);
-    
+
+    // Et prépare output
+    _output.clear();
+    for( unsigned int i = 0; i < _x_res->size; ++i) {
+      _output.push_back( gsl_vector_get( _x_res, i) );
+    }
+    return _output;
   }
+  
   // ******************************************************************** init
   void set_spectral_radius( double radius )
   {
@@ -215,14 +222,13 @@ public:
 	abs_max = mag;
       }
     }
-    // Et divise tous les éléements de _w_res
+    // Et divise tous les éléments de _w_res
     gsl_matrix_scale( _w_res, radius/abs_max );
     // Libère l'espace
     gsl_eigen_nonsymm_free( work );
     gsl_vector_complex_free( eval );
     gsl_matrix_free( _w_tmp );
   }
-  
   // ***************************************************************** display
   /** display string */
   std::string str_dump()
@@ -299,6 +305,7 @@ private:
   Tweights _w_res;
   /** Reservoir state */
   Tstate _x_res;
+  Toutput _output;
 
   /** Random generator */
   gsl_rng* _rnd;
