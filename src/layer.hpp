@@ -87,6 +87,7 @@ public:
     return dump.str();
   };
   // ************************************************************** attributes
+  TweightsPtr weights() { return _w; };
 private:
   /** Weights */
   TweightsPtr _w;

@@ -153,26 +153,26 @@ public:
     }
     gsl_vector_set( v_input, in.size(), 1.0);
 
-    std::cout<< "IN= {" << str_vec(v_input) << std::endl;
+    // std::cout<< "IN= {" << str_vec(v_input) << std::endl;
     
     // Computation
     Tstate v_tmp = gsl_vector_calloc( _x_res->size );
-    std::cout<< "TMP= {" << str_vec(v_tmp) << std::endl;
+    // std::cout<< "TMP= {" << str_vec(v_tmp) << std::endl;
     // _w_in * input + _w_res * _x_res
     gsl_blas_dgemv(CblasNoTrans, 1.0, _w_res, _x_res, 0.0, v_tmp);  // tmp <- w_res * x_res
-    std::cout<< "TMP= {" << str_vec(v_tmp) << std::endl;
+    // std::cout<< "TMP= {" << str_vec(v_tmp) << std::endl;
     gsl_blas_dgemv(CblasNoTrans, 1.0, _w_in, v_input, 1.0, v_tmp); // tmp <- _w_in * v_in + tmp
-    std::cout<< "XN= {" << str_vec(v_tmp) << std::endl;
+    // std::cout<< "XN= {" << str_vec(v_tmp) << std::endl;
     // tanh
     for( unsigned int i = 0; i< v_tmp->size; ++i) {
       gsl_vector_set( v_tmp, i, tanh( gsl_vector_get( v_tmp, i)));
     }
-    std::cout<< "tanh(XN)= {" << str_vec(v_tmp) << std::endl;
+    // std::cout<< "tanh(XN)= {" << str_vec(v_tmp) << std::endl;
     // x = (1-alpha) x + alpha xtilde
     gsl_vector_scale( v_tmp, _leaking_rate );
     gsl_vector_scale( _x_res, 1.0 - _leaking_rate );
     gsl_vector_add( _x_res, v_tmp);
-    std::cout<< "X= {" << str_vec(_x_res) << std::endl;
+    // std::cout<< "X= {" << str_vec(_x_res) << std::endl;
 
     // Libère la mémoire
     gsl_vector_free(v_input);
