@@ -29,7 +29,7 @@ namespace Exception {
   public:
     Any(const std::string& kind,
 	const std::string& msg) {
-      message = std::string("GAML-mlp exception : ")
+      message = std::string("RidgeReg exception : ")
 	+ kind + " : " + msg;
     }
     
@@ -64,9 +64,9 @@ public:
     _xxt(nullptr), _yxt(nullptr)
   {
     // XX^T Matrix
-    _xxt = gsl_matrix_calloc( input_size+1, input_size+1 );
+    _xxt = gsl_matrix_calloc( input_size, input_size );
     // YX^T Matrix
-    _yxt = gsl_matrix_calloc( output_size, input_size+1 );
+    _yxt = gsl_matrix_calloc( output_size, input_size );
   };
   virtual ~RidgeRegression()
   {
@@ -86,7 +86,7 @@ public:
     if( w->size2 != _xxt->size1 ) {
       std::stringstream msg;
       msg << "w->size2=" << w->size2;
-      msg << " DIFF de input_size+1=" << _xxt->size1;
+      msg << " DIFF de input_size=" << _xxt->size1;
       throw Exception::Any( "SizeError", msg.str() );
     }
     
@@ -95,10 +95,9 @@ public:
     gsl_matrix* y = gsl_matrix_alloc( _yxt->size1, 1 );
     for( auto& sample: data) {
       // set X
-      for( unsigned int i = 0; i < x->size1-1; ++i) {
+      for( unsigned int i = 0; i < x->size1; ++i) {
 	gsl_matrix_set( x, i, 0, sample.first[i] );
       }
-      gsl_matrix_set( x, x->size1-1, 0, 1.0 );
 	    
       // set Y
       for( unsigned int i = 0; i < y->size1; ++i) {
@@ -138,10 +137,9 @@ public:
       std::cout << "Target\tY\tError" << std::endl;
       for( auto& sample: data) {
 	// set X
-	for( unsigned int i = 0; i < x->size1-1; ++i) {
+	for( unsigned int i = 0; i < x->size1; ++i) {
 	  gsl_matrix_set( x, i, 0, sample.first[i] );
 	}
-	gsl_matrix_set( x, x->size1-1, 0, 1.0 );
 	// set Y	
 	gsl_blas_dgemm (CblasNoTrans,  CblasNoTrans, 1.0, w, x, 0.0, y);
 	// error

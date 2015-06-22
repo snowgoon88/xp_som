@@ -25,7 +25,7 @@ int main( int argc, char *argv[] )
   std::cout << "***** RESERVOIR **" << "\n";
   std::cout << res.str_dump() << std::endl;
 
-  Layer lay( 5, 1 );
+  Layer lay( 5+1, 1 );
   std::cout << "***** LAYER **" << std::endl;
   std::cout << lay.str_dump() << std::endl;
 
@@ -35,7 +35,7 @@ int main( int argc, char *argv[] )
   MackeyGlass::read( ifile, mg_data);
   ifile.close();
 
-  // Préparer les données d'apprentissage (y, target)
+  // Préparer les données d'apprentissage ([y;1.0], target)
   RidgeRegression::Data learn_data;
   // y = Reservoir( mg_data[i-1]) =?= mg_data[i]
   Reservoir::Tinput in;
@@ -45,6 +45,9 @@ int main( int argc, char *argv[] )
     in.push_back( mg_data[i-1] );
     // Passe dans réservoir
     auto out_res = res.forward( in );
+    // Ajoute 1.0 en bout
+    out_res.push_back( 1.0 );
+    
     // Prépare target
     RidgeRegression::Toutput target;
     target.push_back( mg_data[i] );
@@ -53,7 +56,7 @@ int main( int argc, char *argv[] )
     learn_data.push_back( RidgeRegression::Sample( out_res, target) );
   }
   // Ridge Regression
-  RidgeRegression reg( 5, 1, 1.0 );
+  RidgeRegression reg( 5+1, 1, 1.0 );
   reg.learn( learn_data, lay.weights() );
   std::cout << "***** REGRESSION **" << std::endl;
   std::cout << lay.str_dump() << std::endl;

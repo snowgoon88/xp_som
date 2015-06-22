@@ -32,7 +32,7 @@ public:
     _w(nullptr)
   {
     // Weights
-    _w = gsl_matrix_calloc( output_size, input_size+1);
+    _w = gsl_matrix_calloc( output_size, input_size);
     // Output
     _y_out = gsl_vector_calloc( output_size );
   }
@@ -46,7 +46,7 @@ public:
   Toutput forward( const Tinput& in )
   {
     // Verifie bonne taille
-    if( (in.size()+1) != _w->size2 ) {
+    if( (in.size()) != _w->size2 ) {
       std::cerr << "Layer.forward() : Wrong input size !" << std::endl;
       std::cerr << "                  in.size=" << in.size() << " != " << _w->size2 << std::endl;
     }
@@ -55,11 +55,10 @@ public:
     Toutput result;
     
     // Into GSL : colomn matrix of in.size()+& row (for bias)
-    TstatePtr v_input = gsl_vector_alloc(in.size()+1 );
+    TstatePtr v_input = gsl_vector_alloc(in.size() );
     for( unsigned int i = 0; i< in.size(); ++i) {
       gsl_vector_set( v_input, i, in[i]);
     }
-    gsl_vector_set( v_input, in.size(), 1.0);
 
     // W.X (y = 1.0 * _w * v_input + 0.0 * y);
     gsl_blas_dgemv(CblasNoTrans, 1.0, _w, v_input, 0.0, _y_out );
