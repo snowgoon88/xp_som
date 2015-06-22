@@ -119,7 +119,7 @@ public:
     // TODO => Chercher le meilleur _regul sur échelle logarithmique.
     double best_regul = -12.0;
     double best_error = std::numeric_limits<double>::infinity();
-    for( double regul = best_regul; regul <= -11.9; regul += 0.1 ) {
+    for( double regul = best_regul; regul <= 2.0; regul += 0.1 ) {
       // (XX^T + _regul.I)
       gsl_matrix_set_identity( tmp_xxt );
       gsl_matrix_scale( tmp_xxt, exp10(regul) );
@@ -134,7 +134,15 @@ public:
       
       // Critère d'erreur
       double error = 0;
-      std::cout << "Target\tY\tError" << std::endl;
+      // regul * ||w||^2
+      for( unsigned row = 0; row < w->size1; ++row ) {
+	
+	gsl_vector_view vrow = gsl_matrix_row (w, row);
+	error += gsl_blas_dnrm2( &vrow.vector );
+      }
+      error *= exp10(regul);
+      // std::cout << "regul*||W||^2=" << error << std::endl;
+      // std::cout << "Target\tY\tError" << std::endl;
       for( auto& sample: data) {
 	// set X
 	for( unsigned int i = 0; i < x->size1; ++i) {
@@ -145,8 +153,9 @@ public:
 	// error
 	for( unsigned int i = 0; i < y->size1; ++i) {
 	  error += pow( (gsl_matrix_get( y, i, 0 ) - sample.second[i]), 2);
-	  std::cout << sample.second[i]<<"\t"<< gsl_matrix_get(y,i,0)<<"\t"<<error<< std::endl;
+	  // std::cout << sample.second[i]<<"\t"<< gsl_matrix_get(y,i,0)<<"\t"<<error<< std::endl;
 	}
+	
       }
       std::cout << "regul = " << exp10(regul) << " avec err= " << error << std::endl;
       if( error < best_error ) {
