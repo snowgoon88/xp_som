@@ -61,8 +61,8 @@ public:
     }
     gsl_vector_set( v_input, in.size(), 1.0);
 
-    // W.X (_w * v_input);
-    gsl_blas_dgemv(CblasNoTrans, 1.0, _w, v_input, 1.0, _y_out );
+    // W.X (y = 1.0 * _w * v_input + 0.0 * y);
+    gsl_blas_dgemv(CblasNoTrans, 1.0, _w, v_input, 0.0, _y_out );
 
     // Libère la mémoire
     gsl_vector_free(v_input);

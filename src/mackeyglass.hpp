@@ -3,8 +3,10 @@
 # pragma once
 
 /** 
- * Generate a MackeyGlass discrete serie. Either from a set of initial values or by
+ * Generate a MackeyGlass discrete serie. 
+ * Either from a set of initial values or by
  * specifying the delay length (mem_size).
+ * Only the sequence is returned, not the values uses for boostrapping.
  *
  * x(i+1)=x(i)+ax(i-s)/(1+x(i-s)^c)-bx(i)
  *
@@ -32,7 +34,10 @@ namespace MackeyGlass {
   typedef std::vector<double>     Data;               // A sequence of values
   
   // ********************************************************* create_sequence
-  /** Generate a sequence with an initial random vector of size mem_size */
+  /** 
+   * Generate a sequence with an initial random vector of size mem_size
+   * Only the sequence is returne, not the initialization value
+   */
   Data create_sequence( unsigned int nb_pt, double level,
 			double a, double b, double c,
 			unsigned int mem_size,

@@ -12,6 +12,7 @@
 #include <iostream>                     // std::cout
 #include <sstream>                      // std::stringstream
 #include <vector>                       // std::vector
+#include <limits>                       // std::numeric_limits
 
 #include <gsl/gsl_matrix.h>             // gsl Matrices
 #include <gsl/gsl_blas.h>               // gsl matrix . vector multiplication
@@ -75,7 +76,7 @@ public:
   // ********************************************************************* learn
   void learn( const Data& data, TWeightsPtr w )
   {
-    // TODO Check dimensions of w
+    // Check dimensions of w
     if( w->size1 != _yxt->size1 ) {
       std::stringstream msg;
       msg << "w->size1=" << w->size1;
@@ -113,14 +114,55 @@ public:
 
     // (XX^T + _regul.I)
     gsl_matrix* tmp_xxt = gsl_matrix_alloc( _xxt->size1, _xxt->size2 );
+    gsl_permutation* perm = gsl_permutation_alloc( tmp_xxt->size1 );
+    gsl_matrix* tmp_inv = gsl_matrix_alloc( _xxt->size1, _xxt->size2 );
+    
+    // TODO => Chercher le meilleur _regul sur échelle logarithmique.
+    double best_regul = -12.0;
+    double best_error = std::numeric_limits<double>::infinity();
+    for( double regul = best_regul; regul <= -11.9; regul += 0.1 ) {
+      // (XX^T + _regul.I)
+      gsl_matrix_set_identity( tmp_xxt );
+      gsl_matrix_scale( tmp_xxt, exp10(regul) );
+      gsl_matrix_add( tmp_xxt, _xxt );
+      // LU decomposition for inversion
+      int signum;
+      gsl_linalg_LU_decomp( tmp_xxt, perm, &signum);
+      gsl_linalg_LU_invert( tmp_xxt, perm, tmp_inv);
+      // Produit final
+      gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, _yxt, tmp_inv, 0.0, w );
+      std::cout << "w=" << str_mat(w) << std::endl;
+      
+      // Critère d'erreur
+      double error = 0;
+      std::cout << "Target\tY\tError" << std::endl;
+      for( auto& sample: data) {
+	// set X
+	for( unsigned int i = 0; i < x->size1-1; ++i) {
+	  gsl_matrix_set( x, i, 0, sample.first[i] );
+	}
+	gsl_matrix_set( x, x->size1-1, 0, 1.0 );
+	// set Y	
+	gsl_blas_dgemm (CblasNoTrans,  CblasNoTrans, 1.0, w, x, 0.0, y);
+	// error
+	for( unsigned int i = 0; i < y->size1; ++i) {
+	  error += pow( (gsl_matrix_get( y, i, 0 ) - sample.second[i]), 2);
+	  std::cout << sample.second[i]<<"\t"<< gsl_matrix_get(y,i,0)<<"\t"<<error<< std::endl;
+	}
+      }
+      std::cout << "regul = " << exp10(regul) << " avec err= " << error << std::endl;
+      if( error < best_error ) {
+	best_regul = exp10(regul);
+	best_error = error;
+      }
+    }
+    std::cout << "MEILLEUR REGUL= " << best_regul << " avec err= " << best_error << std::endl;
     gsl_matrix_set_identity( tmp_xxt );
-    gsl_matrix_scale( tmp_xxt, _regul );
+    gsl_matrix_scale( tmp_xxt, best_regul );
     gsl_matrix_add( tmp_xxt, _xxt );
     // LU decomposition for inversion
-    gsl_permutation* perm = gsl_permutation_alloc( tmp_xxt->size1 );
     int signum;
     gsl_linalg_LU_decomp( tmp_xxt, perm, &signum);
-    gsl_matrix* tmp_inv = gsl_matrix_alloc( _xxt->size1, _xxt->size2 );
     gsl_linalg_LU_invert( tmp_xxt, perm, tmp_inv);
     // Produit final
     gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, _yxt, tmp_inv, 0.0, w );

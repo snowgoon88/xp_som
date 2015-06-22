@@ -59,7 +59,7 @@ int main( int argc, char *argv[] )
   std::cout << lay.str_dump() << std::endl;
 
   std::cout << "***** RESULTS **" << std::endl;
-  // Pour vérifier, on affiche Mackeyglass ESN_aprèsRIDGE
+  // Pour vérifier, on affiche Mackeyglass ESN_après RIDGE
   std::cout << "Mackey \t\tOutput" << std::endl;
   for( auto& sample: learn_data) {
     // Target
