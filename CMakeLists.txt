@@ -14,6 +14,7 @@ pkg_search_module(FTGL REQUIRED ftgl)
 pkg_search_module(GSL REQUIRED gsl)
 pkg_search_module(GAML REQUIRED gaml)
 
+FIND_PACKAGE( Boost COMPONENTS program_options REQUIRED )
 #######################################
 # Setting the compilation flags
 #######################################
@@ -36,10 +37,13 @@ SET(PROJECT_ALL_CFLAGS  "${PROJECT_CFLAGS}  ${RAPIDJSON_CFLAGS} ${GAML_CFLAGS} $
 SET(PROJECT_ALL_LDFLAGS "${PROJECT_LIBS} ${PROJECT_LDFLAGS} -L${CMAKE_BINARY_DIR}/src ${GL_LDFLAGS} ${GSL_LDFLAGS} ${FTGL_LDFLAGS} ${GLFW_LDFLAGS}")
 ## Set of libraries for examples
 SET(EXAMPLE_LIBS "${GL_LDFLAGS} ${GSL_LDFLAGS} ${FTGL_LDFLAGS} ${GLFW_LDFLAGS} ${GAML_LDFLAGS}")
+## Set of libraries for examples
+SET(XP_LIBS "${GL_LDFLAGS} ${GSL_LDFLAGS} ${FTGL_LDFLAGS} ${GLFW_LDFLAGS} ${GAML_LDFLAGS} ${Boost_LIBRARIES}")
 ###################################
 #  Subdirectories
 ###################################
 add_subdirectory(src)
 add_subdirectory(test)
+add_subdirectory(xp)
 
 

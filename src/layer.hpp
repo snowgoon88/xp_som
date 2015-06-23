@@ -13,6 +13,9 @@
 #include <gsl/gsl_matrix.h>             // gsl Matrices
 #include <gsl/gsl_blas.h>               // gsl matrix . vector multiplication
 
+#include "rapidjson/prettywriter.h"     // rapidjson
+#include "rapidjson/document.h"         // rapidjson's DOM-style API
+
 #include <utils_gsl.hpp>                // utils::str_vec, utils::str_mat ...
 using namespace utils;
 // ***************************************************************************
@@ -35,6 +38,29 @@ public:
     _w = gsl_matrix_calloc( output_size, input_size);
     // Output
     _y_out = gsl_vector_calloc( output_size );
+  }
+  /** 
+   * Creation à partir d'un fichier contenant uniquement JSON format
+   * of ONE layer.
+   */
+  Layer( std::istream& is ) :
+    _w(nullptr)
+  {
+    // Wrapper pour lire document
+    JSON::IStreamWrapper instream(is);
+    // Parse into a document
+    rapidjson::Document doc;
+    doc.ParseStream( instream );
+
+    std::cout << "Document read" << std::endl;
+
+    unserialize( doc );
+  }
+  /** Creation from a piece of JSON in a Document */
+  Layer( const rapidjson::Value& obj ) :
+    _w(nullptr)
+  {
+    unserialize( obj );
   }
   /** Destruction */
   virtual ~Layer()
@@ -85,6 +111,48 @@ public:
     
     return dump.str();
   };
+  // *************************************************************** serialize
+  void serialize( rapidjson::StringBuffer& buffer )
+  {
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+
+    // Start
+    writer.StartObject();
+    // nb_in, nb_out
+    writer.String("nb_input"); writer.Uint( _w->size2 );
+    writer.String("nb_out"); writer.Uint( _w->size1 );
+    // Weights
+    writer.String("w");
+    writer.StartArray();
+    for( unsigned int i = 0; i < _w->size1; ++i) {
+      for( unsigned int j = 0; j < _w->size2; ++j) {
+	writer.Double( gsl_matrix_get( _w, i, j) );
+      }
+    }
+    writer.EndArray();
+    writer.EndObject();
+  }
+  void unserialize( const rapidjson::Value& obj )
+  {
+    // size
+    Tinput_size nb_in =  obj["nb_input"].GetUint();
+    Toutput_size nb_out =  obj["nb_out"].GetUint();
+    // Matrix
+    _w = gsl_matrix_calloc( nb_out, nb_in);
+    _y_out = gsl_vector_calloc( nb_out );
+
+    // Read Weights
+    const rapidjson::Value& w = obj["w"];
+    assert( w.IsArray() );
+    rapidjson::SizeType idx = 0;
+    for( unsigned int i = 0; i < _w->size1; ++i) {
+      for( unsigned int j = 0; j < _w->size2; ++j) {
+	assert(w[idx].IsNumber());
+	gsl_matrix_set( _w, i, j, w[idx].GetDouble() );
+	idx++;
+      }
+    }
+  }
   // ************************************************************** attributes
   TweightsPtr weights() { return _w; };
 private:
