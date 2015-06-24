@@ -22,7 +22,7 @@
 #include <vector>                       // std::vector
 #include <math.h>                       // tanh
 
-#include "rapidjson/writer.h"           // rapidjson
+#include "rapidjson/prettywriter.h"     // rapidjson
 #include "rapidjson/document.h"         // rapidjson's DOM-style API
 #include <json_wrapper.hpp>             // JSON::OStreamWrapper et IStreamWrapper
 
@@ -76,7 +76,10 @@ public:
     // RESERVOIR STATE : initialisé à 0
     _x_res = gsl_vector_calloc( output_size );
   };
-  /** Creation à partir de JSON format */
+  /** 
+   * Creation à partir d'un fichier contenant uniquement JSON format
+   * of ONE Reservoir.
+   */
   Reservoir( std::istream& is ) :
     _w_in(nullptr), _w_res(nullptr), _x_res(nullptr), _rnd(nullptr)
   {
@@ -91,45 +94,15 @@ public:
 	 itr != doc.MemberEnd(); ++itr) {
       std::cout << "Doc has " << itr->name.GetString() << std::endl;
     }
-    // size
-    Tinput_size nb_in =  doc["nb_input"].GetUint();
-    Toutput_size nb_out =  doc["nb_out"].GetUint();
-    // Matrix
-    _w_in = gsl_matrix_alloc( nb_out, nb_in+1 );
-    std::cout << "  read w_in" << std::endl;
-    rapidjson::Value& w = doc["w_in"];
-    assert( w.IsArray() );
-    rapidjson::SizeType idx = 0;
-    for( unsigned int i = 0; i < _w_in->size1; ++i) {
-      for( unsigned int j = 0; j < _w_in->size2; ++j) {
-	assert(w[idx].IsNumber());
-	gsl_matrix_set( _w_in, i, j, w[idx].GetDouble() );
-	idx++;
-      }
-    }
-    _w_res = gsl_matrix_alloc( nb_out, nb_out );
-    w = doc["w_res"];
-    idx = 0;
-    for( unsigned int i = 0; i < _w_res->size1; ++i) {
-      for( unsigned int j = 0; j < _w_res->size2; ++j) {
-    	gsl_matrix_set( _w_res, i, j, w[idx].GetDouble() );
-    	idx++;
-      }
-    }
-    _x_res = gsl_vector_calloc( nb_out );
-    w = doc["x_res"];
-    idx = 0;
-    for( unsigned int i = 0; i < _x_res->size; ++i) {
-      gsl_vector_set( _x_res, i, w[idx].GetDouble() );
-    	idx++;
-    }
 
-    // parameters
-    _input_scaling = doc["input_scaling"].GetDouble();
-    _spectral_radius = doc["spectral_radius"].GetDouble();
-    _leaking_rate = doc["leaking_rate"].GetDouble();
+    unserialize( doc );
   };
-  
+  /** Creation from a JSON Object in a Document */
+  Reservoir( const rapidjson::Value& obj ) :
+    _w_in(nullptr), _w_res(nullptr), _x_res(nullptr), _rnd(nullptr)
+  {
+    unserialize( obj );
+  }
   /** Destruction */
   ~Reservoir()
   {
@@ -246,11 +219,9 @@ public:
     return dump.str();
   };
   // *************************************************************** serialize
-  void serialize( std::ostream& os )
+  void serialize( rapidjson::StringBuffer& buffer )
   {
-    // rapidjson Wrapper
-    JSON::OStreamWrapper out(os);
-    rapidjson::Writer<JSON::OStreamWrapper> writer(out);
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
 
     // Start
     writer.StartObject();
@@ -261,7 +232,7 @@ public:
     writer.String("input_scaling"); writer.Double( _input_scaling );
     writer.String("spectral_radius"); writer.Double( _spectral_radius );
     writer.String("leaking_rate"); writer.Double( _leaking_rate );
-    os << std::endl;
+
     // Weights
     writer.String("w_in");
     writer.StartArray();
@@ -271,7 +242,7 @@ public:
       }
     }
     writer.EndArray();
-    os << std::endl;
+
     writer.String("w_res");
     writer.StartArray();
     for( unsigned int i = 0; i < _w_res->size1; ++i) {
@@ -280,7 +251,7 @@ public:
       }
     }
     writer.EndArray();
-    os << std::endl;
+
     // State
     writer.String("x_res");
     writer.StartArray();
@@ -288,8 +259,48 @@ public:
       writer.Double( gsl_vector_get( _x_res, i) );
     }
     writer.EndArray();
+
     writer.EndObject();
-    os << std::endl;
+  };
+  void unserialize( const rapidjson::Value& obj )
+  {
+    // size
+    Tinput_size nb_in =  obj["nb_input"].GetUint();
+    Toutput_size nb_out =  obj["nb_out"].GetUint();
+    // Matrix
+    _w_in = gsl_matrix_alloc( nb_out, nb_in+1 );
+    //std::std::cout <<  << std::endl; << "  read w_in" << std::endl;
+    const rapidjson::Value& win = obj["w_in"];
+    assert( win.IsArray() );
+    rapidjson::SizeType idx = 0;
+    for( unsigned int i = 0; i < _w_in->size1; ++i) {
+      for( unsigned int j = 0; j < _w_in->size2; ++j) {
+	assert(win[idx].IsNumber());
+	gsl_matrix_set( _w_in, i, j, win[idx].GetDouble() );
+	idx++;
+      }
+    }
+    _w_res = gsl_matrix_alloc( nb_out, nb_out );
+    const rapidjson::Value& wres = obj["w_res"];
+    idx = 0;
+    for( unsigned int i = 0; i < _w_res->size1; ++i) {
+      for( unsigned int j = 0; j < _w_res->size2; ++j) {
+    	gsl_matrix_set( _w_res, i, j, wres[idx].GetDouble() );
+    	idx++;
+      }
+    }
+    _x_res = gsl_vector_calloc( nb_out );
+    const rapidjson::Value& xres = obj["x_res"];
+    idx = 0;
+    for( unsigned int i = 0; i < _x_res->size; ++i) {
+      gsl_vector_set( _x_res, i, xres[idx].GetDouble() );
+    	idx++;
+    }
+
+    // parameters
+    _input_scaling = obj["input_scaling"].GetDouble();
+    _spectral_radius = obj["spectral_radius"].GetDouble();
+    _leaking_rate = obj["leaking_rate"].GetDouble();
   };
   // ************************************************************** attributes
 private:
