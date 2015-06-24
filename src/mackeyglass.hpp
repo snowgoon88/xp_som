@@ -23,22 +23,38 @@
 #include <gsl/gsl_rng.h>                // gsl random generator
 #include <gsl/gsl_randist.h>            // gsl random distribution
 
+#include "rapidjson/prettywriter.h"       // rapidjson
+#include "rapidjson/stringbuffer.h"       // rapidjson
+
 #include <math.h>                       // pow, sqrt
 
 // ***************************************************************************
 // *************************************************************** MackeyGlass
 // ***************************************************************************
-namespace MackeyGlass {
+class MackeyGlass {
+public:
   // ******************************************************************** Data
   /** Type of data */
   typedef std::vector<double>     Data;               // A sequence of values
-  
+
+  // **************************************************************** creation
+  MackeyGlass( unsigned int nb_pt, double level,
+	       double a, double b, double c,
+	       unsigned int mem_size,
+	       unsigned long int seed = std::time(NULL) ) :
+    _nb_pt(nb_pt), _level(level),
+    _a(a), _b(b), _c(c),
+    _mem_size(mem_size), _seed(seed)
+  {
+  };
   // ********************************************************* create_sequence
   /** 
    * Generate a sequence with an initial random vector of size mem_size
-   * Only the sequence is returne, not the initialization value
+   * Only the sequence is returned, not the initialization value.
+   *
+   * @param out_param : a stream for json formatted parameters serialization
    */
-  Data create_sequence( unsigned int nb_pt, double level,
+  static Data create_sequence( unsigned int nb_pt, double level,
 			double a, double b, double c,
 			unsigned int mem_size,
 			unsigned long int seed = std::time(NULL) )
@@ -84,9 +100,40 @@ namespace MackeyGlass {
 
     return seq;
   }
+  Data create_sequence()
+  {
+    _seq  = create_sequence( _nb_pt, _level, _a, _b, _c,
+			    _mem_size, _seed );
+    return _seq;
+  }
+  // *************************************************************** serialize
+  void serialize( rapidjson::StringBuffer& buffer )
+  {
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer( buffer );
+
+    // start
+    writer.StartObject();
+    // nb points
+    writer.String("nb_pt"); writer.Uint( _nb_pt );
+    // level of noise
+    writer.String("level"); writer.Double( _level );
+    // param_equ
+    writer.String("param_abc");
+    writer.StartArray();
+    writer.Double( _a );
+    writer.Double( _b );
+    writer.Double( _c );
+    writer.EndArray();
+    // memory
+    writer.String("mem_size"); writer.Uint( _mem_size );
+    // seed
+    writer.String("seed"); writer.Uint( _seed );
+    // end
+    writer.EndObject();
+  };
   // ****************************************************************** parser
   /** read/write for Mackeyglass */
-  void read(std::istream& is, Data& data)
+  static void read(std::istream& is, Data& data)
   {
     double x;
     while( !is.eof() ) {
@@ -94,11 +141,27 @@ namespace MackeyGlass {
       data.push_back( x );
     }
   }
-  void write(std::ostream& os, Data& data)
+  static void write(std::ostream& os, Data& data)
   {
     for( auto& x: data) {
       os << x << std::endl;
     }
   }
-}
+  // *************************************************************** attributs
+  const Data& data() const { return _seq; };
+private:
+  /** nb point generated */
+  unsigned int _nb_pt;
+  /** noise level */
+  double _level;
+  /** equ param */
+  double _a, _b, _c;
+  /** memory size needed */
+  unsigned int _mem_size;
+  /** seed */
+  unsigned long int _seed;
+  /** Sequence generated */
+  Data _seq;
+  // ********************************************************************* end
+};
 

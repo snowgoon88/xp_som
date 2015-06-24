@@ -15,6 +15,7 @@
 
 #include "rapidjson/prettywriter.h"     // rapidjson
 #include "rapidjson/document.h"         // rapidjson's DOM-style API
+#include <json_wrapper.hpp>             // JSON::OStreamWrapper et IStreamWrapper
 
 #include <utils_gsl.hpp>                // utils::str_vec, utils::str_mat ...
 using namespace utils;

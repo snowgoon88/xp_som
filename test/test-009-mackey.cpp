@@ -12,6 +12,8 @@
 
 #include <gaml.hpp>       // GAML Library
 
+#include "rapidjson/document.h"         // rapidjson's DOM-style API
+
 // ******************************************************************** Global
 #define DATA_FILE "mackeyglass.data"
 
@@ -29,7 +31,19 @@ struct SimpleParser {
 //******************************************************************************
 int main( int argc, char *argv[] )
 {
+  // Deux façons de générer des séquences
+  // UN : un passant par un créateur, ce qui permet ensuite de serialiser
+  //      les paramètres.
+  MackeyGlass mackey( 20, 1.0, 0.1, 0.5, 2.0, 5 );
+  MackeyGlass::Data seq = mackey.create_sequence();
+  // Les param sous forme de JSON
+  rapidjson::StringBuffer buffer;
+  mackey.serialize( buffer );
+  std::cout << buffer.GetString() << std::endl;
+
+  // DEUX : en passant par la fonction statique qui crée une séquence.
   MackeyGlass::Data data = MackeyGlass::create_sequence( 20, 1.0, 0.1, 0.5, 2.0, 5 );
+  
 
   std::cout << "SEQ={ ";
   for( auto& x: data) {
