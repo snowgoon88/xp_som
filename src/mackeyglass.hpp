@@ -113,8 +113,10 @@ public:
     obj.SetObject();
 
     // Ajoute les paramètres
-    obj.AddMember( "nb_pt", rj::Value(_nb_pt), doc.GetAllocator() );
-    obj.AddMember( "level", rj::Value(_level), doc.GetAllocator() );
+    obj.AddMember( "nb_pt", rj::Value().SetUint(_nb_pt),
+		   doc.GetAllocator() );
+    obj.AddMember( "level", rj::Value().SetDouble(_level),
+		   doc.GetAllocator() );
     // sous forme d'array
     rj::Value ar;
     ar.SetArray();
@@ -123,8 +125,10 @@ public:
     ar.PushBack(_c, doc.GetAllocator()); 
     obj.AddMember( "abc", ar, doc.GetAllocator() );
     // la suite
-    obj.AddMember( "mem_size", rj::Value(_mem_size), doc.GetAllocator() );
-    obj.AddMember( "seed", rj::Value(_seed), doc.GetAllocator() );
+    obj.AddMember( "mem_size", rj::Value().SetUint(_mem_size),
+		   doc.GetAllocator() );
+    obj.AddMember( "seed", rj::Value().SetUint(_seed),
+		   doc.GetAllocator() );
     
     return obj;
   };
