@@ -18,16 +18,15 @@
  * @param seed : for random generator
  */
 
-#include <ctime>                        // std::time
-#include <vector>                       // std::vector
-#include <gsl/gsl_rng.h>                // gsl random generator
-#include <gsl/gsl_randist.h>            // gsl random distribution
+#include <ctime>                      // std::time
+#include <vector>                     // std::vector
+#include <gsl/gsl_rng.h>              // gsl random generator
+#include <gsl/gsl_randist.h>          // gsl random distribution
 
-#include "rapidjson/prettywriter.h"       // rapidjson
-#include "rapidjson/stringbuffer.h"       // rapidjson
+#include "rapidjson/document.h"       // rapidjson's DOM-style API
+namespace rj = rapidjson;
 
-#include <math.h>                       // pow, sqrt
-
+#include <math.h>                     // pow, sqrt
 // ***************************************************************************
 // *************************************************************** MackeyGlass
 // ***************************************************************************
@@ -107,29 +106,27 @@ public:
     return _seq;
   }
   // *************************************************************** serialize
-  void serialize( rapidjson::StringBuffer& buffer )
+  rj::Value serialize( rj::Document& doc )
   {
-    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer( buffer );
+    // rj::Object qui contient les données
+    rj::Value obj;
+    obj.SetObject();
 
-    // start
-    writer.StartObject();
-    // nb points
-    writer.String("nb_pt"); writer.Uint( _nb_pt );
-    // level of noise
-    writer.String("level"); writer.Double( _level );
-    // param_equ
-    writer.String("param_abc");
-    writer.StartArray();
-    writer.Double( _a );
-    writer.Double( _b );
-    writer.Double( _c );
-    writer.EndArray();
-    // memory
-    writer.String("mem_size"); writer.Uint( _mem_size );
-    // seed
-    writer.String("seed"); writer.Uint( _seed );
-    // end
-    writer.EndObject();
+    // Ajoute les paramètres
+    obj.AddMember( "nb_pt", rj::Value(_nb_pt), doc.GetAllocator() );
+    obj.AddMember( "level", rj::Value(_level), doc.GetAllocator() );
+    // sous forme d'array
+    rj::Value ar;
+    ar.SetArray();
+    ar.PushBack(_a, doc.GetAllocator());
+    ar.PushBack(_b, doc.GetAllocator());
+    ar.PushBack(_c, doc.GetAllocator()); 
+    obj.AddMember( "abc", ar, doc.GetAllocator() );
+    // la suite
+    obj.AddMember( "mem_size", rj::Value(_mem_size), doc.GetAllocator() );
+    obj.AddMember( "seed", rj::Value(_seed), doc.GetAllocator() );
+    
+    return obj;
   };
   // ****************************************************************** parser
   /** read/write for Mackeyglass */

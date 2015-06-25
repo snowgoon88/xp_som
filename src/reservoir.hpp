@@ -9,25 +9,26 @@
  * @todo : autres params
  */
 
-#include <iostream>                     // std::cout
-#include <sstream>                      // std::stringstream
+#include <iostream>                  // std::cout
+#include <sstream>                   // std::stringstream
 
-#include <gsl/gsl_rng.h>                // gsl random generator
-#include <gsl/gsl_matrix.h>             // gsl Matrices
-#include <gsl/gsl_eigen.h>              // gsl EigenValues
-#include <gsl/gsl_complex_math.h>       // gsl complex
-#include <gsl/gsl_blas.h>               // gsl matrix . vector multiplication
+#include <gsl/gsl_rng.h>             // gsl random generator
+#include <gsl/gsl_matrix.h>          // gsl Matrices
+#include <gsl/gsl_eigen.h>           // gsl EigenValues
+#include <gsl/gsl_complex_math.h>    // gsl complex
+#include <gsl/gsl_blas.h>            // gsl matrix . vector multiplication
 
-#include <ctime>                        // std::time
-#include <vector>                       // std::vector
-#include <math.h>                       // tanh
+#include <ctime>                     // std::time
+#include <vector>                    // std::vector
+#include <math.h>                    // tanh
 
-#include "rapidjson/prettywriter.h"     // rapidjson
-#include "rapidjson/document.h"         // rapidjson's DOM-style API
-#include <json_wrapper.hpp>             // JSON::OStreamWrapper et IStreamWrapper
+#include "rapidjson/prettywriter.h"  // rapidjson
+#include "rapidjson/document.h"      // rapidjson's DOM-style API
+#include <json_wrapper.hpp>          // JSON::OStreamWrapper et IStreamWrapper
 
-#include <utils_gsl.hpp>                // utils::str_vec, utils::str_mat ...
-using namespace utils;
+#include <utils.hpp>                 // utils::str_vec, utils::str_mat ...
+using namespace utils::gsl;
+
 // ***************************************************************************
 // ***************************************************************** Reservoir
 // ***************************************************************************

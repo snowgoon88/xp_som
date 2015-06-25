@@ -14,6 +14,9 @@
 
 #include "rapidjson/document.h"         // rapidjson's DOM-style API
 
+#include <utils.hpp>                  // various str_xxx
+using namespace utils::rj;
+
 // ******************************************************************** Global
 #define DATA_FILE "mackeyglass.data"
 
@@ -37,9 +40,10 @@ int main( int argc, char *argv[] )
   MackeyGlass mackey( 20, 1.0, 0.1, 0.5, 2.0, 5 );
   MackeyGlass::Data seq = mackey.create_sequence();
   // Les param sous forme de JSON
-  rapidjson::StringBuffer buffer;
-  mackey.serialize( buffer );
-  std::cout << buffer.GetString() << std::endl;
+  rapidjson::Document doc;
+  rapidjson::Value obj = mackey.serialize( doc );
+  std::cout << "** JSON **" << std::endl;
+  std::cout << str_obj( obj ) << std::endl;
 
   // DEUX : en passant par la fonction statique qui crée une séquence.
   MackeyGlass::Data data = MackeyGlass::create_sequence( 20, 1.0, 0.1, 0.5, 2.0, 5 );
