@@ -11,7 +11,8 @@
 #include <reservoir.hpp>
 
 #include "rapidjson/document.h"         // rapidjson's DOM-style API
-#include <json_wrapper.hpp>             // JSON::OStreamWrapper et IStreamWrapper
+#include <utils.hpp>                  // various str_xxx
+using namespace utils::rj;
 
 // ******************************************************************** Global
 #define RES_FILE "reservoir.data"
@@ -25,13 +26,13 @@ int main( int argc, char *argv[] )
   std::cout << res.str_dump() << std::endl;
 
   std::cout << "***** JSON *******" << std::endl;
-  rapidjson::StringBuffer buffer;
-  res.serialize( buffer );
-  std::cout << buffer.GetString() << std::endl;
-
+  rapidjson::Document doc;
+  rapidjson::Value obj = res.serialize( doc );
+  std::cout << str_obj( obj ) << std::endl;
+  
   // Write un a file
   std::ofstream ofile(RES_FILE);
-  ofile << buffer.GetString() << std::endl;
+  ofile << str_obj( obj ) << std::endl;
   ofile.close();
 
   // Read from file - method ONE
@@ -47,7 +48,6 @@ int main( int argc, char *argv[] )
   // Wrapper pour lire document
   JSON::IStreamWrapper instream( jfile );
   // Parse into a document
-  rapidjson::Document doc;
   doc.ParseStream( instream );
   // Begin to parse document, and for each ReservoirJSONObject obj
   // (here, doc IS a ReservoirJSONObject )

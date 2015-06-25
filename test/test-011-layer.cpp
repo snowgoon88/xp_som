@@ -8,13 +8,15 @@
  * Crée un Reservoir+Layer et fait forward
  */
 
-#include <iostream>                       // std::cout
-#include <fstream>                        // std::ofstream
-#include <rapidjson/document.h>           // rapidjson
+#include <iostream>                   // std::cout
+#include <fstream>                    // std::ofstream
+#include <rapidjson/document.h>       // rapidjson
 
 #include <reservoir.hpp>
 #include <layer.hpp>
 
+#include <utils.hpp>                  // various str_xxx
+using namespace utils::rj;
 // ******************************************************************** Global
 #define LAY_FILE "layer.data"
 //******************************************************************************
@@ -29,13 +31,13 @@ int main( int argc, char *argv[] )
   std::cout << "***** LAYER **" << std::endl;
   std::cout << lay.str_dump() << std::endl;
   std::cout << "----- JSON --" << std::endl;
-  rapidjson::StringBuffer buffer;
-  lay.serialize( buffer );
-  std::cout << buffer.GetString() << std::endl;
+  rapidjson::Document doc;
+  rapidjson::Value obj = lay.serialize( doc );
+  std::cout << str_obj( obj ) << std::endl;
 
   // Write in a file
   std::ofstream ofile(LAY_FILE);
-  ofile << buffer.GetString() << std::endl;
+  ofile << str_obj( obj ) << std::endl;
   ofile.close();
 
   // Read from file
