@@ -74,6 +74,16 @@ public:
     gsl_matrix_free( _yxt );
   };
   // ********************************************************************* learn
+  /**
+   * Ridge regression with a given regul parameter.
+   */
+  void learn( const Data& data, TWeightsPtr w, double regul )
+  {
+    // TODO : setup Data à la création
+  }
+  /** 
+   * Optimize _regul parameters by minimizing regularized Risk.
+   */
   void learn( const Data& data, TWeightsPtr w )
   {
     // Check dimensions of w
