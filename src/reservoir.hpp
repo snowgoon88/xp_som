@@ -305,6 +305,7 @@ public:
     _leaking_rate = obj["leaking_rate"].GetDouble();
   };
   // ************************************************************** attributes
+  Toutput_size output_size() const { return (Toutput_size) _w_res->size1; };
 private:
   //Tinput_size _input_size;
   //Toutput_size _output_size;

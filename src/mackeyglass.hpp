@@ -139,7 +139,10 @@ public:
     double x;
     while( !is.eof() ) {
       is >> x;
-      data.push_back( x );
+      // en testant !eof, on évite de lire le dernier endl comme un float...
+      if ( !is.eof()) {
+	data.push_back( x );
+      }
     }
   }
   static void write(std::ostream& os, Data& data)

@@ -17,6 +17,15 @@
 
 namespace utils
 {
+  template<class T>
+  std::string str_vec( const std::vector<T>& vec )
+  {
+    std::stringstream str;
+    for( auto& item: vec) {
+      str << item << " ";
+    }
+    return str.str();
+  }
   namespace gsl
   {
   // ************************************************************ gsl::str_vec  

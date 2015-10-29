@@ -6,7 +6,7 @@
 * DONE [2/2] Fenêtre GLFW version 3 
 ** DONE CMake pour GLFW
 ** DONE C++ pour GLFW
-* TODO [5/6] Afficher Graphe
+* [5/6] Afficher Graphe
 ** TODO Afficher Grille
 ** DONE [4/4] Afficher Axes avec ticks et range
 *** DONE Label
@@ -20,11 +20,9 @@
 ** DONE Position du texte en fonction de la taille de la fenètre (ratio)
 ** DONE Afficher Courbe
 
-
-* TODO [/] Constructeurs, Copy, Move 
-
+* TODO Constructeurs, Copy, Move
 * TODO Rec-SOM
-* Data
+* [/] Data
 ** DONE McKey-Glass
 *** DONE Serialiser avec gaml::make-output_iterator ?
 => son propre reader/writer
@@ -44,3 +42,8 @@ http://stackoverflow.com/questions/7758580/writing-your-own-stl-container/775962
 
 ** TODO Cherche le meilleur Ridge Coef
 * TODO Data en séquence
+* [1/1] XP
+** DONE BUG enregistre 2000 val dans mg_data mais relit 2001
+** Learn ??
+* [0/1] Utils
+** TODO Un seul namespace dans utils, la différence se fera par l'objet que l'on veut striser

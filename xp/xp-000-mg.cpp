@@ -3,11 +3,16 @@
 /**
  * XP about Reservoir Computing
  *
- * 1) generate MackeyGlass, store it (and parameters)
- * 2) learn using first nb_learn data
- * 3) check/validate with left data
- * 4) prepare files for display (using R ?)
- *
+ * 1) OK: generate MackeyGlass, store it (and parameters) and can load
+ * 2) OK: generate ESN+LAY, store it and can load
+ * 3) OK: learn using data
+ *    => pour l'instant, apprend avec toutes les données
+ *    => pour l'instant RidgeRegression cherche ma meilleure régulation
+ *    TODO : faudrait faire du bruit dans RES avant apprentissage, non ?
+ * 4) TODO: check/validate with leftover data
+ * 5) OK: utilise ESN pour générer les données.
+ * 6) OK: prepare files for display (using R ?)
+ *    => juste un output par ligne dans un fichier.
  */
 
 #include <iostream>                // std::cout
@@ -28,8 +33,8 @@ namespace po = boost::program_options;
 using namespace utils::rj;
 
 // ******************************************************************** global
-#define MG_MEM_SIZE       30
-#define MG_LENGTH       2000
+#define MG_MEM_SIZE       10
+#define MG_LENGTH       1000
 #define MG_SEED   1434979356
 
 // Reservoir + Layer
@@ -186,9 +191,49 @@ std::string str_dump()
     dump << _lay->str_dump() << std::endl;
 
   dump << "** MG_DATA has " << _mg_data.size() << " values" << std::endl;
+  for( auto& item: _mg_data ) {
+    dump << item << "; ";
+  }
+  dump << std::endl;
   
   return dump.str();
 };
+// ******************************************************************* predict
+void predict()
+{
+  // un vecteur de output
+  std::vector<RidgeRegression::Toutput> result;
+  
+  // suppose que _mg_data a été initialisé
+  Reservoir::Tinput in;
+  for( unsigned int i = 1; i < _mg_data.size(); ++i) {
+    // Prépare input
+    in.clear();
+    in.push_back( _mg_data[i-1] );
+    // Passe dans réservoir
+    auto out_res = _res->forward( in );
+    // Ajoute 1.0 en bout (le neurone biais)
+    out_res.push_back( 1.0 );
+    // Passe dans layer
+    auto out_lay = _lay->forward( out_res ); 
+
+    result.push_back( out_lay );
+  }
+
+  std::cout << "** PREDICT **" << std::endl;
+  for( auto& item: result) {
+    std::cout << utils::str_vec(item) << std::endl;
+  }
+  // Serialisation dans filename.data
+  std::string fn_data = "data/result.data";
+  std::cout << "Write RESULTS dans " << fn_data << std::endl;
+  std::ofstream ofile( fn_data );
+  for( auto& item: result) {
+    ofile << utils::str_vec(item) << std::endl;
+  }
+  ofile.close();
+  
+}
 // ********************************************************************* learn
 void learn()
 {
@@ -201,16 +246,26 @@ void learn()
     in.push_back( _mg_data[i-1] );
     // Passe dans réservoir
     auto out_res = _res->forward( in );
-    // Ajoute 1.0 en bout
+    // Ajoute 1.0 en bout (le neurone biais)
     out_res.push_back( 1.0 );
     
     // Prépare target
     RidgeRegression::Toutput target;
     target.push_back( _mg_data[i] );
 
-    // Ajoute dans Data
+    // Ajoute dans Data l'échantillon (entré, sortie désirée)
     _data.push_back( RidgeRegression::Sample( out_res, target) );
   }
+
+  // Ridge Regression pour apprendre la couche de sortie
+  RidgeRegression reg( _res->output_size()+1, /* res output size +1 */
+		       1, /*target size */
+		       1.0  /* regule */
+		       );
+  // Apprend, avec le meilleur coefficient de régulation
+  reg.learn( _data, _lay->weights() );
+  std::cout << "***** POIDS après REGRESSION **" << std::endl;
+  std::cout << _lay->str_dump() << std::endl;
 }
 
 
@@ -240,6 +295,13 @@ int main( int argc, char *argv[] )
   }
 
   std::cout << str_dump() << std::endl;
+
+  // learn if conditions are met
+  if( _res and _lay and _mg_data.size() > 0 ) {
+    std::cout << "** LEARNING **" << std::endl;
+    learn();
+    predict();
+  }
   
   // end
   free_esn();
