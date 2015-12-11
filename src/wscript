@@ -1,0 +1,6 @@
+# waf configuration file .waf --help pour commande par défaut
+# ******************************************************************** CMD build
+def build( bld ):
+    print('→ build from ' + bld.path.abspath())
+    #bld( includes = '.',
+    #     name = 'esnlib' )

@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
+def build(bld):
+    print('→ build from ' + bld.path.abspath())
+    bld.program(
+        source=['test-014-pomdp.cpp'],
+        target = 'test-014-pomdp',
+        includes=['.', '../src', '../src/pomdp'],
+        use = ['GSL']
+    )
+    
+    
