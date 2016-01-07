@@ -6,7 +6,7 @@ def build(bld):
     bld.program(
         source=['test-014-pomdp.cpp'],
         target = 'test-014-pomdp',
-        includes=['.', '../src', '../src/pomdp'],
+        includes=['.', '../include', '../src', '../src/pomdp'],
         use = ['GSL']
     )
     
