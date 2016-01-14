@@ -3,7 +3,7 @@
 /** 
  * XP with POMDP and Reservoir Computing
  *
- * TODO : load POMDP and generate Trajectories of S,O,A,S',O',R
+ * - load POMDP and generate Trajectories of S,O,A,S',O',R
  * TODO : store Trajectories
  * TODO : load Trajectories
  * TODO : try to learn O,A -> O' (??????)
@@ -15,7 +15,8 @@
 #include <rapidjson/document.h>    // rapidjson's DOM-style API
 #include <json_wrapper.hpp>        // JSON::IStreamWrapper
 
-#include <pomdp.hpp>
+#include <pomdp/pomdp.hpp>
+#include <pomdp/trajectory.hpp>
 #include <gsl/gsl_rng.h>             // gsl random generator
 #include <ctime>                     // std::time
 
@@ -27,10 +28,12 @@ namespace po = boost::program_options;
 using namespace utils::rj;
 // ********************************************************************* param
 std::string*           _filename_pomdp = nullptr;
-std::string*           _filename_traj = nullptr;
+std::string*           _fileload_traj = nullptr;
+std::string*           _filegene_traj = nullptr;
 
 Model::POMDP*          _pomdp = nullptr;
 unsigned int           _length;
+Trajectory::POMDP::Data _traj_data;
 
 gsl_rng*               _rnd = gsl_rng_alloc( gsl_rng_taus );
 // ****************************************************************** free_mem
@@ -47,6 +50,7 @@ void setup_options(int argc, char **argv)
     ("length,l", po::value<unsigned int>(&_length)->default_value(10), "generate Traj of length ")
     ("load_pomdp,p", po::value<std::string>(), "load POMDP from JSON file")
     ("load_traj,t", po::value<std::string>(), "load Trajectory from file")
+    ("gene_traj,f", po::value<std::string>(), "gene Trajectory into file")
     ;
 
   // Options en ligne de commande
@@ -68,9 +72,16 @@ void setup_options(int argc, char **argv)
       std::cout << desc << std::endl;
     exit(1);
   }
-  
+
+  // file names
   if (vm.count("load_pomdp")) {
     _filename_pomdp = new std::string(vm["load_pomdp"].as< std::string>());
+  }
+  if (vm.count("load_traj")) {
+    _fileload_traj = new std::string(vm["load_traj"].as< std::string>());
+  }
+  if (vm.count("gene_traj")) {
+    _filegene_traj = new std::string(vm["gene_traj"].as< std::string>());
   }
 }
 // ********************************************** load and generate Trajectory
@@ -91,6 +102,10 @@ void load_and_generate()
 
   _pomdp = new Model::POMDP( read_doc["pomdp"] );
 
+  std::ofstream* ofile = nullptr;
+  if( _filegene_traj ) {
+    ofile = new std::ofstream( *_filegene_traj + ".data" );
+  }
   
   // Generate
   gsl_rng_set( _rnd, std::time( NULL ) );
@@ -109,9 +124,22 @@ void load_and_generate()
     
     std::cout << idx_state << "\t" << idx_obs << "\t" << act._id << "\t" << idx_next_state << "\t" << idx_next_obs << "\t" << reward << std::endl;
 
+    if( ofile ) {
+      *ofile << idx_state << "\t" << idx_obs << "\t" << act._id << "\t" << idx_next_state << "\t" << idx_next_obs << "\t" << reward << std::endl;
+    }
+    
     idx_state = idx_next_state;
     idx_obs = idx_next_obs;
   }
+
+  if( ofile ) delete ofile;
+}
+// ***************************************************************** read_traj
+void read_traj( const std::string& filename )
+{
+  std::ifstream ifile( filename );
+  Trajectory::POMDP::read( ifile, _traj_data);
+  ifile.close();
 }
 // ********************************************************************** main
 int main( int argc, char *argv[] )
@@ -122,6 +150,16 @@ int main( int argc, char *argv[] )
     load_and_generate();
   }
 
+  if( _fileload_traj ) {
+    std::cout << "** Load Trajectory::POMDP::Data in " << *_fileload_traj << std::endl;
+    read_traj( *_fileload_traj );
+
+    std::cout << "** Trajectory Read" << std::endl;
+    for( auto& item: _traj_data) {
+      std::cout << item.id_s << ":" << item.id_o << "+" << item.id_a << "->" << item.id_next_s << ":" << item.id_next_o << " = " << item.r << std::endl;
+    }
+  }
+  
   free_mem();
   return 0;
 }
