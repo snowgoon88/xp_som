@@ -1,0 +1,13 @@
+# waf configuration file .waf --help pour commande par défaut
+# ******************************************************************** CMD build
+def build( bld ):
+    print('→ build from ' + bld.path.abspath())
+    # bld.program( source='xp-000-mg.cpp',
+    # 		 target='xp-000-mg',
+    # 		 includes=['.', '../include', '../src', '../src/pomdp'],
+    # 		 use='JSON' )
+    bld.program( source=['xp-001-pomdp.cpp'],
+    		 target='xp-001-pomdp',
+		 includes=['.', '../include', '../src', '../src/pomdp'],
+		 use=['JSON', 'GSL', 'BOOST'] )
+    
