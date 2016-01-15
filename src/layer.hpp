@@ -159,6 +159,7 @@ public:
   }
   // ************************************************************** attributes
   TweightsPtr weights() { return _w; };
+  Toutput_size output_size() const { return (Toutput_size) _w->size1; };
 private:
   /** Weights */
   TweightsPtr _w;
