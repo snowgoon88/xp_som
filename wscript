@@ -25,7 +25,7 @@ def configure( conf ):
     )
     ## Require/Check libboost
     conf.env.LIB_BOOST = ['boost_program_options']
-    conf.env.LIBPATH_BOOST = ['/usr/lib/x86_64-linux-gnu']
+    conf.env.LIBPATH_BOOST = ['/usr/lib/x86_64-linux-gnu','/usr/lib/i386-linux-gnu']
     print "Checking for 'BOOST::program_options'"
     conf.find_file( 'lib'+conf.env.LIB_BOOST[0]+'.so', conf.env.LIBPATH_BOOST )
        
