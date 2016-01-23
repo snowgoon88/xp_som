@@ -8,6 +8,10 @@ def build( bld ):
     # 		 use='JSON' )
     bld.program( source=['xp-001-pomdp.cpp'],
     		 target='xp-001-pomdp',
-		 includes=['.', '../include', '../src', '../src/pomdp'],
+		 includes=['.', '../include', '../src'],
+		 use=['JSON', 'GSL', 'BOOST'] )
+    bld.program( source=['xp-002-cheesemaze.cpp'],
+    		 target='xp-002-cheese',
+		 includes=['.', '../include', '../src'],
 		 use=['JSON', 'GSL', 'BOOST'] )
     

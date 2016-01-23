@@ -270,7 +270,7 @@ void predict()
   std::vector<RidgeRegression::Toutput> result;
   
   // suppose que _mg_data a été initialisé
-  for( auto& item: _traj) {
+  for( auto& item: _traj_data) {
     // Passe dans réservoir
     auto out_res = _res->forward( input_from(item) );
     // Ajoute 1.0 en bout (le neurone biais)
@@ -338,7 +338,7 @@ int main( int argc, char *argv[] )
   if( _filename_pomdp and _fileload_esn and _fileload_traj ) {
     std::cout << "** LEARNING **" << std::endl;
     learn();
-    //predict();
+    predict();
   }
   
   free_mem();

@@ -45,10 +45,11 @@ http://stackoverflow.com/questions/7758580/writing-your-own-stl-container/775962
 * [1/1] XP
 ** DONE BUG enregistre 2000 val dans mg_data mais relit 2001
 ** Learn ??
-* TODO [2/6] XP POMDP 
+* TODO [3/6] XP POMDP 
 ** DONE ajout d'un jsonreader pour transition
 ** DONE Générer et sauvegarder une trajectoire de transitions
-** TODO Cheese maze labyrinthe
+** DONE Cheese maze labyrinthe
+Voir début danns xp/xp-002-cheese-maze
 ** TODO pour apprendre il faut traj+pomdp (nb obs, etc)
 ** TODO [0/3] apprendre (0+A) -> .
 *** TODO pour apprendre, il faut transition ->O

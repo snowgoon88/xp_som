@@ -133,6 +133,7 @@ public:
     gsl_rng_set( _rnd, std::time( NULL ) );
     // obs
     simul_obs();
+
   };
   POMDP( const rj::Value& obj ) :
     _states(), _obs(), _actions(),
