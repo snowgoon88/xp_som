@@ -21,8 +21,8 @@
 ** DONE Position du texte en fonction de la taille de la fenètre (ratio)
 ** DONE Afficher Courbe
 
-* TODO [0/1] Constructeurs, Copy, Move
-** TODO tester Copy pour Layer
+* DONE [1/1] Constructeurs, Copy, Move
+** DONE tester Copy pour Layer
 * TODO Rec-SOM
 * [/] Data
 ** DONE McKey-Glass

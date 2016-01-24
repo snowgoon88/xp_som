@@ -152,6 +152,29 @@ public:
     // obs
     // simul_obs();
   };
+  // ************************************************************* POMDP::copy
+  POMDP( const POMDP& other ) :
+    _states(other._states), _obs(other._obs), _actions(other._actions),
+    _trans(other._trans), _percep(other._percep), _reward(other._reward),
+    _rnd(other._rnd),
+    _cur_state(other.cur_state()), _cur_obs(other.cur_obs())
+  {
+  };
+  POMDP& operator=(const POMDP& other)
+  {
+    if (this != &other) { // protect against invalid self-assignment
+      _states = other._states;
+      _obs = other._obs;
+      _actions = other._actions;
+      _trans = other._trans;
+      _percep = other._percep;
+      _reward = other._reward;
+      _rnd = other._rnd;
+      _cur_state = other.cur_state();
+      _cur_obs = other.cur_obs();
+    }
+    return *this;
+  }
   // ************************************************************** POMDP::str
   /** dump state */
   std::string str_state () const

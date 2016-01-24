@@ -89,5 +89,36 @@ int main( int argc, char *argv[] )
     pomdp.simul_trans( act );
     std::cout << "CURRENT : " << pomdp.str_state() << " r= " << pomdp.cur_reward() << std::endl;
   }
+
+  // Copy
+  Model::POMDP p1(pomdp);
+  pomdp._states[0] = {0,"changed"};
+  pomdp._reward[1] = 12;
+  Model::Transition t;
+  t._proba = {0.5, 0.5};
+  pomdp._percep[1] = t;
+  pomdp._percep[0]._proba[0] = 0.8;
+  pomdp._trans[0][0]._proba[0] = 0.666;
+  Model::Transition t1;
+  t1._proba = {0.666, 0.777};
+  pomdp._trans[0][1] = t1;
+  std::cout << "** ORIG \n" << pomdp.str_dump() << std::endl;
+  std::cout << "** COPY \n" << p1.str_dump() << std::endl;
+  
+  Model::POMDP p2 = pomdp;
+  pomdp._actions[1]._label = "Two";
+  Model::Transition t3;
+  t3._proba = {0.123, 0.456};
+  pomdp._percep[1] = t3;
+  pomdp._percep[0]._proba[0] = 0.789;
+  pomdp._trans[0][1]._proba[0] = 0.222;
+  Model::Transition t4;
+  t4._proba = {0.111, 0.222};
+  pomdp._trans[1][1] = t4;
+
+  std::cout << "** ORIG \n" << pomdp.str_dump() << std::endl;
+  std::cout << "** OPER \n" << p2.str_dump() << std::endl;
+  
+
   return 0;
 }
