@@ -4,9 +4,15 @@
 def build(bld):
     print('→ build from ' + bld.path.abspath())
     bld.program(
+        source=['test-011-layer.cpp'],
+        target = 'test-011-layer',
+        includes=['.', '../include', '../src'],
+        use = ['GSL']
+    )
+    bld.program(
         source=['test-014-pomdp.cpp'],
         target = 'test-014-pomdp',
-        includes=['.', '../include', '../src', '../src/pomdp'],
+        includes=['.', '../include', '../src'],
         use = ['GSL']
     )
     

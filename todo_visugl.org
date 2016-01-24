@@ -3,6 +3,7 @@
 ** GLFW - Window with OpenGL
 ** FTGL - Draw text with OpenGL and FreeType2
 ** GSL - Gnu Scientific Library
+** BOOST - Boost::program_options
 * DONE [2/2] Fenêtre GLFW version 3 
 ** DONE CMake pour GLFW
 ** DONE C++ pour GLFW
@@ -20,7 +21,8 @@
 ** DONE Position du texte en fonction de la taille de la fenètre (ratio)
 ** DONE Afficher Courbe
 
-* TODO Constructeurs, Copy, Move
+* TODO [0/1] Constructeurs, Copy, Move
+** TODO tester Copy pour Layer
 * TODO Rec-SOM
 * [/] Data
 ** DONE McKey-Glass

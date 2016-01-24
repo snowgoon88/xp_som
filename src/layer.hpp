@@ -34,7 +34,7 @@ public:
   typedef gsl_vector*         TstatePtr;
   // **************************************************************** creation
   Layer( Tinput_size input_size, Toutput_size output_size ) :
-    _w(nullptr)
+    _w(nullptr), _y_out(nullptr)
   {
     // Weights
     _w = gsl_matrix_calloc( output_size, input_size);
@@ -43,10 +43,10 @@ public:
   }
   /** 
    * Creation à partir d'un fichier contenant uniquement JSON format
-   * of ONE layer.
+ema   * of ONE layer.
    */
   Layer( std::istream& is ) :
-    _w(nullptr)
+    _w(nullptr), _y_out(nullptr)
   {
     // Wrapper pour lire document
     JSON::IStreamWrapper instream(is);
@@ -60,10 +60,34 @@ public:
   }
   /** Creation from a piece of JSON in a Document */
   Layer( const rapidjson::Value& obj ) :
-    _w(nullptr)
+    _w(nullptr), _y_out(nullptr)
   {
     unserialize( obj );
   }
+  // ************************************************************* Layer::copy
+  Layer(const Layer& other) :
+    _w(nullptr), _y_out(nullptr)
+  { 
+    // copy
+    _w = gsl_matrix_alloc( other._w->size1, other._w->size2 );
+    gsl_matrix_memcpy( _w, other._w );
+    _y_out = gsl_vector_calloc( other._y_out->size );
+    gsl_vector_memcpy( _y_out, other._y_out );
+  }
+  Layer& operator=(const Layer& other) 
+  {
+    if (this != &other) { // protect against invalid self-assignment
+      if( _w ) gsl_matrix_free( _w );
+      if( _y_out ) gsl_vector_free( _y_out );
+      // copy
+      _w = gsl_matrix_alloc( other._w->size1, other._w->size2 );
+      gsl_matrix_memcpy( _w, other._w );
+      _y_out = gsl_vector_calloc( other._y_out->size );
+      gsl_vector_memcpy( _y_out, other._y_out );
+    }
+    return *this;
+  }
+  // ****************************************************** Layer::destructeur
   /** Destruction */
   virtual ~Layer()
   {
@@ -169,3 +193,4 @@ private:
 };
 
 #endif // LAYER_HPP
+

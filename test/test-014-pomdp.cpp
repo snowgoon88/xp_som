@@ -13,7 +13,7 @@
 #include "rapidjson/document.h"         // rapidjson's DOM-style API
 #include <json_wrapper.hpp>          // JSON::OStreamWrapper, JSON::IStreamWrapper
 
-#include <pomdp.hpp>
+#include <pomdp/pomdp.hpp>
 #include <gsl/gsl_rng.h>             // gsl random generator
 #include <ctime>                     // std::time
 

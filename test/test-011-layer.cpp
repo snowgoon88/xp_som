@@ -12,6 +12,8 @@
 #include <fstream>                    // std::ofstream
 #include <rapidjson/document.h>       // rapidjson
 
+#include <gsl/gsl_matrix.h>         // gsl Matrices
+
 #include <reservoir.hpp>
 #include <layer.hpp>
 
@@ -63,6 +65,21 @@ int main( int argc, char *argv[] )
     std::cout << v << "; ";
   }
   std::cout << std::endl;
+
+  // Copy test
+  std::cout << "** COPY" << std::endl;
+  Layer l1(lay);
+  auto weights = lay.weights();
+  gsl_matrix_set(weights, 0, 0, 2.0);
+  std::cout << "== ORIGIN " << lay.str_dump() << std::endl;
+  std::cout << "== COPY   " << l1.str_dump() << std::endl;
+
+  Layer l2 = lay;
+  weights = l2.weights();
+  gsl_matrix_set(weights, 0, 0, 3.0);
+  std::cout << "== ORIGIN " << lay.str_dump() << std::endl;
+  std::cout << "== COPY   " << l2.str_dump() << std::endl;
+
 
   return 0;
 }
