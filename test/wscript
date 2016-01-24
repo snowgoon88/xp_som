@@ -1,8 +1,22 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+import os
+
 def build(bld):
     print('→ build from ' + bld.path.abspath())
+    
+    # # detect files that should be build
+    # for file in os.listdir( bld.path.abspath() ):
+    #     if file.endswith(".cpp"):
+    #         print(" _should build "+file[:-4])
+    #         bld.program(
+    #             source=[file],
+    #             target = file[:-4],
+    #             includes=['.', '../include', '../src'],
+    #             use = ['GSL']
+    #         )
+        
     bld.program(
         source=['test-011-layer.cpp'],
         target = 'test-011-layer',
