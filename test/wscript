@@ -15,5 +15,11 @@ def build(bld):
         includes=['.', '../include', '../src'],
         use = ['GSL']
     )
+    bld.program(
+        source=['test-015-noise.cpp'],
+        target = 'test-015-noise',
+        includes=['.', '../include', '../src'],
+        use = ['GSL']
+    )
     
     
