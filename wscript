@@ -23,6 +23,26 @@ def configure( conf ):
                    uselib_store='GSL',
                    args=['--cflags', '--libs']
     )
+    ## Require FTGL, using wraper around pkg-onfig
+    conf.check_cfg(package='ftgl',
+                   uselib_store='FTGL',
+                   args=['--cflags', '--libs']
+    )
+    ## Require GAML, using wraper around pkg-onfig
+    conf.check_cfg(package='gaml',
+                   uselib_store='GAML',
+                   args=['--cflags', '--libs']
+    )
+    ## Require OpenGL, using wraper around pkg-onfig
+    conf.check_cfg(package='gl',
+                   uselib_store='GL',
+                   args=['--cflags', '--libs']
+    )
+    ## Require GLFW3, using wraper around pkg-onfig
+    conf.check_cfg(package='glfw3',
+                   uselib_store='GLFW3',
+                   args=['--cflags', '--libs']
+    )
     ## Require/Check libboost
     conf.env.LIB_BOOST = ['boost_program_options']
     conf.env.LIBPATH_BOOST = ['/usr/lib/x86_64-linux-gnu','/usr/lib/i386-linux-gnu']
