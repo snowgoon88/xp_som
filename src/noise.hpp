@@ -16,6 +16,9 @@
 #include <gsl/gsl_rng.h>              // gsl random generator
 #include <gsl/gsl_randist.h>          // gsl random distribution
 
+#include "rapidjson/document.h"       // rapidjson's DOM-style API
+namespace rj = rapidjson;
+
 class WNoise
 {
 public:
@@ -54,6 +57,25 @@ public:
   {
     _seq = create_sequence( _nb_pt, _level, _dim, _seed );
     return _seq;
+  }
+  // ******************************************************* WNoise::serialize
+  rj::Value serialize( rj::Document& doc )
+  {
+    // rj::Object qui contient les données
+    rj::Value obj;
+    obj.SetObject();
+
+    // Ajoute les paramètres
+    obj.AddMember( "nb_pt", rj::Value().SetUint(_nb_pt),
+		   doc.GetAllocator() );
+    obj.AddMember( "level", rj::Value().SetDouble(_level),
+		   doc.GetAllocator() );
+    obj.AddMember( "dim", rj::Value().SetUint(_dim),
+		   doc.GetAllocator() );
+    obj.AddMember( "seed", rj::Value().SetUint(_seed),
+		   doc.GetAllocator() );
+
+    return obj;
   }
   // ********************************************************** WNoise::parser
   /** read/write for Mackeyglass */

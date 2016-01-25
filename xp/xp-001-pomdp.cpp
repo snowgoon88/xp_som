@@ -17,6 +17,8 @@
 #include <rapidjson/document.h>    // rapidjson's DOM-style API
 #include <json_wrapper.hpp>        // JSON::IStreamWrapper
 
+#include <noise.hpp>
+
 #include <pomdp/pomdp.hpp>
 #include <pomdp/trajectory.hpp>
 
@@ -40,6 +42,12 @@ std::string*           _fileload_traj = nullptr;
 std::string*           _filegene_traj = nullptr;
 std::string*           _fileload_esn = nullptr;
 std::string*           _filegene_esn = nullptr;
+std::string*           _fileload_noise = nullptr;
+std::string*           _filegene_noise = nullptr;
+
+WNoise::Data           _wnoise;
+unsigned int           _noise_length;
+double                 _noise_level;
 
 Model::POMDP*          _pomdp = nullptr;
 unsigned int           _length;
@@ -74,6 +82,10 @@ void setup_options(int argc, char **argv)
     ("gene_traj,f", po::value<std::string>(), "gene Trajectory into file")
     ("load_esn,e",  po::value<std::string>(), "load ESN from file")
     ("gene_esn,g", po::value<std::string>(), "gene ESN into file")
+    ("load_noise,n", po::value<std::string>(), "load WNoise from file")
+    ("gene_noise", po::value<std::string>(), "gene WNoise into file")
+    ("length_noise", po::value<unsigned int>(&_noise_length)->default_value(100), "Length of noise to generate")
+    ("level_noise",  po::value<double>(&_noise_level)->default_value(0.1), "Level of noise to generate")
     ;
 
   // Options en ligne de commande
@@ -105,6 +117,12 @@ void setup_options(int argc, char **argv)
   }
   if (vm.count("gene_traj")) {
     _filegene_traj = new std::string(vm["gene_traj"].as< std::string>());
+  }
+  if (vm.count("load_noise")) {
+    _fileload_noise = new std::string(vm["load_noise"].as< std::string>());
+  }
+  if (vm.count("gene_noise")) {
+    _filegene_noise = new std::string(vm["gene_noise"].as< std::string>());
   }
   if (vm.count("gene_esn")) {
     _filegene_esn = new std::string(vm["gene_esn"].as< std::string>());
@@ -217,6 +235,39 @@ void read_esn( const std::string& filename )
   _res = new Reservoir( doc["esn"] );
   _lay = new Layer( doc["lay"] );
 }
+// **************************************************************** load_noise
+void read_noise( const std::string& filename )
+{
+  std::ifstream ifile( filename );
+  WNoise::read( ifile, _wnoise);
+  ifile.close();
+}
+// **************************************************************** gene_noise
+void gene_noise( const std::string& filename,
+		 const unsigned int length,
+		 const double level,
+		 const unsigned int dim)
+{
+  WNoise wnoise( length, level, dim );
+  wnoise.create_sequence();
+  _wnoise = wnoise.data();
+  
+  // Sauve dans JSON
+  std::string fn_json = filename+".json";
+  std::cout << "Write WNoise dans " << fn_json << std::endl;
+  rapidjson::Document doc;
+  rapidjson::Value obj = wnoise.serialize( doc );
+  std::ofstream jfile( fn_json );
+  jfile << str_obj(obj) << std::endl;
+  jfile.close();
+
+  // Sauve les données
+  std::string fn_data = filename+".data";
+  std::cout << "Write WNoise dans " << fn_data << std::endl;
+  std::ofstream ofile( fn_data );
+  WNoise::write( ofile, _wnoise );
+  ofile.close();
+}
 // ********************************************************************* learn
 Reservoir::Tinput input_from( Trajectory::POMDP::Item& item )
 {
@@ -238,6 +289,10 @@ RidgeRegression::Toutput target_from( Trajectory::POMDP::Item& item )
   target[item.id_next_s] =1.0;
 
   return target;
+}
+void init( const unsigned int length )
+{
+  // vérifie qu'il y a assez de points dans WNoise.
 }
 void learn()
 {
@@ -317,6 +372,14 @@ int main( int argc, char *argv[] )
 	      _pomdp->_states.size(),                    // out = S
 	      _res_size                                  // _res size
 	      );
+  }  
+  // Si POMDP + gene_noise => générer et sauver noise
+  if( _filename_pomdp and _filegene_noise ) {
+    std::cout << "** Gene NOISE into " << *_filegene_noise << std::endl;
+    gene_noise( *_filegene_noise,
+		_noise_length, _noise_level,
+		_pomdp->_obs.size() + _pomdp->_actions.size()
+		);
   }
   // Si load_traj => charger une trajectoire
   if( _fileload_traj ) {
@@ -327,6 +390,12 @@ int main( int argc, char *argv[] )
     for( auto& item: _traj_data) {
       std::cout << item.id_s << ":" << item.id_o << "+" << item.id_a << "->" << item.id_next_s << ":" << item.id_next_o << " = " << item.r << std::endl;
     }
+  }
+  // Si load_noise => charger un noise
+  if( _fileload_noise ) {
+    std::cout << "** Load WNoise::Data from " << *_fileload_noise << std::endl;
+    read_noise( *_fileload_noise );
+    std::cout << "Read " << _wnoise.size() << " noise data" << std::endl;
   }
   // Si load_esn => charger un ESN
   if( _fileload_esn ) {
