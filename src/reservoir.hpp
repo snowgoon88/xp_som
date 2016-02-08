@@ -105,6 +105,41 @@ public:
   {
     unserialize( obj );
   }
+  // ********************************************************* Reservoir::copy
+  Reservoir( const Reservoir& other ) : 
+    _input_scaling(other._input_scaling), 
+    _spectral_radius(other._spectral_radius),
+    _leaking_rate(other._leaking_rate),
+    _w_in(nullptr), _w_res(nullptr), _x_res(nullptr), _rnd(nullptr)
+  {
+    // copy
+    _w_in = gsl_matrix_alloc( other._w_in->size1, other._w_in->size2 );
+    gsl_matrix_memcpy( _w_in, other._w_in );
+    _w_res = gsl_matrix_alloc( other._w_res->size1, other._w_res->size2 );
+    gsl_matrix_memcpy( _w_res, other._w_res );
+    _x_res = gsl_vector_calloc( other._x_res->size );
+    gsl_vector_memcpy( _x_res, other._x_res );
+
+  }
+  Reservoir& operator=( const Reservoir& other )
+  {
+    if (this != &other) { // protect against invalid self-assignment
+      if( _w_in ) gsl_matrix_free( _w_in );
+      if( _w_res ) gsl_matrix_free( _w_res );
+      if( _x_res ) gsl_vector_free( _x_res );
+      // copy
+      _input_scaling = other._input_scaling;
+      _spectral_radius = other._spectral_radius;
+      _leaking_rate = other._leaking_rate;
+      _w_in = gsl_matrix_alloc( other._w_in->size1, other._w_in->size2 );
+      gsl_matrix_memcpy( _w_in, other._w_in );
+      _w_res = gsl_matrix_alloc( other._w_res->size1, other._w_res->size2 );
+      gsl_matrix_memcpy( _w_res, other._w_res );
+      _x_res = gsl_vector_calloc( other._x_res->size );
+      gsl_vector_memcpy( _x_res, other._x_res );
+    }
+    return *this;
+  }
   /** Destruction */
   ~Reservoir()
   {

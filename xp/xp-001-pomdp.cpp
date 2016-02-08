@@ -63,6 +63,13 @@ gsl_rng*               _rnd = gsl_rng_alloc( gsl_rng_taus );
 void free_mem()
 {
   if( _pomdp ) delete _pomdp;
+  if( _filename_pomdp ) delete _filename_pomdp;
+  if( _fileload_traj ) delete _fileload_traj;
+  if( _filegene_traj ) delete _filegene_traj;
+  if( _fileload_esn ) delete _fileload_esn;
+  if( _filegene_esn ) delete _filegene_esn;
+  if( _fileload_noise ) delete _fileload_noise;
+  if( _filegene_noise ) delete _filegene_noise;
 }
 void free_esn()
 {
@@ -98,15 +105,24 @@ void setup_options(int argc, char **argv)
 
   // Parse
   po::variables_map vm;
-  po::store(po::command_line_parser(argc, argv).
-	    options(desc).positional(pod).run(), vm);
-  po::notify(vm);
+  try {
+    po::store(po::command_line_parser(argc, argv).
+	      options(desc).positional(pod).run(), vm);
 
-  if (vm.count("help")) {
-    std::cout << "Usage: " << argv[0] << " [options]" << std::endl;
+    if (vm.count("help")) {
+      std::cout << "Usage: " << argv[0] << " [options]" << std::endl;
       std::cout << desc << std::endl;
-    exit(1);
+      exit(1);
+    }
+    
+    po::notify(vm);
   }
+  catch(po::error& e)  { 
+    std::cerr << "ERROR: " << e.what() << std::endl << std::endl; 
+    std::cerr << desc << std::endl; 
+    exit(2);
+  } 
+  
 
   // file names
   if (vm.count("load_pomdp")) {
@@ -269,7 +285,7 @@ void gene_noise( const std::string& filename,
   ofile.close();
 }
 // ********************************************************************* learn
-Reservoir::Tinput input_from( Trajectory::POMDP::Item& item )
+Reservoir::Tinput input_from( const Trajectory::POMDP::Item& item )
 {
   // O+A neurones
   Reservoir::Tinput input(_res->input_size() );
@@ -280,7 +296,7 @@ Reservoir::Tinput input_from( Trajectory::POMDP::Item& item )
 
   return input;
 }
-RidgeRegression::Toutput target_from( Trajectory::POMDP::Item& item )
+RidgeRegression::Toutput target_from( const Trajectory::POMDP::Item& item )
 {
   // Try to learn S
   RidgeRegression::Toutput target(_lay->output_size() );
@@ -290,9 +306,12 @@ RidgeRegression::Toutput target_from( Trajectory::POMDP::Item& item )
 
   return target;
 }
-void init( const unsigned int length )
+void init()
 {
-  // vérifie qu'il y a assez de points dans WNoise.
+  for( auto& item: _wnoise ) {
+    // Passe dans réservoir
+    auto out_res = _res->forward( item );
+  }
 }
 void learn()
 {
@@ -319,19 +338,22 @@ void learn()
   std::cout << _lay->str_dump() << std::endl;
 }
 // ******************************************************************* predict
-void predict()
+std::vector<RidgeRegression::Toutput>
+predict( Reservoir& res,
+	 Layer& lay,
+	 const Trajectory::POMDP::Data& traj )
 {
   // un vecteur de output
   std::vector<RidgeRegression::Toutput> result;
   
   // suppose que _mg_data a été initialisé
-  for( auto& item: _traj_data) {
+  for( auto& item: traj) {
     // Passe dans réservoir
-    auto out_res = _res->forward( input_from(item) );
+    auto out_res = res.forward( input_from(item) );
     // Ajoute 1.0 en bout (le neurone biais)
     out_res.push_back( 1.0 );
     // Passe dans layer
-    auto out_lay = _lay->forward( out_res ); 
+    auto out_lay = lay.forward( out_res ); 
 
     result.push_back( out_lay );
   }
@@ -348,6 +370,8 @@ void predict()
   //   ofile << utils::str_vec(item) << std::endl;
   // }
   // ofile.close();
+
+  return result;  
 }
 // ********************************************************************** main
 int main( int argc, char *argv[] )
@@ -406,8 +430,30 @@ int main( int argc, char *argv[] )
   // Si POMDP+ESN+TRAJ => learn
   if( _filename_pomdp and _fileload_esn and _fileload_traj ) {
     std::cout << "** LEARNING **" << std::endl;
+    // Si _noise, on commence par là
+    if( _fileload_noise ) {
+      init();
+    }
+    // Sauve l'état présent du réseau
+    Reservoir res_after_init( *_res );
+    // Apprendre => modifie _lay par régression
     learn();
-    predict();
+    // Première prédiction à partir de l'état du réseau appris
+    std::vector<RidgeRegression::Toutput> result_after_learn = predict( *_res, *_lay, _traj_data );
+    // Deuxième prédiction à partir de l'état du réseau avant apprentissage
+    // mais avec _lay modifié
+    std::vector<RidgeRegression::Toutput> result_after_init = predict( res_after_init, *_lay, _traj_data );
+    
+    // Les résultats
+    // Affiche targert: \n pred\n init\n
+    unsigned int idx_out = 0;
+    for( auto& item: _traj_data) {
+      std::cout << "target:" << utils::str_vec(target_from(item))  << std::endl;
+      std::cout << "pred:  " << utils::str_vec(result_after_learn[idx_out]) << std::endl;
+      std::cout << "init:  " << utils::str_vec(result_after_init[idx_out]) << std::endl;
+      idx_out ++;
+    }
+
   }
   
   free_mem();

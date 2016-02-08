@@ -175,6 +175,11 @@ public:
     }
     return *this;
   }
+  // ********************************************************** POMDP::destroy
+  ~POMDP() 
+  {
+    if( _rnd ) gsl_rng_free( _rnd );
+  }
   // ************************************************************** POMDP::str
   /** dump state */
   std::string str_state () const
