@@ -44,6 +44,7 @@ std::string*           _fileload_esn = nullptr;
 std::string*           _filegene_esn = nullptr;
 std::string*           _fileload_noise = nullptr;
 std::string*           _filegene_noise = nullptr;
+std::string*           _filegene_output = nullptr;
 
 WNoise::Data           _wnoise;
 unsigned int           _noise_length;
@@ -70,6 +71,7 @@ void free_mem()
   if( _filegene_esn ) delete _filegene_esn;
   if( _fileload_noise ) delete _fileload_noise;
   if( _filegene_noise ) delete _filegene_noise;
+  if( _filegene_output ) delete _filegene_output;
 }
 void free_esn()
 {
@@ -93,6 +95,7 @@ void setup_options(int argc, char **argv)
     ("gene_noise", po::value<std::string>(), "gene WNoise into file")
     ("length_noise", po::value<unsigned int>(&_noise_length)->default_value(100), "Length of noise to generate")
     ("level_noise",  po::value<double>(&_noise_level)->default_value(0.1), "Level of noise to generate")
+    ("output,o",  po::value<std::string>(), "Output file for results")
     ;
 
   // Options en ligne de commande
@@ -145,6 +148,9 @@ void setup_options(int argc, char **argv)
   }
   if (vm.count("load_esn")) {
     _fileload_esn = new std::string(vm["load_esn"].as< std::string>());
+  }
+  if (vm.count("output")) {
+    _filegene_output = new std::string(vm["output"].as< std::string>());
   }
 }
 // ************************************************************** load_pomdp
@@ -452,6 +458,32 @@ int main( int argc, char *argv[] )
       std::cout << "pred:  " << utils::str_vec(result_after_learn[idx_out]) << std::endl;
       std::cout << "init:  " << utils::str_vec(result_after_init[idx_out]) << std::endl;
       idx_out ++;
+    }
+
+    // Dans un fichier
+    if( _filegene_output ) {
+      // Sauve les données
+      std::cout << "** Write Output dans " << *_filegene_output << std::endl;
+      std::ofstream ofile( *_filegene_output );
+      idx_out = 0;
+      for( auto& item: _traj_data) {
+	// target
+	for( auto& var: target_from(item)) {
+	  ofile << var << "\t";
+	}
+	// predict
+	for( auto& var: result_after_learn[idx_out]) {
+	  ofile << var << "\t";
+	}
+	// init
+	for( auto& var: result_after_init[idx_out]) {
+	  ofile << var << "\t";
+	}
+	ofile << std::endl;
+	
+	idx_out ++;
+      }
+      ofile.close();
     }
 
   }
