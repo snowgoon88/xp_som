@@ -14,6 +14,7 @@
 #include <iostream>                // std::cout
 #include <fstream>                 // std::ofstream
 #include <string>                  // std::string
+#include <sstream>                 // std::stringdtream
 #include <rapidjson/document.h>    // rapidjson's DOM-style API
 #include <json_wrapper.hpp>        // JSON::IStreamWrapper
 
@@ -58,6 +59,9 @@ Reservoir*             _res = nullptr;
 Layer*                 _lay = nullptr;
 RidgeRegression::Data  _data;
 Reservoir::Toutput_size _res_size;
+double                  _res_scaling;
+double                  _res_radius;
+double                  _res_leak;
 
 gsl_rng*               _rnd = gsl_rng_alloc( gsl_rng_taus );
 // ****************************************************************** free_mem
@@ -84,17 +88,20 @@ void setup_options(int argc, char **argv)
   po::options_description desc("Options");
   desc.add_options()
     ("help,h", "produce help message")
-    ("length,l", po::value<unsigned int>(&_length)->default_value(10), "generate Traj of length ")
-    ("res_size,r", po::value<unsigned int>(&_res_size)->default_value(10), "size of reservoir") 
     ("load_pomdp,p", po::value<std::string>(), "load POMDP from JSON file")
-    ("load_traj,t", po::value<std::string>(), "load Trajectory from file")
-    ("gene_traj,f", po::value<std::string>(), "gene Trajectory into file")
-    ("load_esn,e",  po::value<std::string>(), "load ESN from file")
-    ("gene_esn,g", po::value<std::string>(), "gene ESN into file")
-    ("load_noise,n", po::value<std::string>(), "load WNoise from file")
+    ("gene_traj", po::value<std::string>(), "gene Trajectory into file")
+    ("traj_length", po::value<unsigned int>(&_length)->default_value(10), "generate Traj of length ")
+    ("gene_esn", po::value<std::string>(), "gene ESN into file")
+    ("res_size", po::value<unsigned int>(&_res_size)->default_value(10), "reservoir size")
+    ("res_scaling", po::value<double>(&_res_scaling)->default_value(1.0), "reservoir input scaling")
+    ("res_radius", po::value<double>(&_res_radius)->default_value(0.99), "reservoir spectral radius")
+    ("res_leak", po::value<double>(&_res_leak)->default_value(0.1), "reservoir leaking rate")
     ("gene_noise", po::value<std::string>(), "gene WNoise into file")
     ("length_noise", po::value<unsigned int>(&_noise_length)->default_value(100), "Length of noise to generate")
     ("level_noise",  po::value<double>(&_noise_level)->default_value(0.1), "Level of noise to generate")
+    ("load_traj,t", po::value<std::string>(), "load Trajectory from file")
+    ("load_esn,e",  po::value<std::string>(), "load ESN from file")
+    ("load_noise,n", po::value<std::string>(), "load WNoise from file")
     ("output,o",  po::value<std::string>(), "Output file for results")
     ;
 
@@ -229,8 +236,14 @@ void gene_esn( const std::string& filename,
   _lay = new Layer( reservoir_size+1, output_size );
   
   // Serialisation dans filename.data
-  std::string fn_esn = filename+".esn";
-  std::cout << "Write ESN dans " << fn_esn << std::endl;
+  std::stringstream stream;
+  stream << filename;
+  stream << "_" << _res_size;
+  stream << "_" << _res_scaling;
+  stream << "_" << _res_radius;
+  stream << "_" << _res_leak;
+  stream << ".esn";
+  std::cout << "Write ESN dans " << stream.str() << std::endl;
 
   rapidjson::Document doc;
   doc.SetObject();
@@ -238,7 +251,7 @@ void gene_esn( const std::string& filename,
   doc.AddMember( "lay", _lay->serialize(doc), doc.GetAllocator());
 
   // Write to file
-  std::ofstream ofile( fn_esn );
+  std::ofstream ofile( stream.str() );
   ofile << str_obj(doc) << std::endl;
   ofile.close();
 }
@@ -400,7 +413,8 @@ int main( int argc, char *argv[] )
     gene_esn( *_filegene_esn,
 	      _pomdp->_obs.size() + _pomdp->_actions.size(), // In = O+A
 	      _pomdp->_states.size(),                    // out = S
-	      _res_size                                  // _res size
+	      _res_size,                                  // _res size
+	      _res_scaling, _res_radius, _res_leak
 	      );
   }  
   // Si POMDP + gene_noise => générer et sauver noise
