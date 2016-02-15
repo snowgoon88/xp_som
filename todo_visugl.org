@@ -56,10 +56,11 @@ Voir début danns xp/xp-002-cheese-maze
 ** DONE Memory Leak
 ** DONE Sauvegarder les résultats
 ** DONE pour apprendre il faut traj+pomdp (nb obs, etc)
-** TODO [0/3] apprendre (0+A) -> .
+** TODO [0/4] apprendre (0+A) -> .
 *** TODO pour apprendre, il faut transition ->O
 *** TODO pour apprendre, il faut transition ->S (pour voir)
 *** TODO pour apprendre, il faut transition ->V(S) (pour voir)
+*** TODO pour apprendre, il faut tansition ->V(O) (pour voir)
 ** TODO [0/3] apprendre A x (O -> .) 
 *** TODO pour apprendre, il faut transition ->O
 *** TODO pour apprendre, il faut transition ->S (pour voir)
