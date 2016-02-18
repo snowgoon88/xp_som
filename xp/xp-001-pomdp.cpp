@@ -186,8 +186,17 @@ void gene_traj()
     ofile = new std::ofstream( *_filegene_traj + ".data" );
   }
   
+  // Random with seed
+  unsigned long seed = std::time( NULL );
+  gsl_rng_set( _rnd, seed );
+
+  // inform traj
+  if( ofile ) {
+    *ofile << "## \"pomdp_name\": \"" << *_filename_pomdp << "\"," << std::endl;
+    *ofile << "## \"seed\": " << seed << ", \"length\": " << _length << std::endl;
+      }
+
   // Generate
-  gsl_rng_set( _rnd, std::time( NULL ) );
   const std::vector<Model::Node>& list_action = _pomdp->actions();
   // Current state, obs
   unsigned int idx_state = _pomdp->cur_state()._id;

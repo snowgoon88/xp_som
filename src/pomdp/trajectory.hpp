@@ -7,6 +7,10 @@
  * Trajectoire::POMDP is a sequence of Trajectory::POMDP::Item(s,o,a,s',o',r).
  */
 
+#include <vector>                  // std::vector
+#include <string>                  // std::string
+#include <sstream>                 // std::stringdtream
+
 // **************************************************************** Trajectory
 namespace Trajectory
 {
@@ -32,14 +36,21 @@ public:
   {
     data.clear();
     Item item;
-    while( !is.eof() ) {
-      is >> item.id_s >> item.id_o >> item.id_a >> item.id_next_s >> item.id_next_o >> item.r;
-      // en testant !eof, on évite de lire le dernier endl comme un float...
-      if ( !is.eof()) {
-	data.push_back( item );
+
+    // Lit en omettant les lignes commençant par '#'
+    std::string line;
+    while (!is.eof()) {
+      std::getline( is, line );
+      if( line.front() != '#' ) {
+	std::stringstream iss( line );
+	iss >> item.id_s >> item.id_o >> item.id_a >> item.id_next_s >> item.id_next_o >> item.r;
+	// en testant !eof, on évite de lire le dernier endl comme un float...
+	if( !is.eof()) {
+	  data.push_back( item );
+	}
       }
     }
-  }
+  };
 };
 // ********************************************************************* POMDP
 };

@@ -45,9 +45,7 @@ http://stackoverflow.com/questions/7758580/writing-your-own-stl-container/775962
 ** TODO Cherche le meilleur Ridge Coef
 * TODO Data en séquence
 * [1/1] XP
-** DONE BUG enregistre 2000 val dans mg_data mais relit 2001
-** Learn ??
-* TODO [6/8] XP POMDP 
+* TODO [6/9] XP POMDP 
 J'ai l'impression qu'essayer d'apprendre les transitions ne marche que dans des cas quasi déterministes, non? Dans ce cas, faudrait plutôt essayer de voir si on peut pas apprendre V(s) ou V(o) ??
 ** DONE ajout d'un jsonreader pour transition
 ** DONE Générer et sauvegarder une trajectoire de transitions
@@ -56,6 +54,12 @@ Voir début danns xp/xp-002-cheese-maze
 ** DONE Memory Leak
 ** DONE Sauvegarder les résultats
 ** DONE pour apprendre il faut traj+pomdp (nb obs, etc)
+** TODO Comprendre le format de fichier de sortie -> R
+*** GEN pomdp cheese
+wbuild/xp/xp-002-cheese -p 0.9 -l 1 -f cheese_maze_0.9_1
+*** GEN trajectoire
+wbuild/xp/xp-001-pomdp -p data_xp/cheese_maze_0.9_1.json --gene_traj data_xp/traj_1000 --traj_length 1000
+
 ** TODO [0/4] apprendre (0+A) -> .
 *** TODO pour apprendre, il faut transition ->O
 *** TODO pour apprendre, il faut transition ->S (pour voir)
