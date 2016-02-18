@@ -309,6 +309,10 @@ void gene_noise( const std::string& filename,
   std::string fn_data = filename+".data";
   std::cout << "Write WNoise dans " << fn_data << std::endl;
   std::ofstream ofile( fn_data );
+
+  // inform traj
+  ofile << "## \"pomdp_name\": \"" << *_filename_pomdp << "\"" << std::endl;
+  
   WNoise::write( ofile, _wnoise );
   ofile.close();
 }

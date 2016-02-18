@@ -78,20 +78,23 @@ public:
     return obj;
   }
   // ********************************************************** WNoise::parser
-  /** read/write for Mackeyglass */
+  /** read/write for Noise */
   static void read(std::istream& is, Data& data)
   {
     double x;
     data.clear();
     std::string line;
     while (std::getline(is, line)) {
-      std::vector<double> vec;
-      std::istringstream iss(line);
-      while( !iss.eof()) {
-	iss >> x;
-	vec.push_back( x );
+      // On évite les lignes qui commencent par '#'
+      if( line.front() != '#' ) {
+	std::vector<double> vec;
+	std::istringstream iss(line);
+	while( !iss.eof()) {
+	  iss >> x;
+	  vec.push_back( x );
+	}
+	data.push_back( vec );
       }
-      data.push_back( vec );
     }
   }
   static void write(std::ostream& os, const Data& data)
