@@ -244,14 +244,14 @@ void gene_esn( const std::string& filename,
 		    input_scaling, spectral_radius, leaking_rate );
   _lay = new Layer( reservoir_size+1, output_size );
   
-  // Serialisation dans filename.data
+  // Serialisation dans filename.json
   std::stringstream stream;
   stream << filename;
-  stream << "_" << _res_size;
-  stream << "_" << _res_scaling;
-  stream << "_" << _res_radius;
-  stream << "_" << _res_leak;
-  stream << ".esn";
+  // stream << "_" << _res_size;
+  // stream << "_" << _res_scaling;
+  // stream << "_" << _res_radius;
+  // stream << "_" << _res_leak;
+  stream << ".json";
   std::cout << "Write ESN dans " << stream.str() << std::endl;
 
   rapidjson::Document doc;
