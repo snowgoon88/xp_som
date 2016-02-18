@@ -8,7 +8,7 @@ def build(bld):
     
     # detect files that should be build
     for file in os.listdir( bld.path.abspath() ):
-        if file.endswith(".cpp"):
+        if file.endswith(".cpp") and not file.startswith( ('.','#')):
             # print(" _should build "+file[:-4])
             bld.program(
                 source=[file],
