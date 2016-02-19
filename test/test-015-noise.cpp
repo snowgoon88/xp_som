@@ -60,8 +60,23 @@ int main( int argc, char *argv[] )
   ifile.close();
 
   // Compare les deux
+  std::cout << "__ COMPARISON" << std::endl;
+  if( wnoise.data().size() != data_read.size() ) {
+    std::cerr <<  "wnoise.data().size()=" << wnoise.data().size() << "!= data_read.size()=" << data_read.size() << std::endl;
+    abort();
+  }
   std::cout << std::endl << "COMPARAISON data =?= read " << std::endl;
   for( unsigned int i = 0; i < wnoise.data().size(); ++i) {
+    if( wnoise.data()[i].size() != data_read[i].size() ) {
+      std::cerr <<  "i="<< i << " => wnoise.data()[i].size()=" << wnoise.data()[i].size() << "!= data_read[i].size()=" << data_read[i].size() << std::endl;
+      for( unsigned int j = 0; j < wnoise.data()[i].size(); ++j) {
+	std::cout << "wnoise.data()[i][j]= " << wnoise.data()[i][j] << std::endl;
+      }
+      for( unsigned int j = 0; j < data_read[i].size(); ++j) {
+	std::cout << "data_read[i][j]= " << data_read[i][j] << std::endl;
+      }
+    abort();
+  }
     for( unsigned int j = 0; j < wnoise.data()[i].size(); ++j) {
       std::cout << wnoise.data()[i][j] << "  =?= " << data_read[i][j] << std::endl;
     }

@@ -91,7 +91,9 @@ public:
 	std::istringstream iss(line);
 	while( !iss.eof()) {
 	  iss >> x;
-	  vec.push_back( x );
+	  if( !iss.eof() ) {
+	    vec.push_back( x );
+	  }
 	}
 	data.push_back( vec );
       }
