@@ -18,6 +18,8 @@
  * @param seed : for random generator
  */
 
+#include <iostream>                   // std::cout, std::istream
+#include <sstream>                   // std::istringstream
 #include <ctime>                      // std::time
 #include <vector>                     // std::vector
 #include <gsl/gsl_rng.h>              // gsl random generator
@@ -137,10 +139,13 @@ public:
   static void read(std::istream& is, Data& data)
   {
     double x;
-    while( !is.eof() ) {
-      is >> x;
-      // en testant !eof, on évite de lire le dernier endl comme un float...
-      if ( !is.eof()) {
+    data.clear();
+    std::string line;
+    while (std::getline(is, line)) {
+      // On évite les lignes qui commencent par '#'
+      if( line.front() != '#' ) {
+	std::istringstream iss(line);
+	iss >> x; // Une seule donnée à lire
 	data.push_back( x );
       }
     }
