@@ -462,19 +462,23 @@ int main( int argc, char *argv[] )
 
   // Si POMDP+ESN+TRAJ => learn
   if( _filename_pomdp and _fileload_esn and _fileload_traj ) {
-    std::cout << "** LEARNING **" << std::endl;
+    std::cout << "__ LEARNING **" << std::endl;
     // Si _noise, on commence par là
+    std::cout << "___ init with noise" << std::endl;
     if( _fileload_noise ) {
       init();
     }
     // Sauve l'état présent du réseau
     Reservoir res_after_init( *_res );
     // Apprendre => modifie _lay par régression
+    std::cout << "___ learn()" << std::endl;
     learn();
     // Première prédiction à partir de l'état du réseau appris
+    std::cout << "___ predict follow" << std::endl;
     std::vector<RidgeRegression::Toutput> result_after_learn = predict( *_res, *_lay, _traj_data );
     // Deuxième prédiction à partir de l'état du réseau avant apprentissage
     // mais avec _lay modifié
+    std::cout << "___ predict base" << std::endl;
     std::vector<RidgeRegression::Toutput> result_after_init = predict( res_after_init, *_lay, _traj_data );
     
     // Les résultats
@@ -492,6 +496,27 @@ int main( int argc, char *argv[] )
       // Sauve les données
       std::cout << "** Write Output dans " << *_filegene_output << std::endl;
       std::ofstream ofile( *_filegene_output );
+      // Header comments
+      ofile << "## \"pomdp_name\": \"" << *_filename_pomdp << "\"," << std::endl;
+      ofile << "## \"traj_name\" : \"" << *_fileload_traj << "\"," << std::endl;
+      if( _fileload_noise ) {
+	ofile << "## \"noise_name\" : \"" << *_fileload_noise << "\"," << std::endl;
+      }
+      // Header ColNames
+      // target
+      for( unsigned int i = 0; i < _lay->output_size(); ++i) {
+	ofile << "ta_" << i << "\t";
+      }
+      // after learn
+      for( unsigned int i = 0; i < _lay->output_size(); ++i) {
+	ofile << "le_" << i << "\t";
+      }
+      // after init
+      for( unsigned int i = 0; i < _lay->output_size(); ++i) {
+	ofile << "in_" << i << "\t";
+      }
+      ofile << std::endl;
+      // Data
       idx_out = 0;
       for( auto& item: _traj_data) {
 	// target

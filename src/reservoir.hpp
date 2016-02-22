@@ -154,7 +154,10 @@ public:
     // Verifie bonne taille
     if( (in.size()+1) != _w_in->size2 ) {
       std::cerr << "Reservoir.forward() : Wrong input size !" << std::endl;
-      std::cerr << "                      in.size=" << in.size() << " != " << _w_in->size2 << std::endl;
+      std::cerr << "                      in.size=" << in.size()+1 << " != " << _w_in->size2 << std::endl;
+      for( unsigned int i = 0; i < in.size(); ++i) {
+	std::cout << i << " : " << in[i] << std::endl;
+      }
     }
     // Into GSL : colomn matrix of in.size()+& row (for bias)
     Tstate v_input = gsl_vector_alloc(in.size()+1 );

@@ -54,7 +54,7 @@ Voir début danns xp/xp-002-cheese-maze
 ** DONE Memory Leak
 ** DONE Sauvegarder les résultats
 ** DONE pour apprendre il faut traj+pomdp (nb obs, etc)
-** TODO Comprendre le format de fichier de sortie -> R
+** TODO [2/4] Comprendre le format de fichier de sortie -> R
 *** GEN pomdp cheese
 wbuild/xp/xp-002-cheese -p 0.9 -l 1 -f cheese_maze_0.9_1
 *** GEN trajectoire
@@ -63,7 +63,11 @@ wbuild/xp/xp-001-pomdp -p data_xp/cheese_maze_0.9_1.json --gene_traj data_xp/tra
 wbuild/xp/xp-001-pomdp -p data_xp/cheese_maze_0.9_1.json --gene_esn esn_50_1_0.99_0.1 --res_size 50
 *** GEN noise
 wbuild/xp/xp-001-pomdp -p data_xp/cheese_maze_0.9_1.json --gene_noise noise_1000_0.1 --length_noise 1000
-
+*** TODO LEARN
+*** TODO LEARN Paremeters
+*** DONE LEARN results with comment and header
+*** DONE [Q] : biais dans réservoir ? => OUI
+d'après [Lukosevicius12]
 ** TODO [0/4] apprendre (0+A) -> .
 *** TODO pour apprendre, il faut transition ->O
 *** TODO pour apprendre, il faut transition ->S (pour voir)
