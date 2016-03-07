@@ -46,6 +46,7 @@ std::string*           _filegene_esn = nullptr;
 std::string*           _fileload_noise = nullptr;
 std::string*           _filegene_noise = nullptr;
 std::string*           _filegene_output = nullptr;
+std::string*           _filegene_learn = nullptr;
 
 WNoise::Data           _wnoise;
 unsigned int           _noise_length;
@@ -76,6 +77,7 @@ void free_mem()
   if( _fileload_noise ) delete _fileload_noise;
   if( _filegene_noise ) delete _filegene_noise;
   if( _filegene_output ) delete _filegene_output;
+  if( _filegene_learn ) delete _filegene_learn;
 }
 void free_esn()
 {
@@ -103,6 +105,7 @@ void setup_options(int argc, char **argv)
     ("load_esn,e",  po::value<std::string>(), "load ESN from file")
     ("load_noise,n", po::value<std::string>(), "load WNoise from file")
     ("output,o",  po::value<std::string>(), "Output file for results")
+    ("gene_samples",  po::value<std::string>(), "Output file for RidgeReg samples")
     ;
 
   // Options en ligne de commande
@@ -158,6 +161,9 @@ void setup_options(int argc, char **argv)
   }
   if (vm.count("output")) {
     _filegene_output = new std::string(vm["output"].as< std::string>());
+  }
+  if (vm.count("gene_samples")) {
+    _filegene_learn = new std::string(vm["gene_samples"].as< std::string>());
   }
 }
 // ************************************************************** load_pomdp
@@ -345,7 +351,7 @@ void init()
     auto out_res = _res->forward( item );
   }
 }
-void learn()
+void learn( double regul )
 {
   // Preparation des données d'apprentissage et de test
   _data.clear();
@@ -365,9 +371,68 @@ void learn()
 		       1.0  /* regule */
 		       );
   // Apprend, avec le meilleur coefficient de régulation
-  reg.learn( _data, _lay->weights() );
+  reg.learn( _data, _lay->weights(), regul );
   std::cout << "***** POIDS après REGRESSION **" << std::endl;
   std::cout << _lay->str_dump() << std::endl;
+
+  // Les données d'apprentissage dans un fichier
+  if( _filegene_learn ) {
+    // Samples d'apprentissage
+    std::string fn_sample = *_filegene_learn + "_samples.data";
+    std::cout << "** Write LearnData in " << fn_sample << std::endl;
+    std::ofstream ofile( fn_sample );
+    // Header comments
+    ofile << "## \"pomdp_name\": \"" << *_filename_pomdp << "\"," << std::endl;
+    ofile << "## \"traj_name\" : \"" << *_fileload_traj << "\"," << std::endl;
+    if( _fileload_noise ) {
+      ofile << "## \"noise_name\" : \"" << *_fileload_noise << "\"," << std::endl;
+    }
+    // Header ColNames
+    // input
+    for( unsigned int i = 0; i < _lay->input_size(); ++i) {
+      ofile << "in_" << i << "\t";
+    }
+    // target
+    for( unsigned int i = 0; i < _lay->output_size(); ++i) {
+      ofile << "ta_" << i << "\t";
+    }
+    ofile << std::endl;
+    // Data
+    for( auto& sample: _data) {
+      //in
+      for( auto& var: sample.first) {
+	ofile << var << "\t";
+      }
+      // target
+      for( auto& var: sample.second) {
+	ofile << var << "\t";
+      }
+      ofile << std::endl;
+    }
+    ofile.close();
+
+    // Weights appris
+    std::string fn_w = *_filegene_learn + "_weights.data";
+    std::cout << "** Write LearnedWeights in " << fn_w << std::endl;
+    std::ofstream ofile_w( fn_w );
+    // Header comments
+    ofile_w << "## \"pomdp_name\": \"" << *_filename_pomdp << "\"," << std::endl;
+    ofile_w << "## \"traj_name\" : \"" << *_fileload_traj << "\"," << std::endl;
+    if( _fileload_noise ) {
+      ofile_w << "## \"noise_name\" : \"" << *_fileload_noise << "\"," << std::endl;
+    }
+    auto w = _lay->weights();
+    // Header ColNames
+    for( unsigned int i = 0; i < w->size1; ++i) {
+      ofile_w << "w_" << i << "\t";
+    }
+    ofile_w << std::endl;
+    // Data
+    _lay->write( ofile_w );
+    ofile_w << std::endl;
+
+    ofile_w.close();
+  }
 }
 // ******************************************************************* predict
 std::vector<RidgeRegression::Toutput>
@@ -472,7 +537,7 @@ int main( int argc, char *argv[] )
     Reservoir res_after_init( *_res );
     // Apprendre => modifie _lay par régression
     std::cout << "___ learn()" << std::endl;
-    learn();
+    learn( 0.1 );
     // Première prédiction à partir de l'état du réseau appris
     std::cout << "___ predict follow" << std::endl;
     std::vector<RidgeRegression::Toutput> result_after_learn = predict( *_res, *_lay, _traj_data );
