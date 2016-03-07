@@ -14,6 +14,7 @@
 #include "rapidjson/stringbuffer.h"   // rapidjson
 
 #include <string>                     // std::string
+#include <vector>                     // std::vector
 
 namespace utils
 {

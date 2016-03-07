@@ -79,3 +79,8 @@ d'après [Lukosevicius12]
 *** TODO pour apprendre, il faut transition ->V(S) (pour voir)
 * [0/1] Utils
 ** TODO Un seul namespace dans utils, la différence se fera par l'objet que l'on veut striser
+* [1/2] Check Ridge Regression
+https://onlinecourses.science.psu.edu/stat857/node/155
+http://www.astrostatistics.psu.edu/su07/R/html/MASS/html/lm.ridge.html
+** DONE RidgeReg with GIVEN regul param
+** TODO Compare with R
