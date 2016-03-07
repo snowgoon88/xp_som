@@ -181,8 +181,19 @@ ema   * of ONE layer.
       }
     }
   }
+  // ******************************************************* Layer::read/write
+  void write(std::ostream& os )
+  {
+    for( unsigned int i = 0; i < _w->size1; ++i) {
+      for( unsigned int j = 0; j < _w->size2; ++j) {
+	os << gsl_matrix_get(_w, i,j) << "\t";
+      }
+      os << std::endl;
+    }
+  }
   // ************************************************************** attributes
   TweightsPtr weights() { return _w; };
+  Tinput_size input_size() const { return (Tinput_size) _w->size2; };
   Toutput_size output_size() const { return (Toutput_size) _w->size1; };
 private:
   /** Weights */
