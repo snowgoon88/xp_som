@@ -28,3 +28,31 @@ p_labs <- labs(colour=NULL, title="ESN prediction of Mackey-Glass", x="index", y
 p_leg <- theme(legend.justification=c(1,1), legend.position=c(1,1))
 # AU FINAL
 p_root + p_res + p_tar + p_col + p_labs + p_leg
+
+###############################################################
+## Essayer de comparer RidgeRegression
+###############################################################
+sample <- read.table( "rr_samples.data", na.strings="None", header=TRUE)
+
+# Crée formule
+## Create a formula for a model with a large number of variables:
+xnam <- paste("in_", 0:50, sep="")
+ynam <- paste("ta_", 0:10, sep="")
+fmla <- as.formula(paste( paste( ynam, collapse=" + "), " ~ ", paste(xnam, collapse=" + "), " - 1", sep=""))
+
+## Ridge Regression
+lm.ridge( fmla, data=leasample, lambda=0.1)
+## Prépare autant d'interpolation que d'élément de ynam
+rr.formulae <- lapply( ynam, function(x) as.formula(paste( x, " ~ ", paste(xnam, collapse=" + "), " - 1", sep="")))
+## Appliquer ensuite lm.ridge
+rr.results <- lapply( rr.formulae, function(x) lm.ridge( x, data=leasample, lambda=0.1))
+
+## Essai de retrouver Y avec WX
+## Façon C++, target 1
+sum(le_w[1,] * leasample[1,1:51])
+## Facon R, target 1
+sum( res$coef * res$scales * leasample[1,1:51])
+
+
+
+

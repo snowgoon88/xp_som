@@ -5,6 +5,9 @@
 
 /** 
  * Une couche (de sortie pour le Reservoir).
+ * out = W.input
+ * W.size1 = output_size
+ * W.size2 = input_size
  */
 
 #include <iostream>                 // std::cout

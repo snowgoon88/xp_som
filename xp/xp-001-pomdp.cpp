@@ -383,6 +383,7 @@ void learn( double regul )
     std::ofstream ofile( fn_sample );
     // Header comments
     ofile << "## \"pomdp_name\": \"" << *_filename_pomdp << "\"," << std::endl;
+    ofile << "## \"esn_name\": \"" << *_fileload_esn << "\"," << std::endl;
     ofile << "## \"traj_name\" : \"" << *_fileload_traj << "\"," << std::endl;
     if( _fileload_noise ) {
       ofile << "## \"noise_name\" : \"" << *_fileload_noise << "\"," << std::endl;
@@ -417,14 +418,16 @@ void learn( double regul )
     std::ofstream ofile_w( fn_w );
     // Header comments
     ofile_w << "## \"pomdp_name\": \"" << *_filename_pomdp << "\"," << std::endl;
+    ofile_w << "## \"esn_name\": \"" << *_fileload_esn << "\"," << std::endl;
     ofile_w << "## \"traj_name\" : \"" << *_fileload_traj << "\"," << std::endl;
     if( _fileload_noise ) {
       ofile_w << "## \"noise_name\" : \"" << *_fileload_noise << "\"," << std::endl;
     }
+    ofile_w << "## \"regul\": " << regul << "," << std::endl;
     auto w = _lay->weights();
     // Header ColNames
-    for( unsigned int i = 0; i < w->size1; ++i) {
-      ofile_w << "w_" << i << "\t";
+    for( unsigned int i = 0; i < w->size2; ++i) {
+      ofile_w << "inw_" << i << "\t";
     }
     ofile_w << std::endl;
     // Data
