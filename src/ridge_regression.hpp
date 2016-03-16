@@ -7,6 +7,8 @@
  * A partir des Samples (x,y) ont construit X=(1;x) et Y=y.
  * Les Datas permettent de construire XX^T et YX^T.
  * Une RidgeRegression perment ensuite de trouver les poids optimaux
+ *
+ * ATTENTION : on peut ne pas pénaliser le poids associé à l'intercept.
  */
 
 #include <iostream>                     // std::cout
@@ -58,9 +60,12 @@ public:
   typedef std::pair<Tinput,Toutput> Sample;
   typedef std::vector<Sample> Data;
   // **************************************************************** creation
+  /**
+   * @param int idx_intercept : index of weight for intercept. (-1 if none)
+   */
   RidgeRegression( Tinput_size input_size, Toutput_size output_size,
-		   double regul = 1.0 ) :
-    _regul(regul),
+		   int idx_intercept = -1 ) :
+    _idx_intercept(idx_intercept),
     _xxt(nullptr), _yxt(nullptr)
   {
     // XX^T Matrix
@@ -122,6 +127,10 @@ public:
     gsl_matrix* tmp_inv = gsl_matrix_alloc( _xxt->size1, _xxt->size2 );
     gsl_matrix_set_identity( tmp_xxt );
     gsl_matrix_scale( tmp_xxt, regul );
+    // Set regul to 0 for intercept weight
+    if( _idx_intercept >= 0 ) {
+      gsl_matrix_set( tmp_xxt, _idx_intercept, _idx_intercept, 0.0 );
+    }
     gsl_matrix_add( tmp_xxt, _xxt );
     // LU decomposition for inversion
     int signum;
@@ -137,6 +146,11 @@ public:
     for( unsigned row = 0; row < w->size1; ++row ) {
       
       gsl_vector_view vrow = gsl_matrix_row (w, row);
+      // Set error to 0 for intercept weight
+      if( _idx_intercept >= 0 ) {
+	gsl_vector_set( &vrow.vector, _idx_intercept, 0.0 );
+      }
+
       error += gsl_blas_dnrm2( &vrow.vector );
     }
     error *= regul;
@@ -216,6 +230,11 @@ public:
       // (XX^T + _regul.I)
       gsl_matrix_set_identity( tmp_xxt );
       gsl_matrix_scale( tmp_xxt, exp10(regul) );
+      // Set regul to 0 for intercept weight
+      if( _idx_intercept >= 0 ) {
+	gsl_matrix_set( tmp_xxt, _idx_intercept, _idx_intercept, 0.0 );
+      }
+
       gsl_matrix_add( tmp_xxt, _xxt );
       // LU decomposition for inversion
       int signum;
@@ -231,6 +250,10 @@ public:
       for( unsigned row = 0; row < w->size1; ++row ) {
 	
 	gsl_vector_view vrow = gsl_matrix_row (w, row);
+	// Set error to 0 for intercept weight
+	if( _idx_intercept >= 0 ) {
+	  gsl_vector_set( &vrow.vector, _idx_intercept, 0.0 );
+	}
 	error += gsl_blas_dnrm2( &vrow.vector );
       }
       error *= exp10(regul);
@@ -276,8 +299,8 @@ public:
   };
   // *************************************************************** attributs
 private:
-  /** Regulation coefficients */
-  double _regul;
+  /** Possible index of the weight of the 'intercept' */
+  int _idx_intercept;
   /** internal matrices */
   TWeightsPtr _xxt, _yxt;
 };
