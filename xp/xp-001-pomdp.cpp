@@ -368,7 +368,7 @@ void learn( double regul )
   // Ridge Regression pour apprendre la couche de sortie
   RidgeRegression reg( _res->output_size()+1, /* res output size +1 */
 		       _lay->output_size(), /*target size */
-		       1.0  /* regule */
+		       _res->output_size() /* idx intercept */
 		       );
   // Apprend, avec le meilleur coefficient de régulation
   reg.learn( _data, _lay->weights(), regul );
