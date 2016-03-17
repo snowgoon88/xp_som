@@ -64,6 +64,7 @@ double                  _res_scaling;
 double                  _res_radius;
 double                  _res_leak;
 double                  _regul;
+bool                    _verb;
 
 gsl_rng*               _rnd = gsl_rng_alloc( gsl_rng_taus );
 // ****************************************************************** free_mem
@@ -108,6 +109,7 @@ void setup_options(int argc, char **argv)
     ("load_esn,e",  po::value<std::string>(), "load ESN from file")
     ("load_noise,n", po::value<std::string>(), "load WNoise from file")
     ("output,o",  po::value<std::string>(), "Output file for results")
+    ("verb,v", po::value<bool>(&_verb)->default_value(false), "verbose" );
     ;
 
   // Options en ligne de commande
@@ -374,8 +376,8 @@ void learn( double regul )
 		       );
   // Apprend, avec le meilleur coefficient de régulation
   reg.learn( _data, _lay->weights(), regul );
-  std::cout << "***** POIDS après REGRESSION **" << std::endl;
-  std::cout << _lay->str_dump() << std::endl;
+  // std::cout << "***** POIDS après REGRESSION **" << std::endl;
+  // std::cout << _lay->str_dump() << std::endl;
 
   // Les données d'apprentissage dans un fichier
   if( _filegene_learn ) {
@@ -459,11 +461,11 @@ predict( Reservoir& res,
 
     result.push_back( out_lay );
   }
-
-  std::cout << "** PREDICT **" << std::endl;
-  for( auto& item: result) {
-    std::cout << utils::str_vec(item) << std::endl;
-  }
+  if(_verb)
+    std::cout << "** PREDICT **" << std::endl;
+  // for( auto& item: result) {
+  //   std::cout << utils::str_vec(item) << std::endl;
+  // }
   // // Serialisation dans filename.data
   // std::string fn_data = "data/result.data";
   // std::cout << "Write RESULTS dans " << fn_data << std::endl;
@@ -482,7 +484,8 @@ int main( int argc, char *argv[] )
 
   // Charger le POMDP
   if( _filename_pomdp) {
-    std::cout << "** Load POMDP from " << *_filename_pomdp << std::endl;
+    if( _verb )
+      std::cout << "** Load POMDP from " << *_filename_pomdp << std::endl;
     load_pomdp();
   }
   // Si POMDP + nom traj => générer et sauver une trajectoire
@@ -510,61 +513,70 @@ int main( int argc, char *argv[] )
   }
   // Si load_traj => charger une trajectoire
   if( _fileload_traj ) {
-    std::cout << "** Load Trajectory::POMDP::Data from " << *_fileload_traj << std::endl;
+    if( _verb ) 
+      std::cout << "** Load Trajectory::POMDP::Data from " << *_fileload_traj << std::endl;
     read_traj( *_fileload_traj );
 
-    std::cout << "** Trajectory Read" << std::endl;
-    for( auto& item: _traj_data) {
-      std::cout << item.id_s << ":" << item.id_o << "+" << item.id_a << "->" << item.id_next_s << ":" << item.id_next_o << " = " << item.r << std::endl;
-    }
+    // std::cout << "** Trajectory Read" << std::endl;
+    // for( auto& item: _traj_data) {
+    //   std::cout << item.id_s << ":" << item.id_o << "+" << item.id_a << "->" << item.id_next_s << ":" << item.id_next_o << " = " << item.r << std::endl;
+    // }
   }
   // Si load_noise => charger un noise
   if( _fileload_noise ) {
-    std::cout << "** Load WNoise::Data from " << *_fileload_noise << std::endl;
+    if( _verb )
+      std::cout << "** Load WNoise::Data from " << *_fileload_noise << std::endl;
     read_noise( *_fileload_noise );
-    std::cout << "Read " << _wnoise.size() << " noise data" << std::endl;
+    // std::cout << "Read " << _wnoise.size() << " noise data" << std::endl;
   }
   // Si load_esn => charger un ESN
   if( _fileload_esn ) {
-    std::cout << "** Load ESN from " << *_fileload_esn << std::endl;
+    if( _verb )
+      std::cout << "** Load ESN from " << *_fileload_esn << std::endl;
     read_esn( *_fileload_esn );
   }
 
   // Si POMDP+ESN+TRAJ => learn
   if( _filename_pomdp and _fileload_esn and _fileload_traj ) {
-    std::cout << "__ LEARNING **" << std::endl;
+    if( _verb )
+      std::cout << "** LEARNING **" << std::endl;
     // Si _noise, on commence par là
-    std::cout << "___ init with noise" << std::endl;
     if( _fileload_noise ) {
+      if( _verb )
+	std::cout << "___ init with noise" << std::endl;
       init();
     }
     // Sauve l'état présent du réseau
     Reservoir res_after_init( *_res );
     // Apprendre => modifie _lay par régression
-    std::cout << "___ learn()" << std::endl;
+    if( _verb)
+      std::cout << "___ learn()" << std::endl;
     learn( _regul );
     // Première prédiction à partir de l'état du réseau appris
-    std::cout << "___ predict follow" << std::endl;
+    if( _verb ) 
+      std::cout << "___ predict follow" << std::endl;
     std::vector<RidgeRegression::Toutput> result_after_learn = predict( *_res, *_lay, _traj_data );
     // Deuxième prédiction à partir de l'état du réseau avant apprentissage
     // mais avec _lay modifié
-    std::cout << "___ predict base" << std::endl;
+    if( _verb )
+      std::cout << "___ predict base" << std::endl;
     std::vector<RidgeRegression::Toutput> result_after_init = predict( res_after_init, *_lay, _traj_data );
     
     // Les résultats
     // Affiche targert: \n pred\n init\n
     unsigned int idx_out = 0;
-    for( auto& item: _traj_data) {
-      std::cout << "target:" << utils::str_vec(target_from(item))  << std::endl;
-      std::cout << "pred:  " << utils::str_vec(result_after_learn[idx_out]) << std::endl;
-      std::cout << "init:  " << utils::str_vec(result_after_init[idx_out]) << std::endl;
-      idx_out ++;
-    }
+    // for( auto& item: _traj_data) {
+    //   std::cout << "target:" << utils::str_vec(target_from(item))  << std::endl;
+    //   std::cout << "pred:  " << utils::str_vec(result_after_learn[idx_out]) << std::endl;
+    //   std::cout << "init:  " << utils::str_vec(result_after_init[idx_out]) << std::endl;
+    //   idx_out ++;
+    // }
 
     // Dans un fichier
     if( _filegene_output ) {
       // Sauve les données
-      std::cout << "** Write Output dans " << *_filegene_output << std::endl;
+      if(_verb)
+	std::cout << "** Write Output dans " << *_filegene_output << std::endl;
       std::ofstream ofile( *_filegene_output );
       // Header comments
       ofile << "## \"pomdp_name\": \"" << *_filename_pomdp << "\"," << std::endl;

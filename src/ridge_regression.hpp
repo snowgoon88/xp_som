@@ -84,7 +84,7 @@ public:
    *
    * Returns IN w : best weights with given regul.
    */
-  void learn( const Data& data, TWeightsPtr w, double regul )
+  double learn( const Data& data, TWeightsPtr w, double regul )
   {
     // Check dimensions of w
     if( w->size1 != _yxt->size1 ) {
@@ -138,7 +138,7 @@ public:
     gsl_linalg_LU_invert( tmp_xxt, perm, tmp_inv);
     // Produit final : w = YX^T * (XX^T + regul.I)^{-1}
     gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, _yxt, tmp_inv, 0.0, w );
-    std::cout << "w=" << str_mat(w) << std::endl;
+    //std::cout << "w=" << str_mat(w) << std::endl;
 
     // Critère d'erreur
     double error = 0;
@@ -169,7 +169,7 @@ public:
 	// std::cout << sample.second[i]<<"\t"<< gsl_matrix_get(y,i,0)<<"\t"<<error<< std::endl;
       }
     }
-    std::cout << "regul = " << regul << " avec err= " << error << std::endl;
+    // std::cout << "___ err=" << error << " avec regul=" << regul << std::endl;
     
     // Libération mémoire
     gsl_matrix_free( x );
@@ -177,6 +177,8 @@ public:
     gsl_matrix_free( tmp_xxt );
     gsl_matrix_free( tmp_inv );
     gsl_permutation_free( perm );
+
+    return error;
   }
   /** 
    * Optimize _regul parameters by minimizing regularized Risk.
