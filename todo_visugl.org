@@ -45,7 +45,7 @@ http://stackoverflow.com/questions/7758580/writing-your-own-stl-container/775962
 ** TODO Cherche le meilleur Ridge Coef
 * TODO Data en séquence
 * [1/1] XP
-* TODO [6/9] XP POMDP 
+* TODO [7/10] XP POMDP 
 J'ai l'impression qu'essayer d'apprendre les transitions ne marche que dans des cas quasi déterministes, non? Dans ce cas, faudrait plutôt essayer de voir si on peut pas apprendre V(s) ou V(o) ??
 ** DONE ajout d'un jsonreader pour transition
 ** DONE Générer et sauvegarder une trajectoire de transitions
@@ -54,7 +54,7 @@ Voir début danns xp/xp-002-cheese-maze
 ** DONE Memory Leak
 ** DONE Sauvegarder les résultats
 ** DONE pour apprendre il faut traj+pomdp (nb obs, etc)
-** TODO [2/4] Comprendre le format de fichier de sortie -> R
+** DONE [4/4] Comprendre le format de fichier de sortie -> R
 *** GEN pomdp cheese
 wbuild/xp/xp-002-cheese -p 0.9 -l 1 -f cheese_maze_0.9_1
 *** GEN trajectoire
@@ -63,11 +63,20 @@ wbuild/xp/xp-001-pomdp -p data_xp/cheese_maze_0.9_1.json --gene_traj data_xp/tra
 wbuild/xp/xp-001-pomdp -p data_xp/cheese_maze_0.9_1.json --gene_esn esn_50_1_0.99_0.1 --res_size 50
 *** GEN noise
 wbuild/xp/xp-001-pomdp -p data_xp/cheese_maze_0.9_1.json --gene_noise noise_1000_0.1 --length_noise 1000
-*** TODO LEARN
-*** TODO LEARN Paremeters
+*** DONE LEARN
+*** DONE LEARN Paremeters
+wbuild/xp/xp-001-pomdp -p data_xp/cheese_maze_0.9_1.json -t data_xp/traj_1000.data -e data_xp/esn_50_1_0.99_0.1.json --regul 10.0 -o data_xp/result_10.data
 *** DONE LEARN results with comment and header
 *** DONE [Q] : biais dans réservoir ? => OUI
 d'après [Lukosevicius12]
+** TODO Scripts pour tester influence des paramètres
+*** TODO Reprendre script python
+*** taille Res
+*** regul
+*** noise
+*** noise length
+*** traj size
+
 ** TODO [0/4] apprendre (0+A) -> .
 *** TODO pour apprendre, il faut transition ->O
 *** TODO pour apprendre, il faut transition ->S (pour voir)

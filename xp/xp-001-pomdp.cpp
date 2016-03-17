@@ -63,6 +63,7 @@ Reservoir::Toutput_size _res_size;
 double                  _res_scaling;
 double                  _res_radius;
 double                  _res_leak;
+double                  _regul;
 
 gsl_rng*               _rnd = gsl_rng_alloc( gsl_rng_taus );
 // ****************************************************************** free_mem
@@ -101,11 +102,12 @@ void setup_options(int argc, char **argv)
     ("gene_noise", po::value<std::string>(), "gene WNoise into file")
     ("length_noise", po::value<unsigned int>(&_noise_length)->default_value(100), "Length of noise to generate")
     ("level_noise",  po::value<double>(&_noise_level)->default_value(0.1), "Level of noise to generate")
+    ("gene_samples",  po::value<std::string>(), "Output file for RidgeReg samples")
+    ("regul", po::value<double>(&_regul)->default_value(1.0), "regul for RidgeRegrression")
     ("load_traj,t", po::value<std::string>(), "load Trajectory from file")
     ("load_esn,e",  po::value<std::string>(), "load ESN from file")
     ("load_noise,n", po::value<std::string>(), "load WNoise from file")
     ("output,o",  po::value<std::string>(), "Output file for results")
-    ("gene_samples",  po::value<std::string>(), "Output file for RidgeReg samples")
     ;
 
   // Options en ligne de commande
@@ -540,7 +542,7 @@ int main( int argc, char *argv[] )
     Reservoir res_after_init( *_res );
     // Apprendre => modifie _lay par régression
     std::cout << "___ learn()" << std::endl;
-    learn( 0.1 );
+    learn( _regul );
     // Première prédiction à partir de l'état du réseau appris
     std::cout << "___ predict follow" << std::endl;
     std::vector<RidgeRegression::Toutput> result_after_learn = predict( *_res, *_lay, _traj_data );
@@ -567,9 +569,12 @@ int main( int argc, char *argv[] )
       // Header comments
       ofile << "## \"pomdp_name\": \"" << *_filename_pomdp << "\"," << std::endl;
       ofile << "## \"traj_name\" : \"" << *_fileload_traj << "\"," << std::endl;
+      ofile << "## \"esn_name\": \"" << *_fileload_esn << "\"," << std::endl;
       if( _fileload_noise ) {
 	ofile << "## \"noise_name\" : \"" << *_fileload_noise << "\"," << std::endl;
       }
+      ofile << "## \"regul\": " << _regul << "," << std::endl;
+
       // Header ColNames
       // target
       for( unsigned int i = 0; i < _lay->output_size(); ++i) {
