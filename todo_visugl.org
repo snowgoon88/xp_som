@@ -70,14 +70,15 @@ wbuild/xp/xp-001-pomdp -p data_xp/cheese_maze_0.9_1.json -t data_xp/traj_1000.da
 *** DONE [Q] : biais dans réservoir ? => OUI
 d'après [Lukosevicius12]
 ** TODO Scripts pour tester influence des paramètres
-*** TODO Reprendre script python
+*** DONE Reprendre script python
 **** subprocess.Popen 
 avec Popen.poll() et Popen.wait()
-*** taille Res
-*** regul
+*** DONE taille Res
+*** DONE Leaking rate
+*** DONE regul
 *** noise
 *** noise length
-*** traj size
+*** DONE traj size
 
 ** TODO [0/4] apprendre (0+A) -> .
 *** TODO pour apprendre, il faut transition ->O

@@ -220,7 +220,7 @@ void gene_traj()
     unsigned int idx_next_obs = _pomdp->cur_obs()._id;
     double reward = _pomdp->cur_reward();
     
-    std::cout << idx_state << "\t" << idx_obs << "\t" << act._id << "\t" << idx_next_state << "\t" << idx_next_obs << "\t" << reward << std::endl;
+    // std::cout << idx_state << "\t" << idx_obs << "\t" << act._id << "\t" << idx_next_state << "\t" << idx_next_obs << "\t" << reward << std::endl;
 
     if( ofile ) {
       *ofile << idx_state << "\t" << idx_obs << "\t" << act._id << "\t" << idx_next_state << "\t" << idx_next_obs << "\t" << reward << std::endl;
@@ -262,7 +262,7 @@ void gene_esn( const std::string& filename,
   // stream << "_" << _res_radius;
   // stream << "_" << _res_leak;
   stream << ".json";
-  std::cout << "Write ESN dans " << stream.str() << std::endl;
+  // std::cout << "Write ESN dans " << stream.str() << std::endl;
 
   rapidjson::Document doc;
   doc.SetObject();
@@ -490,12 +490,12 @@ int main( int argc, char *argv[] )
   }
   // Si POMDP + nom traj => générer et sauver une trajectoire
   if( _filename_pomdp and _filegene_traj ) {
-    std::cout << "** Gene TRAJ into " << *_filegene_traj << std::endl;
+    //std::cout << "** Gene TRAJ into " << *_filegene_traj << std::endl;
     gene_traj();
   }
   // Si POMDP + gene_esn => générer et sauver un esn
   if( _filename_pomdp and _filegene_esn ) {
-    std::cout << "** Gene ESN into " << *_filegene_esn << std::endl;
+    //std::cout << "** Gene ESN into " << *_filegene_esn << std::endl;
     gene_esn( *_filegene_esn,
 	      _pomdp->_obs.size() + _pomdp->_actions.size(), // In = O+A
 	      _pomdp->_states.size(),                    // out = S
@@ -505,7 +505,7 @@ int main( int argc, char *argv[] )
   }  
   // Si POMDP + gene_noise => générer et sauver noise
   if( _filename_pomdp and _filegene_noise ) {
-    std::cout << "** Gene NOISE into " << *_filegene_noise << std::endl;
+    //std::cout << "** Gene NOISE into " << *_filegene_noise << std::endl;
     gene_noise( *_filegene_noise,
 		_noise_length, _noise_level,
 		_pomdp->_obs.size() + _pomdp->_actions.size()
