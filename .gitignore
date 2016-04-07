@@ -1,4 +1,6 @@
 # ignore build object and library and depency
 *.[oad]
+*.pyc
 *~
 /build
+/wbuild

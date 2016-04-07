@@ -1,4 +1,4 @@
-* Dependance
+ * Dependance
 ** OpenGL
 ** GLFW - Window with OpenGL
 ** FTGL - Draw text with OpenGL and FreeType2
