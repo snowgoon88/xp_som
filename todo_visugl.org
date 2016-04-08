@@ -493,7 +493,11 @@ http://www.astrostatistics.psu.edu/su07/R/html/MASS/html/lm.ridge.html
 ** DONE RidgeReg with GIVEN regul param
 ** DONE Compare with R
 ** DONE Ne pas accorder de pénalité pour le poids associé à 'intercept' dans RR
-* [0/3] DSOM
-** TODO to double
-** TODO Eigen Random ?? => entre -1 et 1 ??
+* [2/4] DSOM
+** DONE to double
+** DONE Eigen Random ?? => entre -1 et 1 ??
+** [1/2] Serialize
+*** DONE Write to JSON
+*** TODO Read from JSON
 ** TODO Copy operator/assignment => copie de l_link et l_neighbors
+** TODO quelles fonctions utiles ?
