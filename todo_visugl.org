@@ -80,9 +80,18 @@ avec Popen.poll() et Popen.wait()
 *** noise length
 *** DONE traj size
 
-** TODO [0/4] apprendre (0+A) -> .
+** TODO [1/4] apprendre (0+A) -> .
 *** TODO pour apprendre, il faut transition ->O
-*** TODO pour apprendre, il faut transition ->S (pour voir)
+*** DONE pour apprendre, il faut transition ->S (pour voir)
+**** <2016-04-08 Fri>
+l_traj_size = [100, 1000, 2000, 10000]
+l_esn_size = [50, 100, 200, 500]
+l_regul = [0.01, 0.1, 1, 10]
+l_leak = [0.1, 0.5, 0.9]
+nb_repeat  = 10       ## nb laucnh of each configuration
+nb_start   = 0       ## start numbering files with
+generate   = True    ## need to generate traj,esn
+data_xp/result_traj_size_esn_size_leak_regul.data
 *** TODO pour apprendre, il faut transition ->V(S) (pour voir)
 *** TODO pour apprendre, il faut tansition ->V(O) (pour voir)
 ** TODO [0/3] apprendre A x (O -> .) 
