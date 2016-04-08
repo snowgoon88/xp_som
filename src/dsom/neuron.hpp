@@ -15,6 +15,11 @@
 #include <list>
 #include <string>
 
+#include "rapidjson/prettywriter.h" // rapidjson
+#include "rapidjson/document.h"     // rapidjson's DOM-style API
+// #include <json_wrapper.hpp>         // JSON::OStreamWrapper et IStreamWrapper
+namespace rj = rapidjson;
+
 // ********************************************************************* Model
 namespace Model
 {
@@ -27,7 +32,7 @@ namespace DSOM
 /** Store distance with other Neurone */
 struct Neur_Dist {
   unsigned int index;
-float dist;
+  double dist;
 };
 // ***************************************************************************
 // ******************************************************************** Neuron
@@ -39,48 +44,43 @@ float dist;
 class Neuron
 {
 public:
+  // ************************************************************* Neuron_TYPE
+  typedef double          TNumber;
+  typedef Eigen::VectorXd TWeight;
+  typedef Eigen::VectorXi TPos;
+public:
   // ******************************************************** Neuron::creation
   /** Creation with index and random weights in [w_min,w_max]^dim */
-  Neuron( int index, int dim_weights, float w_min=0, float w_max=1) :
-    index(index), weights(nullptr)
+  Neuron( int index, int dim_weights, TNumber w_min=0, TNumber w_max=1) :
+    index(index)
   {
     //std::cerr << "Create Neurone " << index << "\n";
     
-    // Generate weights
-    Random rr;
-    this->weights = new Eigen::VectorXf(dim_weights);
-    
-    for( int i=0; i < this->weights->size(); i++ ) {
-      (*this->weights)(i) = w_min + rr.rndUniFloat() * (w_max - w_min);
-    }
+    // Generate weights between -1 and 1 (Eigen)
+    this->weights = Eigen::VectorXd::Random(dim_weights);
+    // Scale
+    this->weights= (this->weights.array() - -1.0) / (1.0 - -1.0) * (w_max - w_min) + w_min;
   };
   /** Creation with index, position and random weights in [w_min,w_max]^dim */
-  Neuron( int index, Eigen::VectorXi pos,
-	  int dim_weights, float w_min=0, float w_max=1) : 
-    index(index), weights(nullptr), _pos(pos)
+  Neuron( int index, TPos pos,
+	  int dim_weights, TNumber w_min=0, TNumber w_max=1) : 
+    index(index), _pos(pos)
   {
     //std::cerr << "Create Neurone " << index << "\n";
 
-    // Generate weights
-    Random rr;
-    this->weights = new Eigen::VectorXf(dim_weights);
-
-    for( int i=0; i < this->weights->size(); i++ ) {
-      (*this->weights)(i) = w_min + rr.rndUniFloat() * (w_max - w_min);
-    }
+    // Generate weights between -1 and 1 (Eigen)
+    this->weights = Eigen::VectorXd::Random(dim_weights);
+    // Scale
+    this->weights= (this->weights.array() - -1.0) / (1.0 - -1.0) * (w_max - w_min) + w_min;
   };
   /** Creation from Persistence (file). */
   //Neuron( Persistence& save ) {};
   /** Creation with copy */
   Neuron( const Neuron& n ) :
-    index(n.index), weights(nullptr),
+    index(n.index), weights(n.weights),
     l_link(n.l_link), l_neighbors(n.l_neighbors),
     _pos(n._pos)
   {
-    // std::cerr << "CreateCopy Neurone " << this->index << "\n";
-    if( n.weights ) {
-      this->weights = new Eigen::VectorXf(*(n.weights));
-    }
   };
   /** Creation from assignment */
   Neuron& operator=( const Neuron& n )
@@ -90,25 +90,22 @@ public:
       l_link = n.l_link;
       l_neighbors = n.l_neighbors;
       _pos = n._pos;
-      if( n.weights ) {
-	this->weights = new Eigen::VectorXf(*(n.weights));
-      }
+      weights = n.weights;
     }
+    return *this;
   };
   // ********************************************************* Neuron::destroy
   /** Destruction */
   ~Neuron()
   {
-    //std::cerr << "Delete Neurone " << this->index << "\n";
-    if( this->weights != nullptr ) delete this->weights;
   };
 
   // ************************************************************* Neuron::str
   /** dump to STR */
-  std::string str_dump()
+  std::string str_dump() 
   {
     std::stringstream ss;
-    ss << toString() << "\n";
+    ss << str_display() << "\n";
   
     ss << "    link=";
     std::list<unsigned int>::iterator i_link;
@@ -124,7 +121,7 @@ public:
     return ss.str();
   };
   /** display to STR */
-  std::string str_display()
+  std::string str_display() const
   {
     std::stringstream ss;
     ss << "[" << this->index << "] at (";
@@ -132,15 +129,76 @@ public:
       ss<< _pos[i] << ", ";
     }
     ss << ") w=";
-    for( int i=0; i < this->weights->size(); i++) {
-      ss << (*this->weights)(i) << " ";
+    for( int i=0; i < this->weights.size(); i++) {
+      ss << this->weights(i) << " ";
     }
   
     return ss.str();
   };
+  // ************************************************************ Neuron::JSON
+  rj::Value serialize( rj::Document& doc )
+  {
+    // rj::Object qui contient les données
+    rj::Value rj_node;
+    rj_node.SetObject();
+    rj_node.AddMember( "id", rj::Value(index), doc.GetAllocator() );
+    
+    // rj::Array qui contient les Weights
+    rj::Value rj_w;
+    rj_w.SetArray();
+    for( unsigned int i = 0; i < this->weights.size(); ++i) {
+      rj_w.PushBack( this->weights(i), doc.GetAllocator());
+    }
+    rj_node.AddMember( "weights", rj_w, doc.GetAllocator() );
+
+    // Links
+    rj::Value rj_link;
+    rj_link.SetArray();
+    for( auto& link: l_link) {
+      rj_link.PushBack( link, doc.GetAllocator() );
+    }
+    rj_node.AddMember( "link", rj_link, doc.GetAllocator());
+    
+    // Neighbors
+    rj::Value rj_neigh;
+    rj_neigh.SetArray();
+    for( auto& neigh: l_neighbors) {
+      rj::Value rj_cpl;
+      rj_cpl.SetArray();
+      rj_cpl.PushBack( neigh.index, doc.GetAllocator() );
+      rj_cpl.PushBack( neigh.dist, doc.GetAllocator() );
+      rj_neigh.PushBack( rj_cpl, doc.GetAllocator() );
+    }
+    rj_node.AddMember( "neighbors", rj_neigh, doc.GetAllocator() );
+
+    // Pos
+    rj::Value rj_pos;
+    rj_pos.SetArray();
+    for( unsigned int i = 0; i < _pos.size(); ++i) {
+      rj_pos.PushBack( _pos(i), doc.GetAllocator());
+    }
+    rj_node.AddMember( "pos", rj_pos, doc.GetAllocator() );
+    
+    return rj_node;
+  }
   // ***************************************************** Neuron::Persistence
   /** write to an ouput stream */
-  void write( std::ostream& out ) {};
+  // void write( std::ostream& out ) {};
+  // out << "##### DSOM:Neuron\n";
+  // out << "DSOM_Neuron.id: " << index << "\n";
+  
+  // out << "DSOM_Neuron.dim_pos: " << _pos.size() << "\n";
+  // for( unsigned int i=0; i<_pos.size(); i++ ) 
+  //     out << "DSOM_Neuron.pos: " << _pos[i] << "\n";
+
+  // out << "DSOM_Neuron.nb_weights: " << weights->size() << "\n";
+  // for( unsigned int i=0; i<weights->size(); i++ ) 
+  //   out << "DSOM_Neuron.weight: " << (*weights)[i] << "\n";
+
+  // out << "DSOM_Neuron.nb_link: " << l_link.size() << "\n";
+  // std::list<unsigned int>::iterator i_link;
+  // for( i_link=this->l_link.begin(); i_link != this->l_link.end(); i_link++)
+  //   out << "DSOM_Neuron.link: " << (*i_link) << "\n";
 
   // ******************************************************* Neuron::neighbors
   /** add a direct neighbor */
@@ -149,7 +207,7 @@ public:
     this->l_link.push_front( n_ind );
   };
   /** check if already has a link */
-  bool has_link( unsigned int n_ind )
+  bool has_link( unsigned int n_ind ) 
   {
     std::list<unsigned int>::iterator i_link;
     for( i_link=this->l_link.begin(); i_link != this->l_link.end(); i_link++) {
@@ -159,7 +217,7 @@ public:
   };
   
   /** add a neighbor with distance */
-  void add_neighbor( unsigned int n_ind, float n_dist)
+  void add_neighbor( unsigned int n_ind, TNumber n_dist)
   {
     Neur_Dist elem;
     elem.index = n_ind;
@@ -167,7 +225,7 @@ public:
     this->l_neighbors.push_front( elem );
   };  
   /** update existing distance if inferior or add new distance */
-  void update_neighbor( unsigned int n_ind, float n_dist)
+  void update_neighbor( unsigned int n_ind, TNumber n_dist)
   {
     std::list<Neur_Dist>::iterator i_neigh;
     for( i_neigh=this->l_neighbors.begin(); i_neigh != this->l_neighbors.end(); i_neigh++) {
@@ -184,36 +242,36 @@ public:
   };
   // ******************************************************** Neuron::distance
   /** compute distance to another neurone */
-  float computeDistance( Neuron &neur) {};
+  //TNumber computeDistance( Neuron &neur) {};
 
   // ********************************************************* Neuron::forward
   /** compute distance from a given input */
-  float computeDistance( Eigen::VectorXf &input ) {};
+  //TNumber computeDistance( TWeight &input ) {};
   /** compute normed distance from a given input (ie. between 0 and 1 */
-  float computeDistanceNormed( Eigen::VectorXf &input )
+  TNumber computeDistanceNormed( const TWeight& input ) const
   {
-    float dim = input.size();
-    return sqrt((*(this->weights) - input).cwiseProduct( *(this->weights) - input).sum()) /
+    TNumber dim = input.size();
+    return sqrt((this->weights - input).cwiseProduct(this->weights - input).sum()) /
       sqrt( dim );
   };
   // ******************************************************** Neuron::backward
   /** Add to current weights */
-  void add_to_weights( Eigen::VectorXf &delta_weight )
+  void add_to_weights( const TWeight& delta_weight )
   {
-    *(this->weights) = *(this->weights) +  delta_weight;
+    this->weights = this->weights +  delta_weight;
   }
 
   // ****************************************************** Neuron::attributes
   /** Index */
   int index;
   /** Weights */
-  Eigen::VectorXf *weights;
+  TWeight weights;
   /** List of Direct Neighbors */
   std::list<unsigned int> l_link;
   /** List of Neighbors */
   std::list<Neur_Dist> l_neighbors;
   /** Position on grid */
-  Eigen::VectorXi _pos;
+  TPos _pos;
 };
 // ******************************************************************** Neuron
 // ***************************************************************************
