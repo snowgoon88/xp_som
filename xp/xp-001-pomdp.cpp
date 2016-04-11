@@ -28,7 +28,9 @@
 #include <ridge_regression.hpp>
 
 #include <gsl/gsl_rng.h>             // gsl random generator
-#include <ctime>                     // std::time
+#include <ctime>                     // std::time std::clock
+#include <chrono>                    // std::chrono::steady_clock
+#include <random>                    // std::uniform_int...
 #include <algorithm>                 // fill
 
 // Parsing command line options
@@ -196,10 +198,14 @@ void gene_traj()
     ofile = new std::ofstream( *_filegene_traj + ".data" );
   }
   
-  // Random with seed
-  unsigned long seed = std::time( NULL );
+  // Generate see using a first unsigned int generator
+  auto ltime = std::chrono::steady_clock::now();
+  unsigned int first_seed = std::chrono::duration_cast<std::chrono::microseconds>(ltime.time_since_epoch()).count();
+  std::default_random_engine generator(first_seed);
+  std::uniform_int_distribution<unsigned int> uigen;
+  unsigned int seed = uigen(generator);
   gsl_rng_set( _rnd, seed );
-
+  
   // inform traj
   if( ofile ) {
     *ofile << "## \"pomdp_name\": \"" << *_filename_pomdp << "\"," << std::endl;

@@ -1,4 +1,4 @@
- * Dependance
+* Dependance
 ** OpenGL
 ** GLFW - Window with OpenGL
 ** FTGL - Draw text with OpenGL and FreeType2
@@ -70,7 +70,8 @@ wbuild/xp/xp-001-pomdp -p data_xp/cheese_maze_0.9_1.json -t data_xp/traj_1000.da
 *** DONE [Q] : biais dans réservoir ? => OUI
 d'après [Lukosevicius12]
 ** TODO Scripts pour tester influence des paramètres
-*** DONE Reprendre script python
+*** TODO Reprendre script python
+ATTENTION : il faut générer un ESN par run de l'expérience.
 **** subprocess.Popen 
 avec Popen.poll() et Popen.wait()
 *** DONE taille Res
