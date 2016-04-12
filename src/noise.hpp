@@ -19,6 +19,7 @@
 #include "rapidjson/document.h"       // rapidjson's DOM-style API
 namespace rj = rapidjson;
 
+#include <utils.hpp>                  // various str_xxx, random
 class WNoise
 {
 public:
@@ -28,7 +29,7 @@ public:
   WNoise( const unsigned int nb_pt,
 	  const double level = 1.0,
 	  const unsigned int dim = 1,
-	  unsigned long int seed = std::time(NULL) ) :
+	  unsigned long int seed = utils::random::rnd_int<unsigned long int>() ) :
     _nb_pt(nb_pt), _level(level), _dim(dim),
     _seed(seed)
   {
@@ -37,7 +38,7 @@ public:
   static Data create_sequence( const unsigned int nb_pt,
 			       const double level = 1.0,
 			       const unsigned int dim = 1,
-			       const unsigned long int seed = std::time(NULL) )
+			       const unsigned long int seed = utils::random::rnd_int<unsigned long int>() )
   {
     // Random Engine with seed 
     const gsl_rng* rnd = gsl_rng_alloc( gsl_rng_taus );

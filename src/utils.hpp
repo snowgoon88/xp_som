@@ -16,6 +16,39 @@
 #include <string>                     // std::string
 #include <vector>                     // std::vector
 
+#include <chrono>                     // std::chrono::steady_clock
+#include <random>                     // std::uniform_int...
+
+// ***************************************************************************
+// ******************************************************************** RANDOM
+// ***************************************************************************
+namespace utils
+{
+  namespace random
+  {
+    /**
+     * Generate a random TInt with a first seed taken from std::steady_clock
+     * and then using std::random.
+     */
+    template<class TInt>
+    TInt rnd_int()
+    {
+      // first seed
+      auto ltime = std::chrono::steady_clock::now();
+      unsigned int first_seed = std::chrono::duration_cast<std::chrono::microseconds>(ltime.time_since_epoch()).count();
+      std::default_random_engine generator(first_seed);
+      
+      std::uniform_int_distribution<TInt> gen;
+      TInt seed = gen(generator);
+
+      return seed;
+    };
+  };
+};
+
+// ***************************************************************************
+// *********************************************************************** STR
+// ***************************************************************************
 namespace utils
 {
   template<class T>

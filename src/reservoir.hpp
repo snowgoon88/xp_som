@@ -55,7 +55,8 @@ public:
   {
     // Random generator with seed = time
     _rnd = gsl_rng_alloc( gsl_rng_taus );
-    gsl_rng_set( _rnd, std::time( NULL ) );
+    unsigned int seed = utils::random::rnd_int<unsigned int>();
+    gsl_rng_set( _rnd, seed );
     
     // INPUT_WEIGHTS : Matrix _output_size lines of _input_size+1 columns
     // in [- _input_scaling, _input_scaling]

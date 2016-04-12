@@ -198,12 +198,8 @@ void gene_traj()
     ofile = new std::ofstream( *_filegene_traj + ".data" );
   }
   
-  // Generate see using a first unsigned int generator
-  auto ltime = std::chrono::steady_clock::now();
-  unsigned int first_seed = std::chrono::duration_cast<std::chrono::microseconds>(ltime.time_since_epoch()).count();
-  std::default_random_engine generator(first_seed);
-  std::uniform_int_distribution<unsigned int> uigen;
-  unsigned int seed = uigen(generator);
+  // Generate seed
+  unsigned int seed = utils::random::rnd_int<unsigned int>();
   gsl_rng_set( _rnd, seed );
   
   // inform traj

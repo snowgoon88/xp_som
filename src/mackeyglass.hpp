@@ -28,6 +28,8 @@
 #include "rapidjson/document.h"       // rapidjson's DOM-style API
 namespace rj = rapidjson;
 
+#include <utils.hpp>                  // various str_xxx, random
+
 #include <math.h>                     // pow, sqrt
 // ***************************************************************************
 // *************************************************************** MackeyGlass
@@ -42,7 +44,7 @@ public:
   MackeyGlass( unsigned int nb_pt, double level,
 	       double a, double b, double c,
 	       unsigned int mem_size,
-	       unsigned long int seed = std::time(NULL) ) :
+	       unsigned long int seed = utils::random::rnd_int<unsigned long int>()) :
     _nb_pt(nb_pt), _level(level),
     _a(a), _b(b), _c(c),
     _mem_size(mem_size), _seed(seed)
@@ -58,7 +60,7 @@ public:
   static Data create_sequence( unsigned int nb_pt, double level,
 			double a, double b, double c,
 			unsigned int mem_size,
-			unsigned long int seed = std::time(NULL) )
+			unsigned long int seed = utils::random::rnd_int<unsigned long int>())
   {
     // Random Engine with seed 
     const gsl_rng* rnd = gsl_rng_alloc( gsl_rng_taus );
