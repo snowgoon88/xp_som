@@ -62,7 +62,7 @@ public:
     this->weights= (this->weights.array() - -1.0) / (1.0 - -1.0) * (w_max - w_min) + w_min;
   };
   /** Creation with index, position and random weights in [w_min,w_max]^dim */
-  Neuron( int index, TPos pos,
+  Neuron( int index, const Eigen::Ref<const TPos>& pos,
 	  int dim_weights, TNumber w_min=0, TNumber w_max=1) : 
     index(index), _pos(pos)
   {
@@ -73,6 +73,13 @@ public:
     // Scale
     this->weights= (this->weights.array() - -1.0) / (1.0 - -1.0) * (w_max - w_min) + w_min;
   };
+  /** Creation from JSON doc */
+  Neuron( const rj::Value& obj ) :
+    index(0)
+  {
+    // decode d'après obj
+    unserialize( obj );
+  }
   /** Creation from Persistence (file). */
   //Neuron( Persistence& save ) {};
   /** Creation with copy */
@@ -181,6 +188,51 @@ public:
     
     return rj_node;
   }
+  /** unserialize from JSON object */
+  void unserialize( const rapidjson::Value& obj )
+  {
+    // id
+    assert( obj["id"].IsNumber() );
+    index = obj["id"].GetInt();
+
+    // Weights
+    const rj::Value& ar_w = obj["weights"];
+    assert( ar_w.IsArray() );
+    this->weights = Eigen::VectorXd( ar_w.Size() );
+    for( unsigned int i = 0; i < ar_w.Size(); ++i) {
+      assert(ar_w[i].IsNumber());
+      this->weights(i) = ar_w[i].GetDouble();
+    }
+    
+    // Links
+    const rj::Value& ar_l = obj["link"];
+    assert( ar_l.IsArray() );
+    l_link.clear();
+    for( unsigned int i = 0; i < ar_l.Size(); ++i) {
+      assert(ar_l[i].IsNumber());
+      add_link( ar_l[i].GetInt() );
+    }
+
+    // Neighbors
+    const rj::Value& ar_n = obj["neighbors"];
+    assert( ar_n.IsArray() );
+    l_neighbors.clear();
+    for( unsigned int i = 0; i < ar_n.Size(); ++i) {
+      const rj::Value& neigh = ar_n[i];
+      assert( neigh.IsArray() );
+      add_neighbor( neigh[0].GetInt(), neigh[1].GetDouble() );
+    }
+
+    // Pos
+    const rj::Value& ar_p = obj["pos"];
+    assert( ar_p.IsArray() );
+    _pos = Eigen::VectorXi( ar_p.Size() );
+    for( unsigned int i = 0; i < ar_p.Size(); ++i) {
+      assert(ar_p[i].IsNumber());
+      _pos(i) = ar_p[i].GetInt();
+    }
+    
+  };
   // ***************************************************** Neuron::Persistence
   /** write to an ouput stream */
   // void write( std::ostream& out ) {};
