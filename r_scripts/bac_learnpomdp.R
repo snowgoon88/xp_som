@@ -81,3 +81,44 @@ p_bin_in <- geom_bar( aes(x=ta_idx, y = ..count.., fill=label), position=positio
 # plot
 p_root + p_bin_tot + p_bin_in
 
+##################################################################
+# Analyser les résultats
+# fichiers
+fich <- list.files( path="data_xp", pattern="result_*")
+items <- strsplit( fich[1], '_')
+
+###############################################################################
+## Extract parameters and basename from ONE filename
+## :return: data.frame
+###############################################################################
+extract <- function( filename ) {
+  ## Hyp : only one filename
+  items <- strsplit( filename, split='_')[[1]]
+  ltraj <- as.numeric( items[2] )
+  lesn <- as.numeric( items[3] )
+  leak <- as.numeric( items[4] )
+  regul <- as.numeric( items[5] )
+  noesn <- items[6]
+  # Warning : '.' is also a regexp, so set fixed=TRUE
+  subitems <- strsplit( items[7], split='.', fixed=TRUE)[[1]]
+  notraj <- subitems[1]
+  norun <- items[8]
+  ## 'basename' is only a function of ltraj,lesn,leak,regul
+  basename <- paste( ltraj,lesn,leak,regul, sep='_')
+  return( data.frame(filename,basename,ltraj, lesn, leak, regul, noesn, notraj, norun))
+}
+
+###############################################################################
+## Trouver les min/max de chaque colonne
+###############################################################################
+## Faire les moyenne
+attach(df.sum)
+df.mean <- aggregate(df.sum[,c("rate_le","rate_in","mse_le","mse_in")], by=list(ltraj,lesn,leak,regul), FUN=mean)
+detach( df.sum )
+## Remplacer "Groupe.1" par son 'vrai nom
+names(df.mean)[1:4] <- c("ltraj","lesn","leak","regul")
+## trouver le max de rate_le
+attach( df.mean )
+which.max( rate_le )
+## etc
+

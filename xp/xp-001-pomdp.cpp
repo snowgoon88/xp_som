@@ -217,8 +217,8 @@ void gene_traj()
     // random action
     const Model::Node& act = list_action[gsl_rng_uniform_int( _rnd, list_action.size() )];
 
-    unsigned int idx_next_state = _pomdp->simul_trans( act );
-    unsigned int idx_next_obs = _pomdp->simul_obs()
+    unsigned int idx_next_state = _pomdp->simul_trans( act )._id;
+    unsigned int idx_next_obs = _pomdp->simul_obs()._id;
     double reward = _pomdp->cur_reward();
     
     // std::cout << idx_state << "\t" << idx_obs << "\t" << act._id << "\t" << idx_next_state << "\t" << idx_next_obs << "\t" << reward << std::endl;
