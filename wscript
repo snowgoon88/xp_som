@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# encoding: utf-8
 # waf configuration file .waf --help pour commande par défaut
 # Utilisé par CMD dist
 
@@ -29,10 +31,10 @@ def configure( conf ):
                    args=['--cflags', '--libs']
     )
     ## Require GAML, using wraper around pkg-onfig
-    conf.check_cfg(package='gaml',
-                   uselib_store='GAML',
-                   args=['--cflags', '--libs']
-    )
+    ## conf.check_cfg(package='gaml',
+    ##                uselib_store='GAML',
+    ##                args=['--cflags', '--libs']
+    ## )
     ## Require OpenGL, using wraper around pkg-onfig
     conf.check_cfg(package='gl',
                    uselib_store='GL',
