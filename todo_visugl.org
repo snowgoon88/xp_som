@@ -69,8 +69,32 @@ wbuild/xp/xp-001-pomdp -p data_xp/cheese_maze_0.9_1.json -t data_xp/traj_1000.da
 *** DONE LEARN results with comment and header
 *** DONE [Q] : biais dans réservoir ? => OUI
 d'après [Lukosevicius12]
-** TODO Scripts pour tester influence des paramètres
-*** TODO Reprendre script python
+** [7/10] TODO Scripts pour tester influence des paramètres
+## calculer taux erreur pour chaque fichier
+> df.sum <- make_df_pomdp( "data_xp" )
+## sauvegarde
+> write.table( df.sum, file="data_xp/df_sum.rdata", row.names=FALSE, sep="\t")
+*** DONE PT Max id : ltraj lesn leak regul
+voir dans [[bac_learnpomdp.R]]
+## Faire les moyenne
+attach(df.sum)
+df.mean <- aggregate(df.sum[,c("rate_le","rate_in","mse_le","mse_in")], by=list(ltraj,lesn,leak,regul), FUN=mean)
+detach( df.sum )
+## Remplacer "Groupe.1" par son 'vrai nom
+names(df.mean)[1:4] <- c("ltraj","lesn","leak","regul")
+## trouver le max de rate_le
+attach( df.mean )
+which.max( rate_le )
+## etc
+**** rate_le : 73   100  200  0.5   0.1   0.594   0.602 3.693935 3.603116
+**** rate_in : 73   100  200  0.5   0.1   0.594   0.602 3.693935 3.603116
+**** mse_le : 181   100  100  0.9    10    0.55    0.57 0.8461113 0.8258935
+**** mse_in :  181   100  100  0.9    10    0.55    0.57 0.8461113 0.8258935
+*** TODO Afficher variation autour PT Max dans chacune des 4 dimensions (3 fixe)
+*** DONE R-Script : générer les noms des fichiers results
+*** TODO R-Script : utiliser 'by' pour faire des moyennes, des variances
+*** TODO Regarder Variabilité Traj et Output dans 100  200  0.5   0.1
+*** DONE Reprendre script python
 ATTENTION : il faut générer un ESN par run de l'expérience.
 **** subprocess.Popen 
 avec Popen.poll() et Popen.wait()

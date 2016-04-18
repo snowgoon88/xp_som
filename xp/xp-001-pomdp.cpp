@@ -216,10 +216,9 @@ void gene_traj()
   for( unsigned int i = 0; i < _length; ++i) {
     // random action
     const Model::Node& act = list_action[gsl_rng_uniform_int( _rnd, list_action.size() )];
-    _pomdp->simul_trans( act );
 
-    unsigned int idx_next_state = _pomdp->cur_state()._id;
-    unsigned int idx_next_obs = _pomdp->cur_obs()._id;
+    unsigned int idx_next_state = _pomdp->simul_trans( act );
+    unsigned int idx_next_obs = _pomdp->simul_obs()
     double reward = _pomdp->cur_reward();
     
     // std::cout << idx_state << "\t" << idx_obs << "\t" << act._id << "\t" << idx_next_state << "\t" << idx_next_obs << "\t" << reward << std::endl;
