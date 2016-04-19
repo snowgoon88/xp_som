@@ -20,6 +20,32 @@
 #include <random>                     // std::uniform_int...
 
 // ***************************************************************************
+// ********************************************************************* Range
+// ***************************************************************************
+// for (int num : make_range(vector, 3, 7))
+//     std::cout << num << ", ";      // 4, 5, 6, 7,
+// http://stackoverflow.com/questions/30540101/iterator-for-a-subset-of-a-vector
+namespace utils
+{
+template <class Iter>
+class Range {
+  Iter b;
+  Iter e;
+public:
+  
+    Range(Iter b, Iter e) : b(b), e(e) {}
+
+    Iter begin() { return b; }
+    Iter end() { return e; }
+};
+
+template <class Container>
+Range<typename Container::iterator> 
+make_range(Container& c, size_t b, size_t e) {
+    return Range<typename Container::iterator> (c.begin()+b, c.begin()+e);
+}
+};
+// ***************************************************************************
 // ******************************************************************** RANDOM
 // ***************************************************************************
 namespace utils

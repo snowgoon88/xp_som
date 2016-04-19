@@ -57,6 +57,10 @@ double                 _noise_level;
 Model::POMDP*          _pomdp = nullptr;
 unsigned int           _length;
 Trajectory::POMDP::Data _traj_data;
+Trajectory::POMDP::Data _learn_data;
+
+unsigned int           _test_length;
+Trajectory::POMDP::Data _test_data;
 
 Reservoir*             _res = nullptr;
 Layer*                 _lay = nullptr;
@@ -67,6 +71,7 @@ double                  _res_radius;
 double                  _res_leak;
 double                  _regul;
 bool                    _verb;
+
 
 gsl_rng*               _rnd = gsl_rng_alloc( gsl_rng_taus );
 // ****************************************************************** free_mem
@@ -110,6 +115,7 @@ void setup_options(int argc, char **argv)
     ("load_traj,t", po::value<std::string>(), "load Trajectory from file")
     ("load_esn,e",  po::value<std::string>(), "load ESN from file")
     ("load_noise,n", po::value<std::string>(), "load WNoise from file")
+    ("test_length,l", po::value<unsigned int>(&_test_length)->default_value(10), "Length of test")
     ("output,o",  po::value<std::string>(), "Output file for results")
     ("verb,v", po::value<bool>(&_verb)->default_value(false), "verbose" );
     ;
@@ -239,6 +245,23 @@ void read_traj( const std::string& filename )
   std::ifstream ifile( filename );
   Trajectory::POMDP::read( ifile, _traj_data);
   ifile.close();
+
+  // Check that _traj_data size is bigger than _test_length
+  // before creating learn and test Data
+  if( _traj_data.size() >= _test_length ) {
+    _learn_data = Trajectory::POMDP::Data( _traj_data.begin(),
+					   _traj_data.end() - _test_length );
+    _test_data = Trajectory::POMDP::Data( _traj_data.end() - _test_length,
+					  _traj_data.end() );
+
+    std::cout << "__READ_TRAJ : learn = " << _learn_data.size() << std::endl;
+    std::cout << "              test  = " << _test_data.size() << std::endl;
+  }
+  else {
+    std::cerr << "__Read_Traj : error _test_length (" << _test_length << ")";
+    std::cerr << " > _traj_data.size() (" << _traj_data.size() << ")" << std::endl;
+    exit(2);
+  }
 }
 // ****************************************************************** gene_esn
 void gene_esn( const std::string& filename,
@@ -360,7 +383,7 @@ void learn( double regul )
 {
   // Preparation des données d'apprentissage et de test
   _data.clear();
-  for( auto& item: _traj_data) {
+  for( auto& item: _learn_data ) {
     // Passe dans réservoir
     auto out_res = _res->forward( input_from(item) );
     // Ajoute 1.0 en bout (le neurone biais)
@@ -553,15 +576,32 @@ int main( int argc, char *argv[] )
     if( _verb)
       std::cout << "___ learn()" << std::endl;
     learn( _regul );
-    // Première prédiction à partir de l'état du réseau appris
-    if( _verb ) 
-      std::cout << "___ predict follow" << std::endl;
-    std::vector<RidgeRegression::Toutput> result_after_learn = predict( *_res, *_lay, _traj_data );
-    // Deuxième prédiction à partir de l'état du réseau avant apprentissage
-    // mais avec _lay modifié
+
+    // TODO erreur commise sur le début du réseau
+    //      => sauvegarder l'état du réseau (ce qui est déjà) fait
+    // un vecteur de output
+    std::vector<RidgeRegression::Toutput> result_learn;
+    // A partir des données d'apprentissage : Data
+    for( auto& sample: _data) {
+      // Passe dans layer
+      auto out_lay = _lay->forward( sample.first ); 
+      result_learn.push_back( out_lay );
+    }
+    
+    // Prédiction de la suite de la trajectoire
     if( _verb )
-      std::cout << "___ predict base" << std::endl;
-    std::vector<RidgeRegression::Toutput> result_after_init = predict( res_after_init, *_lay, _traj_data );
+      std::cout << "___ predict()" << std::endl;
+    std::vector<RidgeRegression::Toutput> result_test = predict( *_res, *_lay, _test_data );
+    					 
+    // // Première prédiction à partir de l'état du réseau appris
+    // if( _verb ) 
+    //   std::cout << "___ predict follow" << std::endl;
+    // std::vector<RidgeRegression::Toutput> result_after_learn = predict( *_res, *_lay, _traj_data );
+    // // Deuxième prédiction à partir de l'état du réseau avant apprentissage
+    // // mais avec _lay modifié
+    // if( _verb )
+    //   std::cout << "___ predict base" << std::endl;
+    // std::vector<RidgeRegression::Toutput> result_after_init = predict( res_after_init, *_lay, _traj_data );
     
     // Les résultats
     // Affiche targert: \n pred\n init\n
@@ -587,7 +627,8 @@ int main( int argc, char *argv[] )
 	ofile << "## \"noise_name\" : \"" << *_fileload_noise << "\"," << std::endl;
       }
       ofile << "## \"regul\": " << _regul << "," << std::endl;
-
+      ofile << "## \"test_length\": " << _test_length << "," << std::endl;
+      
       // Header ColNames
       // target
       for( unsigned int i = 0; i < _lay->output_size(); ++i) {
@@ -597,26 +638,26 @@ int main( int argc, char *argv[] )
       for( unsigned int i = 0; i < _lay->output_size(); ++i) {
 	ofile << "le_" << i << "\t";
       }
-      // after init
-      for( unsigned int i = 0; i < _lay->output_size(); ++i) {
-	ofile << "in_" << i << "\t";
-      }
+      // // after init
+      // for( unsigned int i = 0; i < _lay->output_size(); ++i) {
+      // 	ofile << "in_" << i << "\t";
+      // }
       ofile << std::endl;
       // Data
       idx_out = 0;
-      for( auto& item: _traj_data) {
+      for( auto& item: _test_data ) { 
 	// target
 	for( auto& var: target_from(item)) {
 	  ofile << var << "\t";
 	}
 	// predict
-	for( auto& var: result_after_learn[idx_out]) {
+	for( auto& var: result_test[idx_out]) {
 	  ofile << var << "\t";
 	}
-	// init
-	for( auto& var: result_after_init[idx_out]) {
-	  ofile << var << "\t";
-	}
+	// // init
+	// for( auto& var: result_after_init[idx_out]) {
+	//   ofile << var << "\t";
+	// }
 	ofile << std::endl;
 	
 	idx_out ++;
