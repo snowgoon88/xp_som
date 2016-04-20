@@ -7,15 +7,9 @@ nbState <- 11
 rg <- seq(1,nbState) 
 ## un label suivant "qui" a bien appris
 #  - both : init et learn
-label_learn <- function(target, learn, init) {
-  if (target == learn && target == init) {
-    return ("both")
-  }
-  else if(target == learn) {
+label_learn <- function(target, learn ) {
+  if(target == learn) {
     return ("learn")
-  }
-  else if(target == init) {
-    return ("init")
   }
   else {
     return ("none")
@@ -33,15 +27,15 @@ add_low_level = function( data ) {
   # ajoute la position des max
   data$ta_idx <- apply(data[,rg], 1, which.max)
   data$le_idx <- apply(data[,nbState+rg], 1, which.max)
-  data$in_idx <- apply(data[,2*nbState+rg], 1, which.max)
+  ##data$in_idx <- apply(data[,2*nbState+rg], 1, which.max)
   
   # Calcules les erreurs MSE et ajoute dans la dataframe
   # WARN à faire avant que des charactères soient utilisés dans dataframe
   data$le_mse <- apply( data, 1, mse1)
-  data$in_mse <- apply( data, 1, mse2)
+  ##data$in_mse <- apply( data, 1, mse2)
   
   # labellise les données en "both/init/learn/none"
-  data$label <- mapply(label_learn, data$ta_idx, data$le_idx, data$in_idx)
+  data$label <- mapply(label_learn, data$ta_idx, data$le_idx )
   
   return (data)
 }
@@ -55,14 +49,13 @@ compute_stat <- function( data ) {
   nb_sample = dim(data)[1]
   # Rate of error
   rate_err_le = sum( data$label == "learn" | data$label == "both") / nb_sample
-  rate_err_in = sum( data$label == "init" | data$label == "both") / nb_sample
+  ##rate_err_in = sum( data$label == "init" | data$label == "both") / nb_sample
   
   # MSE
   rate_mse_le = sum( data$le_mse ) / nb_sample
-  rate_mse_in = sum( data$in_mse ) / nb_sample
+  ##rate_mse_in = sum( data$in_mse ) / nb_sample
   
-  return( data.frame(rate_le=rate_err_le, rate_in=rate_err_in, 
-            mse_le=rate_mse_le, mse_in=rate_mse_in))
+  return( data.frame(rate_le=rate_err_le, mse_le=rate_mse_le))
 }
 
 ###############################################################################
@@ -103,13 +96,15 @@ extract <- function( filename ) {
   leak <- as.numeric( items[4] )
   regul <- as.numeric( items[5] )
   noesn <- items[6]
+  notraj <- items[7]
   # Warning : '.' is also a regexp, so set fixed=TRUE
-  subitems <- strsplit( items[7], split='.', fixed=TRUE)[[1]]
-  notraj <- subitems[1]
-  norun <- items[8]
+  subitems <- strsplit( items[8], split='.', fixed=TRUE)[[1]]
+  ltest <- as.numeric( substr(subitems[1],2,nchar(subitems[1]) ) )
+  norun <- items[9]
+  type <- items[10]
   ## 'basename' is only a function of ltraj,lesn,leak,regul
-  basename <- paste( ltraj,lesn,leak,regul, sep='_')
-  return( data.frame(filename,basename,ltraj, lesn, leak, regul, noesn, notraj, norun))
+  basename <- paste( ltraj,lesn,leak,regul,ltest, sep='_')
+  return( data.frame(filename,basename,ltraj, lesn, leak, regul, ltest, type, noesn, notraj, norun))
 }
 
 ###############################################################################
@@ -124,6 +119,7 @@ make_df_pomdp <- function( path ) {
   df <- data.frame( filename=character(), basename=character(),
                     ltraj=numeric(), lesn=numeric(),
                     leak=numeric(), regul=numeric(),
+                    ltest=numeric(), type=character(),
                     noesn=character(), notraj=character(),
                     norun=character(),
                     rate_le=numeric(), rate_in=numeric(),
@@ -145,139 +141,53 @@ make_df_pomdp <- function( path ) {
 }
 
 ###############################################################################
-## Plot around a 4dim-PT
+## Plot around a 5dim-PT
+## pt=c(ltraj,lesn,leak,regul,ltest) with 'NA' where variation is expected
+##
+## ex: plot_pt_all( df.sum, df.mean, c(500,50,NA,0.1,100))
+##     to plot with varying 'leak'
 ###############################################################################
-plot_regul_all<- function ( dsum, dmean, point ) {
+plot_pt_all <- function ( dsum, dmean, point, ylim.sum=c(0,1), ylim.mean=c(0,10) ) {
+  ## construire la condition
+  ## pt = c(num|NA,...)
+  bd_cond <- function( pt ) {
+    base_str <- c( "ltraj", "lesn", "leak", "regul", "ltest")
+    idx_str  <- c("1","2","3","4","5")
+    abs_str <- base_str[is.na(pt)]
+    dsum_str <- paste( "dsum$", base_str[!is.na(pt)],
+                       "==point[", idx_str[!is.na(pt)], "]", sep="", collapse=" & ")
+    dmean_str <- paste( "dmean$", base_str[!is.na(pt)],
+                        "==point[", idx_str[!is.na(pt)], "]", sep="", collapse=" & ")
+    title_str <- paste( base_str[!is.na(pt)],
+                        "=", pt[!is.na(pt)], sep="", collapse=", ")
+    #   cond_expr <- eval(parse(text=cond_str))
+    #   abs_expr <- eval(parse(text=abs_str))
+    return( list(abs_str,dsum_str,dmean_str,title_str))#,cond_expr,abs_expr))               
+  }
+  all_str <- bd_cond( point )
+  ## PLOT
   p_root <- ggplot()
+  subdsum <- subset(dsum, eval(parse(text=all_str[2])))
+  p_ratele <- geom_point( data=subdsum,
+                          aes( x=eval(parse(text=all_str[1])), y=rate_le))
+  p_msele <- geom_point( data=subdsum, 
+                         aes( x=eval(parse(text=all_str[1])), y=mse_le))
   
-  subdsum <- dsum[dsum$ltraj == point[1] &
-                    dsum$lesn==point[2] &
-                    dsum$leak==point[3],]
-  p_ratele <- geom_point( data=subdsum, aes( x=regul, y=rate_le, color='le'))
-  p_ratein <- geom_point( data=subdsum, aes( x=regul, y=rate_in, color='in'))
-  p_msele <- geom_point( data=subdsum, aes( x=regul, y=mse_le, color='le'))
-  p_msein <- geom_point( data=subdsum, aes( x=regul, y=mse_in, color='in'))
-  #p_ratele_sm <- geom_smooth( data=subdsum,aes( x=regul, y=rate_le))
-
-  subdmean<- dmean[dmean$ltraj == point[1] &
-                     dmean$lesn==point[2] &
-                     dmean$leak==point[3],]
-  p_ratele_ln <- geom_line( data=subdmean, aes( x=regul, y=rate_le, color='le'))
-  p_ratein_ln <- geom_line( data=subdmean, aes( x=regul, y=rate_in, color='in'))
-  p_msele_ln <- geom_line( data=subdmean, aes( x=regul, y=mse_le, color='le'))
-  p_msein_ln <- geom_line( data=subdmean, aes( x=regul, y=mse_in, color='in'))
-
-  p_coord1 <- coord_cartesian(ylim = c(0, 1)) 
-  p_labs1 <- labs(colour=NULL, title="Success Rate", x="regul", y="rate")
-  p1 <- p_root + p_ratele + p_ratele_ln + p_ratein + p_ratein_ln + p_labs1 + p_coord1 + scale_x_log10()
-  p_coord2 <- coord_cartesian(ylim = c(0, 10)) 
-  p_labs2 <- labs(colour=NULL, title="MSE Error", x="regul", y="mse")
-  p2 <- p_root + p_msele + p_msele_ln + p_msein + p_msein_ln + p_labs2 + p_coord2 + scale_x_log10()
+  subdmean <- subset(dmean, eval(parse(text=all_str[3])))
+  p_ratele_ln <- geom_line( data=subdmean,
+                            aes( x=eval(parse(text=all_str[1])), y=rate_le))
+  p_msele_ln <- geom_line( data=subdmean,
+                           aes( x=eval(parse(text=all_str[1])), y=mse_le))
+  
+  p_coord1 <- coord_cartesian(ylim = ylim.sum)
+  p_labs1 <- labs(colour=NULL, title=paste("Success Rate",all_str[4]),
+                  x=all_str[1], y="rate")
+  p1 <- p_root + p_ratele + p_ratele_ln + p_labs1 + p_coord1
+  p_coord2 <- coord_cartesian(ylim = ylim.mean) 
+  p_labs2 <- labs(colour=NULL, title=paste("MSE Error",all_str[4]),
+                  x=all_str[1], y="mse")
+  p2 <- p_root + p_msele + p_msele_ln + p_labs2 + p_coord2
   multiplot( p1, p2, cols=1 )
-}
-plot_leak_all <- function ( dsum, dmean, point ) {
-  p_root <- ggplot()
-  
-  subdsum <- dsum[dsum$ltraj == point[1] &
-                    dsum$lesn==point[2] &
-                    dsum$regul==point[3],]
-  p_ratele <- geom_point( data=subdsum, aes( x=leak, y=rate_le, color='le'))
-  p_ratein <- geom_point( data=subdsum, aes( x=leak, y=rate_in, color='in'))
-  p_msele <- geom_point( data=subdsum, aes( x=leak, y=mse_le, color='le'))
-  p_msein <- geom_point( data=subdsum, aes( x=leak, y=mse_in, color='in'))
-  #p_ratele_sm <- geom_smooth( data=subdsum,aes( x=regul, y=rate_le))
-  
-  subdmean<- dmean[dmean$ltraj == point[1] &
-                     dmean$lesn==point[2] &
-                     dmean$regul==point[3],]
-  p_ratele_ln <- geom_line( data=subdmean, aes( x=leak, y=rate_le, color='le'))
-  p_ratein_ln <- geom_line( data=subdmean, aes( x=leak, y=rate_in, color='in'))
-  p_msele_ln <- geom_line( data=subdmean, aes( x=leak, y=mse_le, color='le'))
-  p_msein_ln <- geom_line( data=subdmean, aes( x=leak, y=mse_in, color='in'))
-  
-  p_coord1 <- coord_cartesian(ylim = c(0, 1)) 
-  p_labs1 <- labs(colour=NULL, title="Success Rate", x="leak", y="rate")
-  p1 <- p_root + p_ratele + p_ratele_ln + p_ratein + p_ratein_ln + p_labs1 + p_coord1
-  p_coord2 <- coord_cartesian(ylim = c(0, 10)) 
-  p_labs2 <- labs(colour=NULL, title="MSE Error", x="leak", y="mse")
-  p2 <- p_root + p_msele + p_msele_ln + p_msein + p_msein_ln + p_labs2 + p_coord2
-  multiplot( p1, p2, cols=1 )
-}
-plot_esn_all <- function ( dsum, dmean, point ) {
-  p_root <- ggplot()
-  
-  subdsum <- dsum[dsum$ltraj == point[1] &
-                    dsum$leak==point[2] &
-                    dsum$regul==point[3],]
-  p_ratele <- geom_point( data=subdsum, aes( x=lesn, y=rate_le, color='le'))
-  p_ratein <- geom_point( data=subdsum, aes( x=lesn, y=rate_in, color='in'))
-  p_msele <- geom_point( data=subdsum, aes( x=lesn, y=mse_le, color='le'))
-  p_msein <- geom_point( data=subdsum, aes( x=lesn, y=mse_in, color='in'))
-  #p_ratele_sm <- geom_smooth( data=subdsum,aes( x=regul, y=rate_le))
-  
-  subdmean<- dmean[dmean$ltraj == point[1] &
-                     dmean$leak==point[2] &
-                     dmean$regul==point[3],]
-  p_ratele_ln <- geom_line( data=subdmean, aes( x=lesn, y=rate_le, color='le'))
-  p_ratein_ln <- geom_line( data=subdmean, aes( x=lesn, y=rate_in, color='in'))
-  p_msele_ln <- geom_line( data=subdmean, aes( x=lesn, y=mse_le, color='le'))
-  p_msein_ln <- geom_line( data=subdmean, aes( x=lesn, y=mse_in, color='in'))
-  
-  p_coord1 <- coord_cartesian(ylim = c(0, 1)) 
-  p_labs1 <- labs(colour=NULL, title="Success Rate", x="lesn", y="rate")
-  p1 <- p_root + p_ratele + p_ratele_ln + p_ratein + p_ratein_ln + p_labs1 + p_coord1
-  p_coord2 <- coord_cartesian(ylim = c(0, 10)) 
-  p_labs2 <- labs(colour=NULL, title="MSE Error", x="lesn", y="mse")
-  p2 <- p_root + p_msele + p_msele_ln + p_msein + p_msein_ln + p_labs2 + p_coord2
-  multiplot( p1, p2, cols=1 )
-}
-plot_traj_all <- function ( dsum, dmean, point ) {
-  p_root <- ggplot()
-  
-  subdsum <- dsum[dsum$lesn == point[1] &
-                    dsum$leak==point[2] &
-                    dsum$regul==point[3],]
-  p_ratele <- geom_point( data=subdsum, aes( x=ltraj, y=rate_le, color='le'))
-  p_ratein <- geom_point( data=subdsum, aes( x=ltraj, y=rate_in, color='in'))
-  p_msele <- geom_point( data=subdsum, aes( x=ltraj, y=mse_le, color='le'))
-  p_msein <- geom_point( data=subdsum, aes( x=ltraj, y=mse_in, color='in'))
-  #p_ratele_sm <- geom_smooth( data=subdsum,aes( x=regul, y=rate_le))
-  
-  subdmean<- dmean[dmean$lesn == point[1] &
-                     dmean$leak==point[2] &
-                     dmean$regul==point[3],]
-  p_ratele_ln <- geom_line( data=subdmean, aes( x=ltraj, y=rate_le, color='le'))
-  p_ratein_ln <- geom_line( data=subdmean, aes( x=ltraj, y=rate_in, color='in'))
-  p_msele_ln <- geom_line( data=subdmean, aes( x=ltraj, y=mse_le, color='le'))
-  p_msein_ln <- geom_line( data=subdmean, aes( x=ltraj, y=mse_in, color='in'))
-  
-  p_coord1 <- coord_cartesian(ylim = c(0, 1)) 
-  p_labs1 <- labs(colour=NULL, title="Success Rate", x="ltraj", y="rate")
-  p1 <- p_root + p_ratele + p_ratele_ln + p_ratein + p_ratein_ln + p_labs1 + p_coord1
-  p_coord2 <- coord_cartesian(ylim = c(0, 10)) 
-  p_labs2 <- labs(colour=NULL, title="MSE Error", x="lraj", y="mse")
-  p2 <- p_root + p_msele + p_msele_ln + p_msein + p_msein_ln + p_labs2 + p_coord2
-  multiplot( p1, p2, cols=1 )
-}
-plot_msele_regul_all<- function ( dsum, dmean, point ) {
-  p_root <- ggplot()
-  
-  subdsum <- dsum[dsum$ltraj == point[1] &
-                    dsum$lesn==point[2] &
-                    dsum$leak==point[3],]
-  p_msele <- geom_point( data=subdsum, aes( x=regul, y=mse_le, color='le'))
-  p_msein <- geom_point( data=subdsum, aes( x=regul, y=mse_in, color='in'))
-  #p_ratele_sm <- geom_smooth( data=subdsum,aes( x=regul, y=mse_le))
-  
-  subdmean<- dmean[dmean$ltraj == point[1] &
-                     dmean$lesn==point[2] &
-                     dmean$leak==point[3],]
-  p_msele_ln <- geom_line( data=subdmean, aes( x=regul, y=mse_le, color='le'))
-  p_msein_ln <- geom_line( data=subdmean, aes( x=regul, y=mse_in, color='in'))
-  
-  p_coord <- coord_cartesian(ylim = c(0, 10)) 
-  p_labs <- labs(colour=NULL, title="MSE Error", x="regul", y="mse")
-  p_root + p_ratele + p_ratele_ln + p_ratein + p_ratein_ln + p_labs + p_coord + scale_x_log10()
 }
 
 # Multiple plot function

@@ -30,7 +30,7 @@ def sub_xp01( name_pomdp, name_traj, name_esn, regul, name_output, post=""):
 
     return sp.Popen( args )
 # ********************************************************************* repeat
-def repeat( name_pomdp, name_traj, name_esn, regul, name_output,
+def repeat( name_pomdp, name_traj, name_esn, regul, test_length, name_output,
             nb_repeat, idx_start=0, nb_max=2 ):
     """
     Launch nb_repeat copies of function fun, with parameters param in parallel
@@ -43,6 +43,7 @@ def repeat( name_pomdp, name_traj, name_esn, regul, name_output,
     args.extend( ['-t', name_traj] )
     args.extend( ['-e', name_esn] )
     args.extend( ['--regul', str(regul)] )
+    args.extend( ['-l', str(test_length)] )
     # repeat
     for idx in range(nb_repeat):
         tmp_args = list(args)
@@ -58,14 +59,15 @@ def xp():
     """
     base_args = ["wbuild/xp/xp-001-pomdp",
                  "-p", "data_xp/cheese_maze_0.9_1.json"]
-    l_traj_size = [100, 1000, 2000, 10000]
-    l_esn_size = [50, 100, 200, 500]
-    l_regul = [0.01, 0.1, 1, 10]
-    l_leak = [0.1, 0.5, 0.9]
-    # l_traj_size = [100]
-    # l_esn_size = [50]
-    # l_regul = [0.01, 0.1]
-    # l_leak = [0.1, 0.5]
+    # l_traj_size = [100, 1000, 2000, 10000]
+    # l_esn_size = [50, 100, 200, 500]
+    # l_regul = [0.01, 0.1, 1, 10]
+    # l_leak = [0.1, 0.5, 0.9]
+    l_traj_size = [500,1000,2000,10000]
+    l_esn_size = [10,50,100]
+    l_regul = [0.01, 0.1, 1.0, 10.0]
+    l_leak = [0.1,0.5,0.9]
+    l_test_length = [10,100,1000]
     nb_traj    = 5       ## how many instances of each traj config
     nb_esn     = 10      ## how many instances of each esn config
     nb_repeat  = 1       ## no need to repeat : deterministic learning
@@ -113,12 +115,12 @@ def xp():
         pbar.finish()
 
     # ## Apprentissage pour toutes les combinaisons
-    nb_combination = len(l_traj_size)*len(l_esn_size)*len(l_leak)*len(l_regul)
+    nb_combination = len(l_test_length)*len(l_traj_size)*len(l_esn_size)*len(l_leak)*len(l_regul)
     print "__LEARN","  "+str(nb_esn*nb_traj)+" x nb_config="+str(nb_combination)
     pbar = pb.ProgressBar(maxval=nb_combination,
                           widgets = ['  ',pb.SimpleProgress(), ' ', pb.Bar()]).start()
     id_xp = 0
-    for traj_size,esn_size,leak,regul in it.product( l_traj_size, l_esn_size, l_leak, l_regul ):
+    for traj_size,esn_size,leak,regul,length_test in it.product( l_traj_size, l_esn_size, l_leak, l_regul, l_test_length ):
         for id_esn,id_traj in it.product( range(nb_esn), range(nb_traj)):
             traj_name = "data_xp/traj_"+str(traj_size)+"_n{0:03d}".format(id_traj)+".data"
             esn_name = "data_xp/esn_"+str(esn_size)+"_1_0.99_"+str(leak)+"_n{0:03d}".format(id_esn)+".json"
@@ -126,7 +128,8 @@ def xp():
                     name_traj=    traj_name,
                     name_esn=     esn_name,
                     regul =       regul,
-                    name_output = "data_xp/result_"+str(traj_size)+"_"+str(esn_size)+"_"+str(leak)+"_"+str(regul)+"_e{0:03d}".format(id_esn)+"_t{0:03d}".format(id_traj)+".data",
+                    test_length = length_test,
+                    name_output = "data_xp/result_"+str(traj_size)+"_"+str(esn_size)+"_"+str(leak)+"_"+str(regul)+"_e{0:03d}".format(id_esn)+"_t{0:03d}".format(id_traj)+"_l"+str(length_test)+".data",
                     nb_repeat = nb_repeat,
                     idx_start = nb_start
             )

@@ -254,8 +254,8 @@ void read_traj( const std::string& filename )
     _test_data = Trajectory::POMDP::Data( _traj_data.end() - _test_length,
 					  _traj_data.end() );
 
-    std::cout << "__READ_TRAJ : learn = " << _learn_data.size() << std::endl;
-    std::cout << "              test  = " << _test_data.size() << std::endl;
+    //std::cout << "__READ_TRAJ : learn = " << _learn_data.size() << std::endl;
+    //std::cout << "              test  = " << _test_data.size() << std::endl;
   }
   else {
     std::cerr << "__Read_Traj : error _test_length (" << _test_length << ")";
@@ -613,12 +613,17 @@ int main( int argc, char *argv[] )
     //   idx_out ++;
     // }
 
-    // Dans un fichier
+    // Dans des fichiers _filegene_output+'_learn'/+'_test'
     if( _filegene_output ) {
       // Sauve les données
       if(_verb)
 	std::cout << "** Write Output dans " << *_filegene_output << std::endl;
-      std::ofstream ofile( *_filegene_output );
+
+      // First, results on test
+      std::stringstream filename_test;
+      filename_test << *_filegene_output;
+      filename_test << "_test";
+      std::ofstream ofile( filename_test.str() );
       // Header comments
       ofile << "## \"pomdp_name\": \"" << *_filename_pomdp << "\"," << std::endl;
       ofile << "## \"traj_name\" : \"" << *_fileload_traj << "\"," << std::endl;
@@ -663,8 +668,58 @@ int main( int argc, char *argv[] )
 	idx_out ++;
       }
       ofile.close();
+      
+      // Then, results on learn
+      std::stringstream filename_learn;
+      filename_learn << *_filegene_output;
+      filename_learn << "_learn";
+      ofile = std::ofstream( filename_learn.str() );
+      // Header comments
+      ofile << "## \"pomdp_name\": \"" << *_filename_pomdp << "\"," << std::endl;
+      ofile << "## \"traj_name\" : \"" << *_fileload_traj << "\"," << std::endl;
+      ofile << "## \"esn_name\": \"" << *_fileload_esn << "\"," << std::endl;
+      if( _fileload_noise ) {
+	ofile << "## \"noise_name\" : \"" << *_fileload_noise << "\"," << std::endl;
+      }
+      ofile << "## \"regul\": " << _regul << "," << std::endl;
+      ofile << "## \"test_length\": " << _test_length << "," << std::endl;
+      
+      // Header ColNames
+      // target
+      for( unsigned int i = 0; i < _lay->output_size(); ++i) {
+	ofile << "ta_" << i << "\t";
+      }
+      // after learn
+      for( unsigned int i = 0; i < _lay->output_size(); ++i) {
+	ofile << "le_" << i << "\t";
+      }
+      // // after init
+      // for( unsigned int i = 0; i < _lay->output_size(); ++i) {
+      // 	ofile << "in_" << i << "\t";
+      // }
+      ofile << std::endl;
+      // Data
+      idx_out = 0;
+      for( auto& item: _learn_data ) { 
+	// target
+	for( auto& var: target_from(item)) {
+	  ofile << var << "\t";
+	}
+	// predict
+	for( auto& var: result_learn[idx_out]) {
+	  ofile << var << "\t";
+	}
+	// // init
+	// for( auto& var: result_after_init[idx_out]) {
+	//   ofile << var << "\t";
+	// }
+	ofile << std::endl;
+      
+	idx_out ++;
+      }
+      ofile.close();
     }
-
+  
   }
   
   free_mem();

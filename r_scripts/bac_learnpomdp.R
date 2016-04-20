@@ -122,3 +122,49 @@ attach( df.mean )
 which.max( rate_le )
 ## etc
 
+###############################################################################
+## Une façon générique de tracer les courbes autour d'un point
+###############################################################################
+
+plot_pt_all <- function ( dsum, dmean, point, ylim.sum=c(0,1), ylim.mean=c(0,10) ) {
+  ## construire la condition
+  ## pt = c(num|NA,...)
+  bd_cond <- function( pt ) {
+    base_str <- c( "ltraj", "lesn", "leak", "regul", "ltest")
+    idx_str  <- c("1","2","3","4","5")
+    abs_str <- base_str[is.na(pt)]
+    dsum_str <- paste( "dsum$", base_str[!is.na(pt)],
+                       "==point[", idx_str[!is.na(pt)], "]", sep="", collapse=" & ")
+    dmean_str <- paste( "dmean$", base_str[!is.na(pt)],
+                       "==point[", idx_str[!is.na(pt)], "]", sep="", collapse=" & ")
+    title_str <- paste( base_str[!is.na(pt)],
+                        "=", pt[!is.na(pt)], sep="", collapse=", ")
+    #   cond_expr <- eval(parse(text=cond_str))
+    #   abs_expr <- eval(parse(text=abs_str))
+    return( list(abs_str,dsum_str,dmean_str,title_str))#,cond_expr,abs_expr))               
+  }
+  all_str <- bd_cond( point )
+  ## PLOT
+  p_root <- ggplot()
+  subdsum <- subset(dsum, eval(parse(text=all_str[2])))
+  p_ratele <- geom_point( data=subdsum,
+                          aes( x=eval(parse(text=all_str[1])), y=rate_le))
+  p_msele <- geom_point( data=subdsum, 
+                         aes( x=eval(parse(text=all_str[1])), y=mse_le))
+  
+  subdmean <- subset(dmean, eval(parse(text=all_str[3])))
+  p_ratele_ln <- geom_line( data=subdmean,
+                            aes( x=eval(parse(text=all_str[1])), y=rate_le))
+  p_msele_ln <- geom_line( data=subdmean,
+                           aes( x=eval(parse(text=all_str[1])), y=mse_le))
+    
+  p_coord1 <- coord_cartesian(ylim = ylim.sum)
+  p_labs1 <- labs(colour=NULL, title=paste("Success Rate",all_str[4]),
+                  x=all_str[1], y="rate")
+  p1 <- p_root + p_ratele + p_ratele_ln + p_labs1 + p_coord1
+  p_coord2 <- coord_cartesian(ylim = ylim.mean) 
+  p_labs2 <- labs(colour=NULL, title=paste("MSE Error",all_str[4]),
+                  x=all_str[1], y="mse")
+  p2 <- p_root + p_msele + p_msele_ln + p_labs2 + p_coord2
+  multiplot( p1, p2, cols=1 )
+}
