@@ -168,3 +168,120 @@ plot_pt_all <- function ( dsum, dmean, point, ylim.sum=c(0,1), ylim.mean=c(0,10)
   p2 <- p_root + p_msele + p_msele_ln + p_labs2 + p_coord2
   multiplot( p1, p2, cols=1 )
 }
+###############################################################################
+## Plot state_target vs state_out
+###############################################################################
+plot_scatter_state <- function ( filename ) {
+  # read file and compute states
+  data <- read.table( file=filename, header=TRUE )
+  data <- add_low_level( data )
+  #
+  p_root <- ggplot()
+  # tous les scatter points
+  p_pts <- geom_point( data=data,
+                       aes( x=ta_idx, y=le_idx))
+  p_labs <- labs( colour=NULL, title=paste("O vs T", filename), x="T", y="O")
+  p1 <- p_root + p_pts + p_labs
+  
+  # length
+  index <- seq(length(data$ta_idx))
+  p_target <- geom_line( data=data,
+                          aes( x=index, y=ta_idx, color='target'))
+  p_output <- geom_line( data=data,
+                          aes( x=index, y=le_idx, color='output'))
+  p2_labs <- labs( title=paste("O+T vs time", filename), x="time", y="State")
+  p2 <- p_root + p_target + p_output + p2_labs
+  return (list(p1,p2))
+}
+test_list <- function (nb ) {
+  l <- list()
+  add_element <- function(i) {
+    l <<- append(l, i)
+  }
+  for( j in 1:nb) {
+    add_element( j )
+  }
+  return (l)
+}
+###############################################################################
+## Plot toutes les trajectoires pour un point donné et un esn
+## - subd : une sous data.frame (voir get_filenames )
+## - esn : le numéro de l'esn à visualiser
+## - str.title : le titre du plot, souvent par mk_query
+###############################################################################
+plot_traj_esn <- function( subd, esn=0, str.title=NULL ) {
+  print(paste("TIT:",str.title))
+  # Le nom du repertoire
+  str.dir <- paste( "data_xp/Traj_", subd$ltraj[1], sep="")
+  # le nom de l'extension
+  str.esn <- paste( "e", formatC(esn, width=3, flag="0"), sep="")
+  # Les fichiers
+  filenames <- paste( str.dir, "/",
+                      subd$filename[subd$noesn==str.esn], sep="")
+  score <- paste( ":rate=", subd$rate_le[subd$noesn==str.esn],
+                  " mse=", formatC(subd$mse_le[subd$noesn==str.esn], width=4),
+                  sep="")
+  #
+  # Crée une liste de plot pour utiliser multiplot
+  l_plots <- list()
+  add_plot_traj <- function (filename, tit=NULL) {
+    p_root <- ggplot()
+    # read file and compute states
+    data <- read.table( file=filename, header=TRUE )
+    data <- add_low_level( data )
+    # length
+    data$index <- seq(length(data$ta_idx))
+    p_target <- geom_line( data=data,
+                           aes( x=index, y=ta_idx, color='target'))
+    p_output <- geom_line( data=data,
+                           aes( x=index, y=le_idx, color='output'))
+    
+    pl <- p_root+p_target+p_output
+    
+    # Ajoute titre
+    if( !is.null(tit) ) {
+      p1 <<- p1 +  ggtitle( tit )
+    }
+    ##l_plots <<-append( l_plots, pl)
+    return(pl)
+  }
+  ## apply to all filenames
+  ##l_plots[[1]] <- add_plot_traj( filenames[1], tit=str.title )
+  for( i in 1:length(filenames)) {
+    pn <- add_plot_traj( filenames[i] )
+    if( i==1 ) {
+      pn <- pn + ggtitle( paste( str.title, "esn=", esn, score[[i]] ))
+                                
+    }
+    else {
+      pn <- pn + ggtitle( score[[i]] )
+    }
+    l_plots[[i]] <- pn
+  }
+  multiplot( plotlist=l_plots, cols=1)
+  ##return( l_plots )
+}
+## Liste tous les noms de fichiers qui sont compatible avec la requete
+mk_query <- function( pt ) {
+  base_str <- c( "ltraj", "lesn", "leak", "regul", "ltest","type")
+  idx_str  <- c("1","2","3","4","5","6")
+  abs_str <- base_str[is.na(pt)]
+  dsum_str <- paste( "dsum$", base_str[!is.na(pt)],
+                     "==point[", idx_str[!is.na(pt)], "]", sep="", collapse=" & ")
+  title_str <- paste( base_str[!is.na(pt)],
+                      "=", pt[!is.na(pt)], sep="", collapse=", ")
+  #   cond_expr <- eval(parse(text=cond_str))
+  #   abs_expr <- eval(parse(text=abs_str))
+  return( list(abs_str,dsum_str,title_str))#,cond_expr,abs_expr))               
+}
+###############################################################################
+## Subset de dsum qui sont compatible avec le point donné
+## point = list(ltraj,leasn,leak,regul,ltest,type)
+##       où chaque élément peut être NA
+###############################################################################
+get_filenames <- function(dsum,  point ) {
+  res <- mk_query( point )
+  subd <- subset( dsum, eval(parse(text=res[2])))
+  return( subd )
+}
+  

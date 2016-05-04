@@ -74,6 +74,8 @@ d'après [Lukosevicius12]
 df.sum <- make_df_pomdp( "data_xp" )
 ## sauvegarde
 write.table( df.sum, file="data_xp/df_sum.rdata", row.names=FALSE, sep="\t")
+## Fait en plusieurs lots qu'on charge ensuite
+df <- rbind( df.sum.500, df.sum.1000, df.sum.2000, df.sum.10000 )
 *** TODO PT Max id : ltraj lesn leak regul
 voir dans [[bac_learnpomdp.R]]
 ## Faire les moyenne
@@ -86,6 +88,22 @@ names(df.mean)[1:6] <- c("ltraj","lesn","leak","regul","ltest","type")
 attach( df.mean )
 which.max( rate_le )
 ## etc
+## Ordonner le dataframe en fonction de rate_le
+df.maxrate <- df.mean[ order(-rate_le),]
+## On peut ensuite afficher, puis imprimer, en cliquant dessus.
+
+*** Visualier autour d'un point
+res <- mk_query( list(1000,100,0.1,0.1,10,"test"))
+subd <- get_filenames( df.sum, list(1000,100,0.1,0.1,10,"test"))
+lp <- plot_traj_esn( subd, esn=6, str.title=res\[[3 ]\] )
+## Ce qui se fait aussi avec 
+p <- look_traj( df.sum, list(500,100,0.5,1,100,"test"), 2)
+subd.test05 <- p[[1]]
+str.test05 <- p[[2]]
+pt.test05 <- p[[3]]
+plot_traj_esn( subd.test05, esn=6, str.title=str.test05)
+plot_traj_esn( subd.test05, esn=9, str.title=str.test05)
+
 *** DONE Tester sur traj test !!
 *** DONE Afficher variation autour PT Max dans chacune des 4 dimensions (3 fixe)
 *** DONE R-Script : générer les noms des fichiers results
