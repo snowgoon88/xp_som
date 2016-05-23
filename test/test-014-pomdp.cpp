@@ -14,6 +14,8 @@
 #include <json_wrapper.hpp>          // JSON::OStreamWrapper, JSON::IStreamWrapper
 
 #include <pomdp/pomdp.hpp>
+#include <pomdp/prog_dynamique.hpp>
+
 #include <gsl/gsl_rng.h>             // gsl random generator
 #include <ctime>                     // std::time
 
@@ -118,7 +120,15 @@ int main( int argc, char *argv[] )
 
   std::cout << "** ORIG \n" << pomdp.str_dump() << std::endl;
   std::cout << "** OPER \n" << p2.str_dump() << std::endl;
-  
+
+  // Tester les algorithmes
+  Algorithms::TVal valQ = Algorithms::compute_Q( p1 );
+  std::cout << "** QVal *****"  << std::endl;
+  for( auto& s: pomdp._states) {
+    for( auto& a: pomdp._actions ) {
+      std::cout << "Q["<< s._id << ", " << a._id << "]=" << valQ[s._id][a._id] << std::endl;
+    }
+  }
 
   return 0;
 }
