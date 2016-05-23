@@ -63,18 +63,27 @@ def xp():
     # l_esn_size = [50, 100, 200, 500]
     # l_regul = [0.01, 0.1, 1, 10]
     # l_leak = [0.1, 0.5, 0.9]
-    l_traj_size = [500,1000,2000,10000]
-    l_esn_size = [10,50,100]
-    l_regul = [0.01, 0.1, 1.0, 10.0]
-    l_leak = [0.1,0.5,0.9]
-    l_test_length = [10,100,400]
+
+    l_traj_size = [500]
+    l_esn_size = [10,50]
+    l_regul = [0.01, 0.1]
+    l_leak = [0.1,0.5]
+    l_test_length = [10]
+
+    # l_traj_size = [500,1000,2000,10000]
+    # l_esn_size = [10,50,100]
+    # l_regul = [0.01, 0.1, 1.0, 10.0]
+    # l_leak = [0.1,0.5,0.9]
+    # l_test_length = [10,100,400]
     nb_traj    = 5       ## how many instances of each traj config
-    nb_esn     = 10      ## how many instances of each esn config
+    nb_esn     = 2      ## how many instances of each esn config
     nb_repeat  = 1       ## no need to repeat : deterministic learning
     nb_start   = 0       ## start numbering files with
-    generate   = True    ## need to generate traj,esn
-
-    if generate:
+    generate_traj = False    ## need to generate traj
+    generate_esn  = True     ## need to generate traj
+    learn         = True    ## learn
+    
+    if generate_traj:
         ## Pour chaque longueur de trajectoire
         print "__TRAJ","  "+str(nb_traj)+"x traj_size="+str(l_traj_size)
         nb_combination = nb_traj * len(l_traj_size)
@@ -94,6 +103,7 @@ def xp():
             pbar.update( id_xp )
         pbar.finish()
 
+    if generate_esn:
         ## Pour chaque esn (nb_esn x [esn_size x leak]
         print "__ESN","  "+str(nb_esn)+"x esn_size="+str(l_esn_size)+" leak="+str(l_leak)
         nb_combination = nb_esn * len(l_esn_size)*len(l_leak)
@@ -101,7 +111,7 @@ def xp():
                               widgets = ['  ',pb.SimpleProgress(), ' ', pb.Bar()]).start()
         id_xp = 0
         for esn_size,leak_rate,id_esn in it.product(l_esn_size, l_leak, range(nb_esn)):
-            esn_name = "data_xp/esn_"+str(esn_size)+"_1_0.99_"+str(leak_rate)+"_n{0:03d}".format( id_esn )
+            esn_name = "data_v/esn_"+str(esn_size)+"_1_0.99_"+str(leak_rate)+"_n{0:03d}".format( id_esn )
             esn_args = [ "--gene_esn", esn_name,
                          "--res_size", str(esn_size),
                          "--res_leak", str(leak_rate)]
@@ -114,28 +124,29 @@ def xp():
             pbar.update( id_xp )
         pbar.finish()
 
-    # ## Apprentissage pour toutes les combinaisons
-    nb_combination = len(l_test_length)*len(l_traj_size)*len(l_esn_size)*len(l_leak)*len(l_regul)
-    print "__LEARN","  "+str(nb_esn*nb_traj)+" x nb_config="+str(nb_combination)
-    pbar = pb.ProgressBar(maxval=nb_combination,
-                          widgets = ['  ',pb.SimpleProgress(), ' ', pb.Bar()]).start()
-    id_xp = 0
-    for traj_size,esn_size,leak,regul,length_test in it.product( l_traj_size, l_esn_size, l_leak, l_regul, l_test_length ):
-        for id_esn,id_traj in it.product( range(nb_esn), range(nb_traj)):
-            traj_name = "data_xp/traj_"+str(traj_size)+"_n{0:03d}".format(id_traj)+".data"
-            esn_name = "data_xp/esn_"+str(esn_size)+"_1_0.99_"+str(leak)+"_n{0:03d}".format(id_esn)+".json"
-            repeat( name_pomdp = "data_xp/cheese_maze_0.9_1.json",
-                    name_traj=    traj_name,
-                    name_esn=     esn_name,
-                    regul =       regul,
-                    test_length = length_test,
-                    name_output = "data_xp/result_"+str(traj_size)+"_"+str(esn_size)+"_"+str(leak)+"_"+str(regul)+"_e{0:03d}".format(id_esn)+"_t{0:03d}".format(id_traj)+"_l"+str(length_test)+".data",
-                    nb_repeat = nb_repeat,
-                    idx_start = nb_start
-            )
-        id_xp += 1
-        pbar.update( id_xp )
-    pbar.finish()
+    if learn:
+        # ## Apprentissage pour toutes les combinaisons
+        nb_combination = len(l_test_length)*len(l_traj_size)*len(l_esn_size)*len(l_leak)*len(l_regul)
+        print "__LEARN","  "+str(nb_esn*nb_traj)+" x nb_config="+str(nb_combination)
+        pbar = pb.ProgressBar(maxval=nb_combination,
+                              widgets = ['  ',pb.SimpleProgress(), ' ', pb.Bar()]).start()
+        id_xp = 0
+        for traj_size,esn_size,leak,regul,length_test in it.product( l_traj_size, l_esn_size, l_leak, l_regul, l_test_length ):
+            for id_esn,id_traj in it.product( range(nb_esn), range(nb_traj)):
+                traj_name = "data_xp/traj_"+str(traj_size)+"_n{0:03d}".format(id_traj)+".data"
+                esn_name = "data_v/esn_"+str(esn_size)+"_1_0.99_"+str(leak)+"_n{0:03d}".format(id_esn)+".json"
+                repeat( name_pomdp = "data_xp/cheese_maze_0.9_1.json",
+                        name_traj=    traj_name,
+                        name_esn=     esn_name,
+                        regul =       regul,
+                        test_length = length_test,
+                        name_output = "data_v/result_"+str(traj_size)+"_"+str(esn_size)+"_"+str(leak)+"_"+str(regul)+"_e{0:03d}".format(id_esn)+"_t{0:03d}".format(id_traj)+"_l"+str(length_test)+".data",
+                        nb_repeat = nb_repeat,
+                        idx_start = nb_start
+                )
+            id_xp += 1
+            pbar.update( id_xp )
+        pbar.finish()
 
 # ************************************************************************* MAIN
 if __name__ == '__main__':

@@ -43,12 +43,12 @@ TVal compute_Q( const Model::POMDP& pomdp,
     vQ.push_back( vQ_s );
   }
   // DEBUG
-  std::cout << "___ INIT " << std::endl;
-  for( auto& s: pomdp._states) {
-    for( auto& a: pomdp._actions ) {
-      std::cout << "Q["<< s._id << ", " << a._id << "]=" << vQ[s._id][a._id] << std::endl;
-    }
-  }
+  // std::cout << "___ INIT " << std::endl;
+  // for( auto& s: pomdp._states) {
+  //   for( auto& a: pomdp._actions ) {
+  //     std::cout << "Q["<< s._id << ", " << a._id << "]=" << vQ[s._id][a._id] << std::endl;
+  //   }
+  // }
   
   // Iterate until convergence (< epsilon)
   double bellman_residual = std::numeric_limits<double>::max();
@@ -79,13 +79,13 @@ TVal compute_Q( const Model::POMDP& pomdp,
     }
     vQ = new_vQ;
     // DEBUG
-    std::cout << "___ STEP " << num_ite++ << std::endl;
-    for( auto& s: pomdp._states) {
-      for( auto& a: pomdp._actions ) {
-	std::cout << "Q["<< s._id << ", " << a._id << "]=" << vQ[s._id][a._id] << std::endl;
-      }
-    }
-    std::cout << "BE= " << bellman_residual << std::endl;
+    // std::cout << "___ STEP " << num_ite++ << std::endl;
+    // for( auto& s: pomdp._states) {
+    //   for( auto& a: pomdp._actions ) {
+    // 	std::cout << "Q["<< s._id << ", " << a._id << "]=" << vQ[s._id][a._id] << std::endl;
+    //   }
+    // }
+    // std::cout << "BE= " << bellman_residual << std::endl;
   }
 
   return vQ;

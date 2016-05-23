@@ -31,7 +31,8 @@
 #include <ctime>                     // std::time std::clock
 #include <chrono>                    // std::chrono::steady_clock
 #include <random>                    // std::uniform_int...
-#include <algorithm>                 // fill
+#include <algorithm>                 // fill, std::max_element
+#include <pomdp/prog_dynamique.hpp>  // compute_Q
 
 // Parsing command line options
 #include <boost/program_options.hpp>
@@ -72,6 +73,8 @@ double                  _res_leak;
 double                  _regul;
 bool                    _verb;
 
+// Fonction valeur
+Algorithms::TVal _vQ;
 
 gsl_rng*               _rnd = gsl_rng_alloc( gsl_rng_taus );
 // ****************************************************************** free_mem
@@ -362,13 +365,26 @@ Reservoir::Tinput input_from( const Trajectory::POMDP::Item& item )
 
   return input;
 }
+/** Learn S */
+// RidgeRegression::Toutput target_from( const Trajectory::POMDP::Item& item )
+// {
+//   // Try to learn S
+//   RidgeRegression::Toutput target(_lay->output_size() );
+//   std::fill( target.begin(), target.end(), 0.0 );
+
+//   target[item.id_next_s] =1.0;
+
+//   return target;
+// }
+/** Learn V(s) */
 RidgeRegression::Toutput target_from( const Trajectory::POMDP::Item& item )
 {
-  // Try to learn S
+  // Try to learn V(S)
   RidgeRegression::Toutput target(_lay->output_size() );
-  std::fill( target.begin(), target.end(), 0.0 );
 
-  target[item.id_next_s] =1.0;
+  // V(s) = max Q(s,a) 
+  target[0] = *std::max_element( _vQ[item.id_next_s].begin(),
+				 _vQ[item.id_next_s].end() );
 
   return target;
 }
@@ -522,7 +538,8 @@ int main( int argc, char *argv[] )
     //std::cout << "** Gene ESN into " << *_filegene_esn << std::endl;
     gene_esn( *_filegene_esn,
 	      _pomdp->_obs.size() + _pomdp->_actions.size(), // In = O+A
-	      _pomdp->_states.size(),                    // out = S
+	      //_pomdp->_states.size(),                    // out = S
+	      1,                                          // out = V(s)
 	      _res_size,                                  // _res size
 	      _res_scaling, _res_radius, _res_leak
 	      );
@@ -540,7 +557,6 @@ int main( int argc, char *argv[] )
     if( _verb ) 
       std::cout << "** Load Trajectory::POMDP::Data from " << *_fileload_traj << std::endl;
     read_traj( *_fileload_traj );
-
     // std::cout << "** Trajectory Read" << std::endl;
     // for( auto& item: _traj_data) {
     //   std::cout << item.id_s << ":" << item.id_o << "+" << item.id_a << "->" << item.id_next_s << ":" << item.id_next_o << " = " << item.r << std::endl;
@@ -564,6 +580,10 @@ int main( int argc, char *argv[] )
   if( _filename_pomdp and _fileload_esn and _fileload_traj ) {
     if( _verb )
       std::cout << "** LEARNING **" << std::endl;
+
+    // Stocker la fonction valeur
+    _vQ = Algorithms::compute_Q( *_pomdp );
+    
     // Si _noise, on commence par là
     if( _fileload_noise ) {
       if( _verb )
