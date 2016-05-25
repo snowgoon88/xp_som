@@ -64,17 +64,18 @@ def xp():
     # l_regul = [0.01, 0.1, 1, 10]
     # l_leak = [0.1, 0.5, 0.9]
 
-    l_traj_size = [500]
-    l_esn_size = [10,50]
-    l_regul = [0.01, 0.1]
-    l_leak = [0.1,0.5]
-    l_test_length = [10]
+    # l_traj_size = [500]
+    # l_esn_size = [10,50]
+    # l_regul = [0.01, 0.1]
+    # l_leak = [0.1,0.5]
+    # l_test_length = [10]
 
-    # l_traj_size = [500,1000,2000,10000]
-    # l_esn_size = [10,50,100]
-    # l_regul = [0.01, 0.1, 1.0, 10.0]
-    # l_leak = [0.1,0.5,0.9]
-    # l_test_length = [10,100,400]
+    l_traj_size = [500,1000,2000,10000]
+    l_esn_size = [10,50,100]
+    l_regul = [0.01, 0.1, 1.0, 10.0]
+    l_leak = [0.1,0.5,0.9]
+    l_test_length = [10,100,400]
+    
     nb_traj    = 5       ## how many instances of each traj config
     nb_esn     = 2      ## how many instances of each esn config
     nb_repeat  = 1       ## no need to repeat : deterministic learning

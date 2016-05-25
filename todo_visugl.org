@@ -69,7 +69,7 @@ wbuild/xp/xp-001-pomdp -p data_xp/cheese_maze_0.9_1.json -t data_xp/traj_1000.da
 *** DONE LEARN results with comment and header
 *** DONE [Q] : biais dans réservoir ? => OUI
 d'après [Lukosevicius12]
-** [10/11] TODO Scripts pour tester influence des paramètres
+** [11/13] TODO Scripts pour tester influence des paramètres
 ## calculer taux erreur pour chaque fichier
 df.sum <- make_df_pomdp( "data_xp" )
 ## sauvegarde
@@ -92,7 +92,7 @@ which.max( rate_le )
 df.maxrate <- df.mean[ order(-rate_le),]
 ## On peut ensuite afficher, puis imprimer, en cliquant dessus.
 
-*** Visualier autour d'un point
+*** DONE Visualier autour d'un point
 res <- mk_query( list(1000,100,0.1,0.1,10,"test"))
 subd <- get_filenames( df.sum, list(1000,100,0.1,0.1,10,"test"))
 lp <- plot_traj_esn( subd, esn=6, str.title=res\[[3 ]\] )
@@ -104,6 +104,9 @@ pt.test05 <- p[[3]]
 plot_traj_esn( subd.test05, esn=6, str.title=str.test05)
 plot_traj_esn( subd.test05, esn=9, str.title=str.test05)
 
+**** <2016-05-24 Tue>
+Sauvegarde de l'environnement R autour de data_xp dans "env_data_xp.R"
+
 *** DONE Tester sur traj test !!
 *** DONE Afficher variation autour PT Max dans chacune des 4 dimensions (3 fixe)
 *** DONE R-Script : générer les noms des fichiers results
@@ -112,13 +115,14 @@ plot_traj_esn( subd.test05, esn=9, str.title=str.test05)
 *** DONE Reprendre script python
 ATTENTION : il faut générer un ESN par run de l'expérience.
 **** subprocess.Popen 
-avec Popen.poll() et Popen.wait()
+     avec Popen.poll() et Popen.wait()
 *** DONE taille Res
 *** DONE Leaking rate
 *** DONE regul
 *** noise
 *** noise length
 *** DONE traj size
+*** TODO Sauvegarder les points pt.test* importants
 
 ** TODO [1/4] apprendre (0+A) -> .
 *** TODO pour apprendre, il faut transition ->O
@@ -136,6 +140,20 @@ nb_start   = 0       ## start numbering files with
 generate   = True    ## need to generate traj,esn
 data_xp/result_traj_size_esn_size_leak_regul_Eesn_Ttraj.data_nb_test/learn
 *** TODO pour apprendre, il faut transition ->V(S) (pour voir)
+**** TODO <2016-05-23 Mon>
+l_traj_size = [500,1000,2000,10000]
+    l_esn_size = [10,50,100]
+    l_regul = [0.01, 0.1, 1.0, 10.0]
+    l_leak = [0.1,0.5,0.9]
+    l_test_length = [10,100,400]
+    
+    nb_traj    = 5       ## how many instances of each traj config
+    nb_esn     = 2      ## how many instances of each esn config
+    nb_repeat  = 1       ## no need to repeat : deterministic learning
+    nb_start   = 0       ## start numbering files with
+    generate_traj = False    ## need to generate traj
+    generate_esn  = True     ## need to generate traj
+    learn         = True    ## learn
 *** TODO pour apprendre, il faut tansition ->V(O) (pour voir)
 ** TODO [0/3] apprendre A x (O -> .) 
 *** TODO pour apprendre, il faut transition ->O
