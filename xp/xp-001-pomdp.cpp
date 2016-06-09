@@ -6,7 +6,7 @@
  * - load POMDP and generate Trajectories of S,O,A,S',O',R
  * - store Trajectories
  * - load Trajectories 
- * - générer un esn pour apprendre (bonne dimensions
+ * - generer un esn pour apprendre (bonne dimensions
  * - load un esn
  * TODO : try to learn O,A -> S (??????)
  */
@@ -127,7 +127,7 @@ void setup_options(int argc, char **argv)
   po::options_description cmdline_options;
   cmdline_options.add(desc);
 
-  // Options qui sont 'après'
+  // Options qui sont 'apres'
   po::positional_options_description pod;
   //pod.add( "data_file", 1);
 
@@ -279,7 +279,8 @@ void gene_esn( const std::string& filename,
   free_esn();
   _res = new Reservoir( input_size, reservoir_size,
 		    input_scaling, spectral_radius, leaking_rate );
-  _lay = new Layer( reservoir_size+1, output_size );
+  //NEW layer's input also basic input
+  _lay = new Layer( input_size+reservoir_size+1, output_size );
   
   // Serialisation dans filename.json
   std::stringstream stream;
@@ -342,7 +343,7 @@ void gene_noise( const std::string& filename,
   jfile << str_obj(obj) << std::endl;
   jfile.close();
 
-  // Sauve les données
+  // Sauve les data
   std::string fn_data = filename+".data";
   std::cout << "Write WNoise dans " << fn_data << std::endl;
   std::ofstream ofile( fn_data );
@@ -391,35 +392,54 @@ RidgeRegression::Toutput target_from( const Trajectory::POMDP::Item& item )
 void init()
 {
   for( auto& item: _wnoise ) {
-    // Passe dans réservoir
+    // Passe dans reservoir
     auto out_res = _res->forward( item );
   }
 }
 void learn( double regul )
 {
-  // Preparation des données d'apprentissage et de test
+  // Preparation des donnees d'apprentissage et de test
   _data.clear();
   for( auto& item: _learn_data ) {
-    // Passe dans réservoir
-    auto out_res = _res->forward( input_from(item) );
-    // Ajoute 1.0 en bout (le neurone biais)
-    out_res.push_back( 1.0 );
+    RidgeRegression::Tinput samp_in;//( _res->input_size()+_res->output_size()+1, 0.0 );
+    //DEBUG std::cout << "samp_ini=" << utils::str_vec( samp_in ) << std::endl;
+	
+    // Les inputs
+    Reservoir::Tinput vec_in = input_from(item);
+    //DEBUG std::cout << "vec_in=" << utils::str_vec(vec_in) <<  std::endl;
+    // Passe dans reservoir
+    auto out_res = _res->forward( vec_in );
+    samp_in.insert( samp_in.begin(), out_res.begin(), out_res.end());
+    //DEBUG std::cout << "samp_res=" << utils::str_vec( samp_in ) << std::endl;
     
-    // Ajoute dans Data l'échantillon (entré, sortie désirée)
-    _data.push_back( RidgeRegression::Sample( out_res, target_from(item)) );
+    // Ajoute input
+    samp_in.insert( samp_in.end(), vec_in.begin(), vec_in.end() );
+    //DEBUG std::cout << "samp_in=" << utils::str_vec( samp_in ) << std::endl;
+
+    // Ajoute 1.0 en bout (le neurone biais)
+    samp_in.push_back( 1.0 );
+    //DEBUG std::cout << "samp_final=" << utils::str_vec( samp_in ) << std::endl;
+    //DEBUG std::cout << "__" << std::endl;
+
+    RidgeRegression::Toutput vec_tar = target_from(item);
+    //DEBUG std::cout << "vec_tar=" << utils::str_vec( vec_tar )  << std::endl;
+    
+    // Ajoute dans Data l'echantillon (entre, sortie desiree)
+    _data.push_back( RidgeRegression::Sample( samp_in, vec_tar) );
   }
 
+  //DEBUG std::cout << "___ Regression" << std::endl;
   // Ridge Regression pour apprendre la couche de sortie
   RidgeRegression reg( _res->output_size()+1, /* res output size +1 */
 		       _lay->output_size(), /*target size */
 		       _res->output_size() /* idx intercept */
 		       );
-  // Apprend, avec le meilleur coefficient de régulation
+  // Apprend, avec le meilleur coefficient de regulation
   reg.learn( _data, _lay->weights(), regul );
-  // std::cout << "***** POIDS après REGRESSION **" << std::endl;
+  // std::cout << "***** POIDS apres REGRESSION **" << std::endl;
   // std::cout << _lay->str_dump() << std::endl;
 
-  // Les données d'apprentissage dans un fichier
+  // Les donnees d'apprentissage dans un fichier
   if( _filegene_learn ) {
     // Samples d'apprentissage
     std::string fn_sample = *_filegene_learn + "_samples.data";
@@ -490,10 +510,14 @@ predict( Reservoir& res,
   // un vecteur de output
   std::vector<RidgeRegression::Toutput> result;
   
-  // suppose que _mg_data a été initialisé
+  // suppose que _mg_data a ete initialise
   for( auto& item: traj) {
-    // Passe dans réservoir
-    auto out_res = res.forward( input_from(item) );
+    // input
+    auto vec_in = input_from(item);
+    // Passe dans reservoir
+    auto out_res = res.forward( vec_in );
+    // Ajoute input
+    out_res.insert( out_res.end(), vec_in.begin(), vec_in.end() );
     // Ajoute 1.0 en bout (le neurone biais)
     out_res.push_back( 1.0 );
     // Passe dans layer
@@ -528,12 +552,12 @@ int main( int argc, char *argv[] )
       std::cout << "** Load POMDP from " << *_filename_pomdp << std::endl;
     load_pomdp();
   }
-  // Si POMDP + nom traj => générer et sauver une trajectoire
+  // Si POMDP + nom traj => generer et sauver une trajectoire
   if( _filename_pomdp and _filegene_traj ) {
     //std::cout << "** Gene TRAJ into " << *_filegene_traj << std::endl;
     gene_traj();
   }
-  // Si POMDP + gene_esn => générer et sauver un esn
+  // Si POMDP + gene_esn => generer et sauver un esn
   if( _filename_pomdp and _filegene_esn ) {
     //std::cout << "** Gene ESN into " << *_filegene_esn << std::endl;
     gene_esn( *_filegene_esn,
@@ -544,7 +568,7 @@ int main( int argc, char *argv[] )
 	      _res_scaling, _res_radius, _res_leak
 	      );
   }  
-  // Si POMDP + gene_noise => générer et sauver noise
+  // Si POMDP + gene_noise => generer et sauver noise
   if( _filename_pomdp and _filegene_noise ) {
     //std::cout << "** Gene NOISE into " << *_filegene_noise << std::endl;
     gene_noise( *_filegene_noise,
@@ -582,48 +606,48 @@ int main( int argc, char *argv[] )
       std::cout << "** LEARNING **" << std::endl;
 
     // Stocker la fonction valeur
-    _vQ = Algorithms::compute_Q( *_pomdp );
+    //_vQ = Algorithms::compute_Q( *_pomdp );
     
-    // Si _noise, on commence par là
+    // Si _noise, on commence par la 
     if( _fileload_noise ) {
       if( _verb )
 	std::cout << "___ init with noise" << std::endl;
       init();
     }
-    // Sauve l'état présent du réseau
+    // Sauve l'etat present du reseau
     Reservoir res_after_init( *_res );
-    // Apprendre => modifie _lay par régression
+    // Apprendre => modifie _lay par regression
     if( _verb)
       std::cout << "___ learn()" << std::endl;
     learn( _regul );
 
-    // TODO erreur commise sur le début du réseau
-    //      => sauvegarder l'état du réseau (ce qui est déjà) fait
+    // TODO erreur commise sur le debut du reseau
+    //      => sauvegarder l'etat du reseau (ce qui est deja) fait
     // un vecteur de output
     std::vector<RidgeRegression::Toutput> result_learn;
-    // A partir des données d'apprentissage : Data
+    // A partir des donnees d'apprentissage : Data
     for( auto& sample: _data) {
       // Passe dans layer
       auto out_lay = _lay->forward( sample.first ); 
       result_learn.push_back( out_lay );
     }
     
-    // Prédiction de la suite de la trajectoire
+    // Prediction de la suite de la trajectoire
     if( _verb )
       std::cout << "___ predict()" << std::endl;
     std::vector<RidgeRegression::Toutput> result_test = predict( *_res, *_lay, _test_data );
     					 
-    // // Première prédiction à partir de l'état du réseau appris
+    // // Premiere prediction a partir de l'etat du reseau appris
     // if( _verb ) 
     //   std::cout << "___ predict follow" << std::endl;
     // std::vector<RidgeRegression::Toutput> result_after_learn = predict( *_res, *_lay, _traj_data );
-    // // Deuxième prédiction à partir de l'état du réseau avant apprentissage
-    // // mais avec _lay modifié
+    // // Deuxieme prediction a partir de l'etat du reseau avant apprentissage
+    // // mais avec _lay modifie
     // if( _verb )
     //   std::cout << "___ predict base" << std::endl;
     // std::vector<RidgeRegression::Toutput> result_after_init = predict( res_after_init, *_lay, _traj_data );
     
-    // Les résultats
+    // Les resultats
     // Affiche targert: \n pred\n init\n
     unsigned int idx_out = 0;
     // for( auto& item: _traj_data) {
@@ -635,7 +659,7 @@ int main( int argc, char *argv[] )
 
     // Dans des fichiers _filegene_output+'_learn'/+'_test'
     if( _filegene_output ) {
-      // Sauve les données
+      // Sauve les donnees
       if(_verb)
 	std::cout << "** Write Output dans " << *_filegene_output << std::endl;
 
