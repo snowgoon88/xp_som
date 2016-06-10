@@ -5,10 +5,11 @@
  *
  * - generate/save/load HMM : expr
  * - generate Trajectories of (S,O). inspi from Trajectory
- * - TODO save Trajectories
- * - TODO Load Trajectories
+ * - save/load Trajectories
+ * - TODO create ESN : two initialisation options
+ * - TODO save ESN
+ * - TODO load ESN
  *
- * TODO : make function that don't use globals...
  */
 
 #include <iostream>                // std::cout
@@ -27,21 +28,28 @@
 using namespace utils::rj;
 // ******************************************************************** Global
 // HMM
-std::string _expr = "ABCD";
-bica::hmm::T _t;
-bica::hmm::O _o;
-unsigned int _nb_states;
+using Problem = struct {
+  std::string expr = "ABCD";
+  bica::hmm::T t;
+  bica::hmm::O o;
+  unsigned int nb_states;
+};
+Problem _pb;
 
 // Trajectory
-Trajectory::HMM::Data _learn_data;
+using Traj = Trajectory::HMM::Data;
+Traj _learn_data;
 
 // **************************************************************** create_hmm
-void create_hmm( const std::string& expr = "ABCD" )
+Problem create_hmm( const std::string& expr = "ABCD" )
 {
-  _expr = expr;
+  Problem pb;
+  pb.expr = expr;
   auto hmm = bica::hmm::make(expr);
-  std::tie(_t, _o) = hmm.first;
-  _nb_states = hmm.second;
+  std::tie(pb.t, pb.o) = hmm.first;
+  pb.nb_states = hmm.second;
+
+  return pb;
 }
 // ****************************************************************** save_hmm
 void save_hmm( const std::string& filename, const std::string hmm_expr )
@@ -58,7 +66,7 @@ void save_hmm( const std::string& filename, const std::string hmm_expr )
   ofile.close();
 };
 // ****************************************************************** load_hmm
-void load_hmm( const std::string& filename )
+Problem load_hmm( const std::string& filename )
 {
   auto pfile = std::ifstream( filename );
 
@@ -70,7 +78,7 @@ void load_hmm( const std::string& filename )
   pfile.close();
 
   auto expr = bica::hmm::unserialize( read_doc["hmm"] );
-  create_hmm( expr );
+  return create_hmm( expr );
 };
 // ***************************************************************** print_hmm
 void print_hmm(const std::string& name, bica::sampler::HMM& h, int nb)
@@ -83,20 +91,23 @@ void print_hmm(const std::string& name, bica::sampler::HMM& h, int nb)
   std::cout << std::endl;
 }
 // *************************************************************** create_traj
-void create_traj( const unsigned int length )
+Traj create_traj( const unsigned int length, const Problem& pb )
 {
+  Traj traj;
   // Sampler pour le HMM
-  bica::sampler::HMM hmm(_t,_o);
+  bica::sampler::HMM hmm( pb.t, pb.o);
 
-  _learn_data.clear();
+  traj.clear();
   for( unsigned int i = 0; i < length; ++i) {
-    _learn_data.push_back( Trajectory::HMM::Item{hmm.input_id(), hmm.input()} );
+    traj.push_back( Trajectory::HMM::Item{ hmm.input_id(), hmm.input()} );
     hmm.shift();
   }
+
+  return traj;
 };
 // ***************************************************************** save_traj
 void save_traj( const std::string& filename,
-		const Trajectory::HMM::Data& data,
+		const Traj& data,
 		const std::string hmm_expr)
 {
   auto ofile = std::ofstream( filename );
@@ -109,11 +120,14 @@ void save_traj( const std::string& filename,
   ofile.close();
 };
 // ***************************************************************** load_traj
- void load_traj( const std::string& filename )
+Traj load_traj( const std::string& filename )
 {
+  Traj traj;
   auto pfile = std::ifstream( filename );
-  Trajectory::HMM::read( pfile, _learn_data );
+  Trajectory::HMM::read( pfile, traj );
   pfile.close();
+
+  return traj;
 };
 // ***************************************************************************
 // ********************************************************************** main
@@ -121,35 +135,34 @@ void save_traj( const std::string& filename,
 int main(int argc, char *argv[])
 {
   // Create a new HMM
-  create_hmm( "ABCDCB" );
-  bica::sampler::HMM hmm1(_t,_o);
-  std::cout << "__" << _expr << "__ with " << _nb_states << " states" << std::endl;  
+  _pb = create_hmm( "ABCDCB" );
+  bica::sampler::HMM hmm1(_pb.t,_pb.o);
+  std::cout << "__" << _pb.expr << "__ with " << _pb.nb_states << " states" << std::endl;  
   // print_hmm("h1",hmm1,30);
   // // Save to JSON
-  // save_hmm( "tmp_hmm.json", _expr );
+  // save_hmm( "tmp_hmm.json", _pb.expr );
   // // Reload from JSON
   // // first create another one
-  // create_hmm( "AAAF" );
-  // bica::sampler::HMM hmm2(_t,_o);
-  // std::cout << "__" << _expr << "__ with " << _nb_states << " states" << std::endl;  
+  // _pb = create_hmm( "AAAF" );
+  // bica::sampler::HMM hmm2(_pb.t,_pb.o);
+  // std::cout << "__" << _pb.expr << "__ with " << _pb.nb_states << " states" << std::endl;  
   // print_hmm("h2",hmm2,30);
   // // then load
-  // load_hmm( "tmp_hmm.json" );
-  // bica::sampler::HMM hmm3(_t,_o);
-  // std::cout << "__" << _expr << "__ with " << _nb_states << " states" << std::endl;  
+  // _pb = load_hmm( "tmp_hmm.json" );
+  // bica::sampler::HMM hmm3(_pb.t,_pb.o);
+  // std::cout << "__" << _pb.expr << "__ with " << _pb.nb_states << " states" << std::endl;  
   // print_hmm("h3",hmm3,30);
 
   // Create and save trajectory
-  create_traj( 100 );
-  save_traj( "tmp_traj.json", _learn_data, _expr );
+  _learn_data = create_traj( 100, _pb );
+  save_traj( "tmp_traj.json", _learn_data, _pb.expr );
   // Read Trajectory
   _learn_data.clear();
-  load_traj( "tmp_traj.json" );
-  // for (auto it = _learn_data.begin(); it != _learn_data.begin()+10; ++it) {
-  //   std::cout << "s=" << (*it).id_s << "\to=" << (*it).id_o << std::endl;    
-  // }
+  _learn_data = load_traj( "tmp_traj.json" );
+  for (auto it = _learn_data.begin(); it != _learn_data.begin()+10; ++it) {
+    std::cout << "s=" << (*it).id_s << "\to=" << (*it).id_o << std::endl;    
+  }
   
-
   return 0;
 }
 // ***************************************************************************
