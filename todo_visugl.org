@@ -23,6 +23,29 @@
 
 * DONE [1/1] Constructeurs, Copy, Move
 ** DONE tester Copy pour Layer
+* TODO [1/2] BICA
+** hmm.hpp (et input.hpp)
+HMM est une paire de deux fontion
+- une qui donne le prochain état          (int) -> int
+  typedef std::function<int(int)>    T;
+- une qui donne la prochaine observation  (int) -> double
+  typedef std::function<double(int)> O;
+*** peut définir des HMM avec string : make( string )
+std::string("ABCD"),           // periodic
+"AB*D",                        // periodic, mais avec *=uniform obs
+"+ ABC & DEF",                 // suite de 2 HMM
+"! .05 ABCD",                  // bruit gaussien sur obs
+"+ ! .05 ABC & DEF",           // suite gaussien puis deterministe
+"| .05 ABC .05 DEF",           // alterne entre deux deterministes
+"| .05 ! .05 ABCD .01 *",      // alterne entre 1) Gaussien 2) random O
+"| 0.03 ! 0.05 AAAAAAAAAAF 0.1 | 0.5 A 0.5 F"
+                               // alterne 1) AAAAAAAAAAAF gaussien
+                               //         2) soit A, soit F
+** DONE test-hmm.cpp
+** TODO [0/2] Apprendre (o)_t -> o_{t+1} avec réservoir
+*** générer trajectoire HMM
+*** TODO initialiser différemment ESN (Szita)
+*** TODO xp-002-HMM
 * TODO Rec-SOM
 * [/] Data
 ** DONE McKey-Glass

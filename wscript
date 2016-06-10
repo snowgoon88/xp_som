@@ -58,4 +58,5 @@ def build( bld ):
     ## bld.recurse( 'src' )
     bld.recurse( 'xp' )
     bld.recurse( 'test' )
+    bld.recurse( 'src/supelec' )
     

@@ -14,4 +14,8 @@ def build( bld ):
     		 target='xp-002-cheese',
 		 includes=['.', '../include', '../src'],
 		 use=['JSON', 'GSL', 'BOOST'] )
+    bld.program( source=['xp-003-hmm.cpp'],
+    		 target='xp-003-hmm',
+		 includes=['.', '../include', '../src','../src/supelec'],
+		 use=['JSON', 'GSL', 'BOOST'] )
     

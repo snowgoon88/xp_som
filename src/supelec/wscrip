@@ -1,0 +1,12 @@
+# -*- coding: utf-8 -*-
+# waf configuration file .waf --help pour commande par défaut
+# ******************************************************************** CMD build
+def build(bld):
+    # try to build
+    bld.program(
+        source=['test-hmm.cpp'],
+        target = 'test-hmm',
+        includes=['.', '../include', '../src'],
+        use = []
+    )
+    
