@@ -1,3 +1,4 @@
+# -*- mode: python; -*-
 # waf configuration file .waf --help pour commande par défaut
 # ******************************************************************** CMD build
 def build( bld ):

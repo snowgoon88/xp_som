@@ -27,6 +27,10 @@
 #include <layer.hpp>
 #include <ridge_regression.hpp>
 
+// Parsing command line options
+#include <boost/program_options.hpp>
+namespace po = boost::program_options;
+
 #include <utils.hpp>                  // various str_xxx
 using namespace utils::rj;
 // ******************************************************************** Global
@@ -37,11 +41,11 @@ using Problem = struct {
   bica::hmm::O o;
   unsigned int nb_states;
 };
-Problem _pb;
+std::unique_ptr<Problem> _pb = nullptr;
 
 // Trajectory
 using Traj = Trajectory::HMM::Data;
-Traj _learn_data;
+std::unique_ptr<Traj>    _learn_data = nullptr;
 
 // ESN
 using PtrReservoir =   std::unique_ptr<Reservoir>;
@@ -51,7 +55,109 @@ using ESN = struct {
   PtrLayer          lay = nullptr;
   bool    input_forward = false;
 };
-ESN _esn;
+std::unique_ptr<ESN>     _esn;
+
+// Options
+std::unique_ptr<std::string> _opt_expr               = nullptr;
+std::unique_ptr<std::string> _opt_filesave_hmm       = nullptr;
+std::unique_ptr<std::string> _opt_fileload_hmm       = nullptr;
+unsigned int                 _opt_traj_length;
+std::unique_ptr<std::string> _opt_filesave_traj      = nullptr;
+std::unique_ptr<std::string> _opt_fileload_traj      = nullptr;
+Reservoir::Toutput_size      _opt_res_size;
+double                       _opt_res_scaling;
+double                       _opt_res_radius;
+double                       _opt_res_leak;
+bool                         _opt_res_forward;
+bool                         _opt_res_szita;
+double                       _opt_res_szita_val;
+std::unique_ptr<std::string> _opt_filesave_esn       = nullptr;
+std::unique_ptr<std::string> _opt_fileload_esn       = nullptr;
+
+
+// ***************************************************************************
+// ******************************************************************* options
+// ***************************************************************************
+void setup_options(int argc, char **argv)
+{
+  po::options_description desc("Options");
+  desc.add_options()
+    ("help,h", "produce help message")
+    ("create_hmm", po::value<std::string>(), "create an HMM from string")
+    ("save_hmm", po::value<std::string>(), "save HMM in filename")
+    ("load_hmm,m", po::value<std::string>(), "load HMM from filename")
+
+    ("length_traj", po::value<unsigned int>(&_opt_traj_length)->default_value(10),
+     "create a Traj with length")
+    ("save_traj", po::value<std::string>(), "save Traj in filename")
+    ("load_traj,t", po::value<std::string>(), "load Traj from filename")
+
+    ("res_size", po::value<unsigned int>(&_opt_res_size)->default_value(10), "reservoir size")
+    ("res_forward", po::value<bool>(&_opt_res_forward)->default_value(false), "reservoir input forwarding")
+    ("res_szita_init", po::value<bool>(&_opt_res_szita)->default_value(false), "reservoir: use szita initialisation")
+    ("res_szita_val", po::value<double>(&_opt_res_szita_val)->default_value(5.0), "reservoir: value for init weights")
+    ("res_scaling", po::value<double>(&_opt_res_scaling)->default_value(1.0), "reservoir input scaling")
+    ("res_radius", po::value<double>(&_opt_res_radius)->default_value(0.99), "reservoir spectral radius")
+    ("res_leak", po::value<double>(&_opt_res_leak)->default_value(0.1), "reservoir leaking rate")
+    ("save_esn", po::value<std::string>(), "save ESN in filename")
+    ("load_esn,e", po::value<std::string>(), "load ESN from filename")
+  ;
+
+  // Options en ligne de commande
+  po::options_description cmdline_options;
+  cmdline_options.add(desc);
+  
+  // Options qui sont 'apres'
+  po::positional_options_description pod;
+  //pod.add( "data_file", 1);
+  
+  // Parse
+  po::variables_map vm;
+  try {
+    po::store(po::command_line_parser(argc, argv).
+	      options(desc).positional(pod).run(), vm);
+    
+    if (vm.count("help")) {
+      std::cout << "Usage: " << argv[0] << " [options]" << std::endl;
+      std::cout << desc << std::endl;
+      exit(1);
+    }
+    
+    po::notify(vm);
+  }
+  catch(po::error& e)  { 
+    std::cerr << "ERROR: " << e.what() << std::endl << std::endl; 
+    std::cerr << desc << std::endl; 
+    exit(2);
+  } 
+
+  // HMM
+  if( vm.count("create_hmm")) {
+    _opt_expr = make_unique<std::string>(vm["create_hmm"].as< std::string>());
+  }
+  if (vm.count("save_hmm")) {
+    _opt_filesave_hmm = make_unique<std::string>(vm["save_hmm"].as< std::string>());
+  }
+  if (vm.count("load_hmm")) {
+    _opt_fileload_hmm = make_unique<std::string>(vm["load_hmm"].as< std::string>());
+  }
+  // TRAJ
+  if (vm.count("save_traj")) {
+    _opt_filesave_traj = make_unique<std::string>(vm["save_traj"].as< std::string>());
+  }
+  if (vm.count("load_traj")) {
+    _opt_fileload_traj = make_unique<std::string>(vm["load_traj"].as< std::string>());
+  }
+
+  // ESN
+  if (vm.count("save_esn")) {
+    _opt_filesave_esn = make_unique<std::string>(vm["save_esn"].as< std::string>());
+  }
+  if (vm.count("load_esn")) {
+    _opt_fileload_esn = make_unique<std::string>(vm["load_esn"].as< std::string>());
+  }
+  
+};
 
 // **************************************************************** create_hmm
 Problem create_hmm( const std::string& expr = "ABCD" )
@@ -157,7 +263,7 @@ ESN create_esn( Reservoir::Tinput_size input_size = 1,
   ESN esn;
   esn.res = make_unique<Reservoir>( input_size, reservoir_size,
 				   input_scaling, spectral_radius, leaking_rate );
-  if( forward_input ) {
+  if( forward_input == true) {
     // layer take also input 
     esn.lay = make_unique<Layer>( input_size+reservoir_size+1, output_size );
   }
@@ -167,7 +273,8 @@ ESN create_esn( Reservoir::Tinput_size input_size = 1,
   esn.input_forward = forward_input;
 
   // Special Input Weights bu [Szita06]
-  if( szita_input ) {
+  if( szita_input == true) {
+    //std::cout << "  Szita initialization, val=" << szita_val << std::endl;
     esn.res->init_discrete_input( szita_val );
   }
 
@@ -209,12 +316,12 @@ ESN load_esn(const std::string& filename )
   return esn;
 }
 // ***************************************************************************
-// ********************************************************************** main
+// ********************************************************************** test
 // ***************************************************************************
-int main(int argc, char *argv[])
+void test()
 {
-  // Create a new HMM
-  _pb = create_hmm( "ABCDCB" );
+    // Create a new HMM
+  Problem _pb = create_hmm( "ABCDCB" );
   bica::sampler::HMM hmm1(_pb.t,_pb.o);
   std::cout << "__" << _pb.expr << "__ with " << _pb.nb_states << " states" << std::endl;  
   // print_hmm("h1",hmm1,30);
@@ -233,7 +340,7 @@ int main(int argc, char *argv[])
   // print_hmm("h3",hmm3,30);
 
   // // Create and save trajectory
-  // _learn_data = create_traj( 100, _pb );
+  // Traj _learn_data = create_traj( 100, _pb );
   // save_traj( "tmp_traj.json", _learn_data, _pb.expr );
   // // Read Trajectory
   // _learn_data.clear();
@@ -243,12 +350,62 @@ int main(int argc, char *argv[])
   // }
 
   // Create and save ESN
-  _esn = create_esn( 2, 3, 5, true, true, 4);
+  ESN _esn = create_esn( 2, 3, 5, true, true, 4);
   save_esn( "tmp_esn.json", _esn );
   ESN esn_read = load_esn( "tmp_esn.json" );
   std::cout << "__READ RES: " << esn_read.res->str_display();
   std::cout << " LAY: " << esn_read.lay->str_display() << std::endl;
-  
+};
+// ***************************************************************************
+// ********************************************************************** main
+// ***************************************************************************
+int main(int argc, char *argv[])
+{
+   setup_options( argc, argv );
+   
+   // HMM _______________________
+   if( _opt_expr ) {
+     std::cout << "__CREATE HMM with " << *_opt_expr << std::endl;
+     _pb = make_unique<Problem>( create_hmm( *_opt_expr ));
+     bica::sampler::HMM hmm1(_pb->t,_pb->o);
+     std::cout << "__" << _pb->expr << "__ with " << _pb->nb_states << " states" << std::endl;
+   }
+   if( _opt_fileload_hmm ) {
+     std::cout << "__LOAD HMM from " << *_opt_fileload_hmm << std::endl;
+     _pb = make_unique<Problem>( load_hmm( *_opt_fileload_hmm ));
+     bica::sampler::HMM hmm1(_pb->t,_pb->o);
+     std::cout << "__" << _pb->expr << "__ with " << _pb->nb_states << " states" << std::endl;
+   }
+   if( _pb and _opt_filesave_hmm ) {
+     std::cout << "__SAVE HMM to " << *_opt_filesave_hmm << std::endl;
+     save_hmm( *_opt_filesave_hmm, _pb->expr );
+   }
+
+   // Traj_______________________
+   if( _pb and _opt_filesave_traj ) {
+     std::cout << "__CREATE Traj of length " << _opt_traj_length << " with hmm=" << _pb->expr << std::endl;
+     _learn_data = make_unique<Traj>( create_traj( _opt_traj_length, *_pb ));
+     std::cout << "__SAVE Traj to " << *_opt_filesave_traj << std::endl;
+     save_traj( *_opt_filesave_traj, *_learn_data, _pb->expr );
+   }
+   if( _opt_fileload_traj ) {
+     std::cout << "__LOAD Traj from " << *_opt_fileload_traj << std::endl;
+     _learn_data = make_unique<Traj>( load_traj( *_opt_fileload_traj ) );
+   }
+
+   // ESN ________________________
+   if( _opt_filesave_esn ) {
+     std::cout << "__CREATE ESN " << std::endl;
+     _esn = make_unique<ESN>( create_esn(1, 1, _opt_res_size, _opt_res_forward,
+					 _opt_res_szita, _opt_res_szita_val,
+					 _opt_res_scaling, _opt_res_radius, _opt_res_leak) );
+     std::cout << "__SAVE ESN to " << *_opt_filesave_esn << std::endl;
+     save_esn( *_opt_filesave_esn, *_esn);
+   }
+   if( _opt_fileload_esn ) {
+     std::cout << "__LOAD ESN from " << *_opt_fileload_esn << std::endl;
+     _esn = make_unique<ESN>( load_esn( *_opt_fileload_esn ));
+   }
   return 0;
 }
 // ***************************************************************************
