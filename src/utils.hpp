@@ -19,6 +19,20 @@
 #include <chrono>                     // std::chrono::steady_clock
 #include <random>                     // std::uniform_int...
 
+#include <memory>                     // std::unique_ptr, std::shared_ptr
+#include <utility>                    // std::forward
+// ***************************************************************************
+// **************************************************************** unique_ptr
+// ***************************************************************************
+/** A Template function to replace make_unique (not in C++11)
+ * auto ptr(make_unique<Truc>());
+ */
+template<typename T, typename... Ts>
+std::unique_ptr<T> make_unique(Ts&&... params)
+{
+  return std::unique_ptr<T>(new T(std::forward<Ts>(params)...));
+}
+
 // ***************************************************************************
 // ********************************************************************* Range
 // ***************************************************************************

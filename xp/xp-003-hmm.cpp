@@ -6,9 +6,8 @@
  * - generate/save/load HMM : expr
  * - generate Trajectories of (S,O). inspi from Trajectory
  * - save/load Trajectories
- * - TODO create ESN : two initialisation options
- * - TODO save ESN
- * - TODO load ESN
+ * - create ESN : two initialisation options
+ * - save/load ESN
  *
  */
 
@@ -23,6 +22,10 @@
 #include <hmm-json.hpp>
 #include <input.hpp>
 #include <hmm_trajectory.hpp>
+
+#include <reservoir.hpp>
+#include <layer.hpp>
+#include <ridge_regression.hpp>
 
 #include <utils.hpp>                  // various str_xxx
 using namespace utils::rj;
@@ -39,6 +42,16 @@ Problem _pb;
 // Trajectory
 using Traj = Trajectory::HMM::Data;
 Traj _learn_data;
+
+// ESN
+using PtrReservoir =   std::unique_ptr<Reservoir>;
+using PtrLayer     = std::unique_ptr<Layer>;
+using ESN = struct {
+  PtrReservoir      res = nullptr;
+  PtrLayer          lay = nullptr;
+  bool    input_forward = false;
+};
+ESN _esn;
 
 // **************************************************************** create_hmm
 Problem create_hmm( const std::string& expr = "ABCD" )
@@ -129,6 +142,72 @@ Traj load_traj( const std::string& filename )
 
   return traj;
 };
+// **************************************************************** create_esn
+ESN create_esn( Reservoir::Tinput_size input_size = 1,
+		Layer::Toutput_size output_size = 1,   
+		Reservoir::Toutput_size reservoir_size = 10,
+		bool forward_input = false,
+		bool szita_input = false,
+		double szita_val = 1.0,
+		double input_scaling = 1.0,
+		double spectral_radius= 0.99,
+		double leaking_rate = 0.1
+		)
+{
+  ESN esn;
+  esn.res = make_unique<Reservoir>( input_size, reservoir_size,
+				   input_scaling, spectral_radius, leaking_rate );
+  if( forward_input ) {
+    // layer take also input 
+    esn.lay = make_unique<Layer>( input_size+reservoir_size+1, output_size );
+  }
+  else {
+    esn.lay = make_unique<Layer>( reservoir_size+1, output_size );
+  }
+  esn.input_forward = forward_input;
+
+  // Special Input Weights bu [Szita06]
+  if( szita_input ) {
+    esn.res->init_discrete_input( szita_val );
+  }
+
+  return esn;
+};
+// ****************************************************************** save_esn
+void save_esn( const std::string& filename, const ESN& esn )
+{
+  auto ofile = std::ofstream( filename );
+
+  rapidjson::Document doc;
+  doc.SetObject();
+  doc.AddMember( "res", esn.res->serialize(doc), doc.GetAllocator());
+  doc.AddMember( "lay", esn.lay->serialize(doc), doc.GetAllocator());
+  doc.AddMember( "input_forward", rj::Value(esn.input_forward), doc.GetAllocator() );
+
+  ofile << str_obj(doc) << std::endl;
+  ofile.close();
+};
+// ****************************************************************** load_esn
+ESN load_esn(const std::string& filename )
+{
+  ESN esn;
+  
+  std::ifstream ifile( filename );
+  // Wrapper pour lire document
+  JSON::IStreamWrapper instream(ifile);
+  // Parse into a document
+  rj::Document doc;
+  doc.ParseStream( instream );
+  ifile.close();
+
+  esn.res = make_unique<Reservoir>( doc["res"] );
+  esn.lay = make_unique<Layer>( doc["lay"] );
+  esn.input_forward = doc["input_forward"].GetBool();
+  
+  ifile.close();
+
+  return esn;
+}
 // ***************************************************************************
 // ********************************************************************** main
 // ***************************************************************************
@@ -153,15 +232,22 @@ int main(int argc, char *argv[])
   // std::cout << "__" << _pb.expr << "__ with " << _pb.nb_states << " states" << std::endl;  
   // print_hmm("h3",hmm3,30);
 
-  // Create and save trajectory
-  _learn_data = create_traj( 100, _pb );
-  save_traj( "tmp_traj.json", _learn_data, _pb.expr );
-  // Read Trajectory
-  _learn_data.clear();
-  _learn_data = load_traj( "tmp_traj.json" );
-  for (auto it = _learn_data.begin(); it != _learn_data.begin()+10; ++it) {
-    std::cout << "s=" << (*it).id_s << "\to=" << (*it).id_o << std::endl;    
-  }
+  // // Create and save trajectory
+  // _learn_data = create_traj( 100, _pb );
+  // save_traj( "tmp_traj.json", _learn_data, _pb.expr );
+  // // Read Trajectory
+  // _learn_data.clear();
+  // _learn_data = load_traj( "tmp_traj.json" );
+  // for (auto it = _learn_data.begin(); it != _learn_data.begin()+10; ++it) {
+  //   std::cout << "s=" << (*it).id_s << "\to=" << (*it).id_o << std::endl;    
+  // }
+
+  // Create and save ESN
+  _esn = create_esn( 2, 3, 5, true, true, 4);
+  save_esn( "tmp_esn.json", _esn );
+  ESN esn_read = load_esn( "tmp_esn.json" );
+  std::cout << "__READ RES: " << esn_read.res->str_display();
+  std::cout << " LAY: " << esn_read.lay->str_display() << std::endl;
   
   return 0;
 }

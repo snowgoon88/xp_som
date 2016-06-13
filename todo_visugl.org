@@ -42,10 +42,10 @@ std::string("ABCD"),           // periodic
                                // alterne 1) AAAAAAAAAAAF gaussien
                                //         2) soit A, soit F
 ** DONE test-hmm.cpp
-** TODO [0/2] Apprendre (o)_t -> o_{t+1} avec réservoir
-*** générer trajectoire HMM
-*** TODO initialiser différemment ESN (Szita)
-*** TODO xp-002-HMM
+** TODO [2/3] Apprendre (o)_t -> o_{t+1} avec réservoir
+*** DONE générer trajectoire HMM
+*** DONE initialiser différemment ESN (Szita)
+*** TODO xp-003-HMM
 * TODO Rec-SOM
 * [/] Data
 ** DONE McKey-Glass

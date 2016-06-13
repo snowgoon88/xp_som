@@ -140,6 +140,15 @@ ema   * of ONE layer.
     
     return dump.str();
   };
+  /** display */
+  std::string str_display()
+  {
+    std::stringstream disp;
+    disp << _w->size2 << " --> ";
+    disp << _w->size1;
+
+    return disp.str();
+  };
   // *************************************************************** serialize
   rj::Value serialize( rj::Document& doc )
   {

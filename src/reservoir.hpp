@@ -243,8 +243,22 @@ public:
     gsl_vector_complex_free( eval );
     gsl_matrix_free( _w_tmp );
   }
+  /**
+   * Initiliaze input weights to {0,+C,-C}
+   */ 
+  void init_discrete_input( double val )
+  {
+    // INPUT_WEIGHTS : Matrix _output_size lines of _input_size+1 columns
+    // in {0,+C,-C}
+    for( unsigned int i = 0; i < _w_in->size1; ++i) {
+      for( unsigned int j = 0; j < _w_in->size2; ++j) {
+	auto choice = static_cast<int>(gsl_rng_uniform_int( _rnd, 3));
+	gsl_matrix_set( _w_in, i, j, (choice-1) * val);
+      }
+    }
+  }
   // ***************************************************************** display
-  /** display string */
+  /** dump string */
   std::string str_dump()
   {
     std::stringstream dump;
@@ -258,6 +272,15 @@ public:
     dump << str_vec( _x_res );
     
     return dump.str();
+  };
+  /** display */
+  std::string str_display()
+  {
+    std::stringstream disp;
+    disp << "(" << _w_in->size2 << ") --<" << _w_res->size2 << ">--> ";
+    disp << _w_res->size1;
+
+    return disp.str();
   };
   // *************************************************************** serialize
   rj::Value serialize( rj::Document& doc )

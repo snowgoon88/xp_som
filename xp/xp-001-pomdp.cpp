@@ -292,7 +292,7 @@ void gene_esn( const std::string& filename,
   stream << ".json";
   // std::cout << "Write ESN dans " << stream.str() << std::endl;
 
-  rapidjson::Document doc;
+  rapidjson::Document doc; 
   doc.SetObject();
   doc.AddMember( "esn", _res->serialize(doc), doc.GetAllocator());
   doc.AddMember( "lay", _lay->serialize(doc), doc.GetAllocator());
