@@ -60,7 +60,7 @@ public:
     
     // INPUT_WEIGHTS : Matrix _output_size lines of _input_size+1 columns
     // in [- _input_scaling, _input_scaling]
-    _w_in = gsl_matrix_alloc( output_size, input_size+1);
+    _w_in = gsl_matrix_alloc( output_size, input_size);
     for( unsigned int i = 0; i < _w_in->size1; ++i) {
       for( unsigned int j = 0; j < _w_in->size2; ++j) {
 	gsl_matrix_set( _w_in, i, j, (gsl_rng_uniform_pos(_rnd)-0.5) * _input_scaling / 0.5 );
@@ -153,19 +153,19 @@ public:
   Toutput forward( const Tinput& in )
   {
     // Verifie bonne taille
-    if( (in.size()+1) != _w_in->size2 ) {
+    if( in.size() != _w_in->size2 ) {
       std::cerr << "Reservoir.forward() : Wrong input size !" << std::endl;
-      std::cerr << "                      in.size=" << in.size()+1 << " != " << _w_in->size2 << std::endl;
+      std::cerr << "                      in.size=" << in.size() << " != " << _w_in->size2 << std::endl;
       for( unsigned int i = 0; i < in.size(); ++i) {
 	std::cout << i << " : " << in[i] << std::endl;
       }
     }
     // Into GSL : colomn matrix of in.size()+& row (for bias)
-    Tstate v_input = gsl_vector_alloc(in.size()+1 );
+    Tstate v_input = gsl_vector_alloc(in.size() );
     for( unsigned int i = 0; i< in.size(); ++i) {
       gsl_vector_set( v_input, i, in[i]);
     }
-    gsl_vector_set( v_input, in.size(), 1.0);
+    //OBSOLETE gsl_vector_set( v_input, in.size(), 1.0);
 
     // std::cout<< "IN= {" << str_vec(v_input) << std::endl;
     
@@ -291,7 +291,7 @@ public:
 
     // Ajoute les paramètres
     // nb_in, nb_out
-    obj.AddMember( "nb_input", rj::Value(_w_in->size2-1), doc.GetAllocator() );
+    obj.AddMember( "nb_input", rj::Value(_w_in->size2), doc.GetAllocator() );
     obj.AddMember( "nb_output", rj::Value(_w_in->size1), doc.GetAllocator() );
     // Main Parameters
     obj.AddMember( "input_scaling", rj::Value(_input_scaling), doc.GetAllocator() );
@@ -333,7 +333,7 @@ public:
     Tinput_size nb_in =  obj["nb_input"].GetUint();
     Toutput_size nb_out =  obj["nb_output"].GetUint();
     // Matrix
-    _w_in = gsl_matrix_alloc( nb_out, nb_in+1 );
+    _w_in = gsl_matrix_alloc( nb_out, nb_in );
     //std::std::cout <<  << std::endl; << "  read w_in" << std::endl;
     const rj::Value& win = obj["w_in"];
     assert( win.IsArray() );
@@ -367,7 +367,7 @@ public:
     _leaking_rate = obj["leaking_rate"].GetDouble();
   };
   // ************************************************************** attributes
-  Tinput_size  input_size() const { return (Tinput_size) _w_in->size2-1; };
+  Tinput_size  input_size() const { return (Tinput_size) _w_in->size2; };
   Toutput_size output_size() const { return (Toutput_size) _w_res->size1; };
 private:
   //Tinput_size _input_size;

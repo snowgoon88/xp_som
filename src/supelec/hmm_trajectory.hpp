@@ -7,6 +7,8 @@
  * Trajectory::HMM is a sequence of Trajectory::HMM:Item(s,o)
  */
 
+#include <vector>
+
 // **************************************************************** Trajectory
 namespace Trajectory
 {

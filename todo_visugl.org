@@ -23,7 +23,7 @@
 
 * DONE [1/1] Constructeurs, Copy, Move
 ** DONE tester Copy pour Layer
-* TODO [1/2] BICA
+* TODO [2/2] BICA
 ** hmm.hpp (et input.hpp)
 HMM est une paire de deux fontion
 - une qui donne le prochain état          (int) -> int
@@ -42,10 +42,10 @@ std::string("ABCD"),           // periodic
                                // alterne 1) AAAAAAAAAAAF gaussien
                                //         2) soit A, soit F
 ** DONE test-hmm.cpp
-** TODO [2/3] Apprendre (o)_t -> o_{t+1} avec réservoir
+** DONE [3/3] Apprendre (o)_t -> o_{t+1} avec réservoir
 *** DONE générer trajectoire HMM
 *** DONE initialiser différemment ESN (Szita)
-*** TODO xp-003-HMM
+*** DONE xp-003-HMM
 * TODO Rec-SOM
 * [/] Data
 ** DONE McKey-Glass

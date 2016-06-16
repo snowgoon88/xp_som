@@ -8,7 +8,7 @@
  * - save/load Trajectories
  * - create ESN : two initialisation options
  * - save/load ESN
- *
+ * - use command-line arguments: -h,--help
  */
 
 #include <iostream>                // std::cout
@@ -45,7 +45,7 @@ std::unique_ptr<Problem> _pb = nullptr;
 
 // Trajectory
 using Traj = Trajectory::HMM::Data;
-std::unique_ptr<Traj>    _learn_data = nullptr;
+std::unique_ptr<Traj>    _data = nullptr;
 
 // ESN
 using PtrReservoir =   std::unique_ptr<Reservoir>;
@@ -56,6 +56,9 @@ using ESN = struct {
   bool    input_forward = false;
 };
 std::unique_ptr<ESN>     _esn;
+// Internal stat of ESN, input to Layer
+using LayerData = std::vector<Layer::Tinput>;
+LayerData                _data_lay_in;
 
 // Options
 std::unique_ptr<std::string> _opt_expr               = nullptr;
@@ -73,8 +76,12 @@ bool                         _opt_res_szita;
 double                       _opt_res_szita_val;
 std::unique_ptr<std::string> _opt_filesave_esn       = nullptr;
 std::unique_ptr<std::string> _opt_fileload_esn       = nullptr;
-
-
+double                       _opt_regul;
+unsigned int                 _opt_test_length;
+std::unique_ptr<std::string> _opt_file_result        = nullptr;
+bool                         _opt_verb;
+// Learn
+RidgeRegression::Data        _sample_data;
 // ***************************************************************************
 // ******************************************************************* options
 // ***************************************************************************
@@ -101,6 +108,11 @@ void setup_options(int argc, char **argv)
     ("res_leak", po::value<double>(&_opt_res_leak)->default_value(0.1), "reservoir leaking rate")
     ("save_esn", po::value<std::string>(), "save ESN in filename")
     ("load_esn,e", po::value<std::string>(), "load ESN from filename")
+
+    ("regul", po::value<double>(&_opt_regul)->default_value(1.0), "regul for RidgeRegrression")
+    ("test_length,l", po::value<unsigned int>(&_opt_test_length)->default_value(10), "Length of test")
+    ("output,o",  po::value<std::string>(), "Output file for results")
+    ("verb,v", po::value<bool>(&_opt_verb)->default_value(false), "verbose" )
   ;
 
   // Options en ligne de commande
@@ -155,6 +167,11 @@ void setup_options(int argc, char **argv)
   }
   if (vm.count("load_esn")) {
     _opt_fileload_esn = make_unique<std::string>(vm["load_esn"].as< std::string>());
+  }
+
+  // RESULT
+  if (vm.count("output")) {
+    _opt_file_result = make_unique<std::string>(vm["output"].as< std::string>());
   }
   
 };
@@ -265,7 +282,7 @@ ESN create_esn( Reservoir::Tinput_size input_size = 1,
 				   input_scaling, spectral_radius, leaking_rate );
   if( forward_input == true) {
     // layer take also input 
-    esn.lay = make_unique<Layer>( input_size+reservoir_size+1, output_size );
+    esn.lay = make_unique<Layer>( input_size+reservoir_size, output_size );
   }
   else {
     esn.lay = make_unique<Layer>( reservoir_size+1, output_size );
@@ -316,6 +333,71 @@ ESN load_esn(const std::string& filename )
   return esn;
 }
 // ***************************************************************************
+// ***************************************************************** make data
+// ***************************************************************************
+LayerData
+compute_lay_input( const Traj::iterator& it_traj_begin,
+		   const Traj::iterator& it_traj_end,
+		   ESN& esn )
+{
+  LayerData result;
+
+  for (auto it = it_traj_begin; it != it_traj_end; ++it) {
+    // input
+    Reservoir::Tinput res_in;
+    res_in.push_back( 1.0 ); // biais value
+    res_in.push_back( (*it).id_o );
+    // forward through reservoir
+    auto res_out = esn.res->forward( res_in );
+
+    Layer::Tinput lay_in;
+    lay_in.insert( lay_in.begin(), res_in.begin(), res_in.end());
+    lay_in.insert( lay_in.begin(), res_out.begin(), res_out.end());
+    
+    result.push_back( lay_in );
+  }
+  return result;
+}
+// ***************************************************************************
+// ********************************************************************* learn
+// ***************************************************************************
+void learn( ESN& esn,
+	    const LayerData::iterator& it_input_begin,
+	    const LayerData::iterator& it_input_end,
+	    const Traj::iterator& it_target_begin,
+	    const Traj::iterator& it_target_end,
+	    const double regul )
+{
+  // learn data
+  RidgeRegression::Data sample_data ;
+  {
+    auto it_input = it_input_begin;
+    auto it_target = it_target_begin;
+      for ( ;
+	    it_input != it_input_end and it_target != it_target_end;
+	    ++it_input, ++it_target) {
+	Layer::Toutput samp_tar{ it_target->id_o};
+	sample_data.push_back( RidgeRegression::Sample( *it_input, samp_tar) );
+      }
+  }
+  // DEBUG
+  // for( const auto& samp:  _sample_data) {
+  //   std::cout << utils::str_vec(samp.first) << " -> " << utils::str_vec(samp.second) << std::endl;
+  // }
+
+  // DEBUG
+  //std::cout << "___ Regression" << std::endl;
+  //std::cout << "    Before W " << esn.lay->str_dump() << std::endl;
+  RidgeRegression reg( esn.lay->input_size(),
+		       esn.lay->output_size(),
+		       0 /* idx intercept */
+		       );
+  // learn
+  auto error = reg.learn( sample_data, esn.lay->weights(), regul );
+  // DEBUG std::cout << "    After W " << esn.lay->str_dump() << std::endl;
+};
+
+// ***************************************************************************
 // ********************************************************************** test
 // ***************************************************************************
 void test()
@@ -340,12 +422,12 @@ void test()
   // print_hmm("h3",hmm3,30);
 
   // // Create and save trajectory
-  // Traj _learn_data = create_traj( 100, _pb );
-  // save_traj( "tmp_traj.json", _learn_data, _pb.expr );
+  // Traj _data = create_traj( 100, _pb );
+  // save_traj( "tmp_traj.json", _data, _pb.expr );
   // // Read Trajectory
-  // _learn_data.clear();
-  // _learn_data = load_traj( "tmp_traj.json" );
-  // for (auto it = _learn_data.begin(); it != _learn_data.begin()+10; ++it) {
+  // _data.clear();
+  // _data = load_traj( "tmp_traj.json" );
+  // for (auto it = _data.begin(); it != _data.begin()+10; ++it) {
   //   std::cout << "s=" << (*it).id_s << "\to=" << (*it).id_o << std::endl;    
   // }
 
@@ -365,48 +447,174 @@ int main(int argc, char *argv[])
    
    // HMM _______________________
    if( _opt_expr ) {
-     std::cout << "__CREATE HMM with " << *_opt_expr << std::endl;
+     if( _opt_verb )
+       std::cout << "__CREATE HMM with " << *_opt_expr << std::endl;
      _pb = make_unique<Problem>( create_hmm( *_opt_expr ));
      bica::sampler::HMM hmm1(_pb->t,_pb->o);
-     std::cout << "__" << _pb->expr << "__ with " << _pb->nb_states << " states" << std::endl;
+     if( _opt_verb )
+       std::cout << "__" << _pb->expr << "__ with " << _pb->nb_states << " states" << std::endl;
    }
    if( _opt_fileload_hmm ) {
-     std::cout << "__LOAD HMM from " << *_opt_fileload_hmm << std::endl;
+    if( _opt_verb )
+      std::cout << "__LOAD HMM from " << *_opt_fileload_hmm << std::endl;
      _pb = make_unique<Problem>( load_hmm( *_opt_fileload_hmm ));
      bica::sampler::HMM hmm1(_pb->t,_pb->o);
-     std::cout << "__" << _pb->expr << "__ with " << _pb->nb_states << " states" << std::endl;
+     if( _opt_verb )
+       std::cout << "__" << _pb->expr << "__ with " << _pb->nb_states << " states" << std::endl;
    }
    if( _pb and _opt_filesave_hmm ) {
-     std::cout << "__SAVE HMM to " << *_opt_filesave_hmm << std::endl;
+     if( _opt_verb )
+       std::cout << "__SAVE HMM to " << *_opt_filesave_hmm << std::endl;
      save_hmm( *_opt_filesave_hmm, _pb->expr );
    }
 
    // Traj_______________________
    if( _pb and _opt_filesave_traj ) {
-     std::cout << "__CREATE Traj of length " << _opt_traj_length << " with hmm=" << _pb->expr << std::endl;
-     _learn_data = make_unique<Traj>( create_traj( _opt_traj_length, *_pb ));
-     std::cout << "__SAVE Traj to " << *_opt_filesave_traj << std::endl;
-     save_traj( *_opt_filesave_traj, *_learn_data, _pb->expr );
+     if( _opt_verb )
+       std::cout << "__CREATE Traj of length " << _opt_traj_length << " with hmm=" << _pb->expr << std::endl;
+     _data = make_unique<Traj>( create_traj( _opt_traj_length, *_pb ));
+     if( _opt_verb )
+       std::cout << "__SAVE Traj to " << *_opt_filesave_traj << std::endl;
+     save_traj( *_opt_filesave_traj, *_data, _pb->expr );
    }
    if( _opt_fileload_traj ) {
-     std::cout << "__LOAD Traj from " << *_opt_fileload_traj << std::endl;
-     _learn_data = make_unique<Traj>( load_traj( *_opt_fileload_traj ) );
+     if( _opt_verb )
+       std::cout << "__LOAD Traj from " << *_opt_fileload_traj << std::endl;
+     _data = make_unique<Traj>( load_traj( *_opt_fileload_traj ) );
    }
 
    // ESN ________________________
    if( _opt_filesave_esn ) {
-     std::cout << "__CREATE ESN " << std::endl;
-     _esn = make_unique<ESN>( create_esn(1, 1, _opt_res_size, _opt_res_forward,
+     if( _opt_verb )
+       std::cout << "__CREATE ESN " << std::endl;
+     _esn = make_unique<ESN>( create_esn(1+1, 1, _opt_res_size, _opt_res_forward,
 					 _opt_res_szita, _opt_res_szita_val,
 					 _opt_res_scaling, _opt_res_radius, _opt_res_leak) );
-     std::cout << "__SAVE ESN to " << *_opt_filesave_esn << std::endl;
+     if( _opt_verb )
+       std::cout << "__SAVE ESN to " << *_opt_filesave_esn << std::endl;
      save_esn( *_opt_filesave_esn, *_esn);
    }
    if( _opt_fileload_esn ) {
-     std::cout << "__LOAD ESN from " << *_opt_fileload_esn << std::endl;
+     if( _opt_verb )
+       std::cout << "__LOAD ESN from " << *_opt_fileload_esn << std::endl;
      _esn = make_unique<ESN>( load_esn( *_opt_fileload_esn ));
    }
+
+  // Learn_________________________
+  if( _pb and _data and _esn ) {
+    if( _opt_verb )
+      std::cout << "__LEARN" << std::endl;
+    // Compute and save RES internal state (ie. layer input)
+    _data_lay_in = compute_lay_input( _data->begin(), _data->end(), *_esn );
+    // DEBUG
+    //std::cout << "       RES: " << _esn->res->str_display();
+    //std::cout << " LAY: " << _esn->lay->str_display() << std::endl;
+    learn( *_esn,
+	   _data_lay_in.begin(), _data_lay_in.end()-1-_opt_test_length, // input
+	   _data->begin()+1, _data->end()-_opt_test_length,             // target
+	   _opt_regul );
+
+    // Erreur d'apprentissage
+    std::vector<RidgeRegression::Toutput> result_learn;
+    for( const auto& pred_in: _data_lay_in) {
+      auto pred_out = _esn->lay->forward( pred_in );
+      result_learn.push_back( pred_out );
+    }
+    
+    // to file ____________________
+    auto idx_out = 0;
+    //DEBUG
+    // for (auto it = _data->begin(); it != _data->end()-1; ++it) {
+    //   std::cout << "IN: " << (*_data)[idx_out].id_o ;
+    //   std::cout << " TAR: " << (*_data)[idx_out+1].id_o;
+    //   std::cout << " OUT: " << utils::str_vec(result_learn[idx_out]) << std::endl;
+
+    //   idx_out ++;
+    // }
+    if( _opt_file_result ) {
+       // Results on learn
+       std::stringstream filename_learn;
+       filename_learn << *_opt_file_result;
+       filename_learn << "_learn";
+       auto ofile = std::ofstream( filename_learn.str() );
+
+       // Header comments
+       ofile << "## \"hmm_exp\": \"" << _pb->expr << "\"," << std::endl;
+       ofile << "## \"traj_name\" : \"" << *_opt_fileload_traj << "\"," << std::endl;
+       ofile << "## \"esn_name\": \"" << *_opt_fileload_esn << "\"," << std::endl;
+       ofile << "## \"regul\": " << _opt_regul << "," << std::endl;
+       ofile << "## \"test_length\": " << _opt_test_length << "," << std::endl;
+       // Header ColNames
+       // target
+       for( unsigned int i = 0; i < _esn->lay->output_size(); ++i) {
+     	ofile << "ta_" << i << "\t";
+       }
+       // after learn
+       for( unsigned int i = 0; i < _esn->lay->output_size(); ++i) {
+     	ofile << "le_" << i << "\t";
+       }
+       ofile << std::endl;
+
+       // Data
+       idx_out = 0;
+       for (auto it = _data->begin()+1; it != _data->end()-_opt_test_length; ++it) {
+	 // TAR
+	 ofile << it->id_o << "\t";
+	 // RES
+	 for( auto& var: result_learn[idx_out]) {
+	   ofile << var << "\t";
+	 }
+	 ofile << std::endl;
+	 
+	 idx_out++;
+       }
+	 
+       ofile.close();
+
+       // Results on test
+       std::stringstream filename_test;
+       filename_test << *_opt_file_result;
+       filename_test << "_test";
+       ofile = std::ofstream( filename_test.str() );
+
+       // Header comments
+       ofile << "## \"hmm_exp\": \"" << _pb->expr << "\"," << std::endl;
+       ofile << "## \"traj_name\" : \"" << *_opt_fileload_traj << "\"," << std::endl;
+       ofile << "## \"esn_name\": \"" << *_opt_fileload_esn << "\"," << std::endl;
+       ofile << "## \"regul\": " << _opt_regul << "," << std::endl;
+       ofile << "## \"test_length\": " << _opt_test_length << "," << std::endl;
+       // Header ColNames
+       // target
+       for( unsigned int i = 0; i < _esn->lay->output_size(); ++i) {
+     	ofile << "ta_" << i << "\t";
+       }
+       // after learn
+       for( unsigned int i = 0; i < _esn->lay->output_size(); ++i) {
+     	ofile << "le_" << i << "\t";
+       }
+       ofile << std::endl;
+
+       // Data
+       // Keep going one with the next values of idx_out
+       for (auto it = _data->end()-_opt_test_length; it != _data->end(); ++it) {
+	 // TAR
+	 ofile << it->id_o << "\t";
+	 // RES
+	 for( auto& var: result_learn[idx_out]) {
+	   ofile << var << "\t";
+	 }
+	 ofile << std::endl;
+	 
+	 idx_out++;
+       }
+	 
+       ofile.close();
+    }
+    
+  }
+  
   return 0;
+
 }
 // ***************************************************************************
 
