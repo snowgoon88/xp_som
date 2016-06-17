@@ -9,6 +9,13 @@
  * - create ESN : two initialisation options
  * - save/load ESN
  * - use command-line arguments: -h,--help
+ *
+ * In practice, the following data flow is used
+ * [1.0, traj.id_o] ---<res>---> [res_out]
+ * SI esn.input_forward :
+ *       [1.0; res_out; traj.id_o] ---<lay>---> [traj(+1).id_o]
+ * SINON 
+ *       [1.0; res_out] ---<lay>---> [traj(+1).id_o]
  */
 
 #include <iostream>                // std::cout
@@ -26,6 +33,8 @@
 #include <reservoir.hpp>
 #include <layer.hpp>
 #include <ridge_regression.hpp>
+
+#include <gl_plot.hpp>
 
 // Parsing command line options
 #include <boost/program_options.hpp>
@@ -79,6 +88,7 @@ std::unique_ptr<std::string> _opt_fileload_esn       = nullptr;
 double                       _opt_regul;
 unsigned int                 _opt_test_length;
 std::unique_ptr<std::string> _opt_file_result        = nullptr;
+bool                         _opt_graph;
 bool                         _opt_verb;
 // Learn
 RidgeRegression::Data        _sample_data;
@@ -112,7 +122,9 @@ void setup_options(int argc, char **argv)
     ("regul", po::value<double>(&_opt_regul)->default_value(1.0), "regul for RidgeRegrression")
     ("test_length,l", po::value<unsigned int>(&_opt_test_length)->default_value(10), "Length of test")
     ("output,o",  po::value<std::string>(), "Output file for results")
-    ("verb,v", po::value<bool>(&_opt_verb)->default_value(false), "verbose" )
+    ("graph,g", "graphics" )
+    ("verb,v", "verbose" )
+    //("verb,v", po::value<bool>(&_opt_verb)->default_value(false), "verbose" )
   ;
 
   // Options en ligne de commande
@@ -173,7 +185,14 @@ void setup_options(int argc, char **argv)
   if (vm.count("output")) {
     _opt_file_result = make_unique<std::string>(vm["output"].as< std::string>());
   }
-  
+
+  // Options
+  if( vm.count("verb") ) {
+    _opt_verb = true;
+  }
+  if( vm.count("graph") ) {
+    _opt_graph = true;
+  }
 };
 
 // **************************************************************** create_hmm
@@ -351,8 +370,11 @@ compute_lay_input( const Traj::iterator& it_traj_begin,
     auto res_out = esn.res->forward( res_in );
 
     Layer::Tinput lay_in;
-    lay_in.insert( lay_in.begin(), res_in.begin(), res_in.end());
-    lay_in.insert( lay_in.begin(), res_out.begin(), res_out.end());
+    lay_in.push_back( 1.0 );
+    lay_in.insert( lay_in.end(), res_out.begin(), res_out.end() );
+    if( esn.input_forward ) {
+      lay_in.push_back( (*it).id_o );
+    }
     
     result.push_back( lay_in );
   }
@@ -395,8 +417,79 @@ void learn( ESN& esn,
   // learn
   auto error = reg.learn( sample_data, esn.lay->weights(), regul );
   // DEBUG std::cout << "    After W " << esn.lay->str_dump() << std::endl;
-};
 
+  // DEBUG : learning sample in file
+  auto ofile = std::ofstream( "dbg_learn_data" );
+  // Header ColNames
+  // input
+  for( unsigned int i = 0; i < _esn->lay->input_size(); ++i) {
+    ofile << "in_" << i << "\t";
+  }
+  // target
+  for( unsigned int i = 0; i < _esn->lay->output_size(); ++i) {
+    ofile << "ta_" << i << "\t";
+  }
+  ofile << std::endl;
+  // Data
+  for( auto& sample: sample_data) {
+    //in
+    for( auto& var: sample.first) {
+      ofile << var << "\t";
+    }
+    // target
+    for( auto& var: sample.second) {
+      ofile << var << "\t";
+    }
+    ofile << std::endl;
+  }
+  ofile.close();
+};
+// ***************************************************************************
+// ******************************************************************* graph
+// ***************************************************************************
+void graph( const std::string& title,
+	    const Traj::iterator& target_begin, const Traj::iterator& target_end,
+	    const std::vector<RidgeRegression::Toutput>::iterator& out_begin,
+	    const std::vector<RidgeRegression::Toutput>::iterator& out_end,
+	    const unsigned int test_length )
+	    
+{
+  GLPlot plot( title, 800, 600 );
+
+  // Add target in green
+  auto c_tar = make_unique<Curve>();
+  c_tar->set_color( {0,1,0} );
+  // c_tar->add_time_serie( target_begin, target_end );
+  // plot.add_curve( std::move(c_tar) );
+
+  // Add learn in blue
+  auto c_learn = make_unique<Curve>();
+  c_learn->set_color( {0,0,1} );
+  // and test in red
+  auto c_test = make_unique<Curve>();
+  c_test->set_color( {1,0,0} );
+
+  auto tdata = 0.0;
+  auto it_tar = target_begin;
+  auto it_out = out_begin;
+  for ( ; it_out != out_end-test_length and it_tar != target_end;
+	++it_out, ++it_tar) {
+    c_tar->add_sample( Curve::Sample{tdata, it_tar->id_o, 0} );
+    c_learn->add_sample( Curve::Sample{tdata, (*it_out)[0], 0} );
+    tdata += 1.0;
+  }
+  for ( ; it_out != out_end and it_tar != target_end;
+	++it_out, ++it_tar) {
+    c_tar->add_sample( Curve::Sample{tdata, it_tar->id_o, 0} );
+    c_test->add_sample( Curve::Sample{tdata, (*it_out)[0], 0} );
+    tdata += 1.0;
+  }
+  plot.add_curve( std::move(c_tar) );
+  plot.add_curve( std::move(c_learn) );
+  plot.add_curve( std::move(c_test) );
+
+  plot.show();
+}
 // ***************************************************************************
 // ********************************************************************** test
 // ***************************************************************************
@@ -518,6 +611,8 @@ int main(int argc, char *argv[])
     std::vector<RidgeRegression::Toutput> result_learn;
     for( const auto& pred_in: _data_lay_in) {
       auto pred_out = _esn->lay->forward( pred_in );
+      std::cout << "IN: " << utils::str_vec(pred_in);
+      std::cout << " --> " << utils::str_vec(pred_out) << std::endl;
       result_learn.push_back( pred_out );
     }
     
@@ -609,6 +704,14 @@ int main(int argc, char *argv[])
        }
 	 
        ofile.close();
+    }
+
+    // graphic
+    if( _opt_graph ) {
+      graph( "Predict O_{t+1} = f( h(o_i) )",
+	     _data->begin()+1, _data->end(),
+	     result_learn.begin(), result_learn.end(),
+	     _opt_test_length );
     }
     
   }

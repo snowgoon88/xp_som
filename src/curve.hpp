@@ -38,6 +38,7 @@ public:
   {}
   ~Curve() {std::cout << "Curve destroyed" << std::endl;};
 
+  // ******************************************************* Curve::add_sample
   template<typename Itr>
   void add_sample( const Itr& x_data_begin, const Itr& x_data_end,
 		   const Itr& y_data_begin, const Itr& y_data_end )
@@ -51,7 +52,6 @@ public:
       add_sample( {*it_x, *it_y, 0.0} );
     }
   }
-
   /** Add a point to the Curve and adjust _bbox */
   void add_sample( const Sample& sample)
   {
@@ -75,6 +75,15 @@ public:
 	if (sample.y > get_bbox().y_max) _bbox.y_max = sample.y;
 	if (sample.y < get_bbox().y_min) _bbox.y_min = sample.y;
       }
+    }
+  }
+  // *************************************************** Curve::add_time_serie
+  template<typename Itr>
+  void add_time_serie( const Itr& data_begin, const Itr& data_end )
+  {
+    auto it = data_begin;
+    for (auto t_data=0.0; it != data_end; ++it, t_data+=1.0) {
+      add_sample( Sample{t_data, it, 0.0} );
     }
   }
 

@@ -18,5 +18,5 @@ def build( bld ):
     bld.program( source=['xp-003-hmm.cpp'],
     		 target='xp-003-hmm',
 		 includes=['.', '../include', '../src','../src/supelec'],
-		 use=['JSON', 'GSL', 'BOOST'] )
+		 use=['JSON', 'GSL', 'BOOST', 'FTGL', 'GL', 'GLFW3'] )
     
