@@ -11,7 +11,7 @@
 #include <FTGL/ftgl.h>       // Fontes dans OpenGL
 #include <math.h>       
 
-#define FONT_PATH "../ressources/Consolas.ttf"
+#define FONT_PATH "ressources/Consolas.ttf"
 #define FONT_SIZE 12
 #define DIM_MAJOR 6
 // Scale par défaut des fontes : écran de 800 de large, axe de -1 à 1.

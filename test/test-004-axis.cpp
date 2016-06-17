@@ -83,7 +83,7 @@ public:
   ~Window() {  
     glfwDestroyWindow( _window);
     
-    glfwTerminate();
+    //glfwTerminate();
     std::cout << "Window destroyed" << std::endl;
   }
 private:

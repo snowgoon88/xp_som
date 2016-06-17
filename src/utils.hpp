@@ -14,6 +14,7 @@
 #include "rapidjson/stringbuffer.h"   // rapidjson
 
 #include <string>                     // std::string
+#include <sstream>                    // std::stringdtream
 #include <vector>                     // std::vector
 
 #include <chrono>                     // std::chrono::steady_clock

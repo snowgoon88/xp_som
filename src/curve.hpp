@@ -15,26 +15,48 @@ class Curve
 {
 public:
   /** Un Sample est un triplet */
-  typedef struct {
+  using Sample = struct {
     double x;
     double y;
     double z;
-  } Sample;
+  };
 
-  /** Bounding box autour des données */
-  typedef struct {
+  /** Bounding box around data */
+  using BoundingBox = struct {
     double x_min, x_max, y_min, y_max;
-  } BoundingBox;
+  };
+
+  /** Color */
+  using Color = struct {
+    double r,g,b;
+  };
 
 public:
+  // ********************************************************* Curve::creation
   /** Creation */
-  Curve() {std::cout << "Curve creation" << std::endl; /*create_data();*/};
+  Curve() : _fg_col{1,0,0} // red
+  {}
   ~Curve() {std::cout << "Curve destroyed" << std::endl;};
 
-  /** Ajoute un point à la courbe et ajuste _bbox */
+  template<typename Itr>
+  void add_sample( const Itr& x_data_begin, const Itr& x_data_end,
+		   const Itr& y_data_begin, const Itr& y_data_end )
+  {
+    //std::cout << "Curve::add_sample_with_Itr" << std::endl;
+    auto it_x = x_data_begin;
+    auto it_y = y_data_begin;
+    
+    for (; it_x != x_data_end and it_y != y_data_end; ++it_x, ++it_y) {
+      //std::cout << "add " << *it_x << ", " << *it_y << std::endl;
+      add_sample( {*it_x, *it_y, 0.0} );
+    }
+  }
+
+  /** Add a point to the Curve and adjust _bbox */
   void add_sample( const Sample& sample)
   {
-    // Premier sample ?
+    //std::cout << "Curve::add_sample" << std::endl;
+    // First sample ?
     if (_data.size() == 0 ) {
       //std::cout << "add_sample : NEW" << std::endl;
       _data.push_back( sample );
@@ -45,7 +67,7 @@ public:
     }
     else {
       //std::cout << "add_sample : ADD" << std::endl;
-      // Vérifie qu'il est après le dernier point
+      // Check it is after the last point
       if (sample.x > get_bbox().x_max) {
 	//std::cout << "add_sample : OK"  << std::endl;
 	_data.push_back( sample );
@@ -55,7 +77,12 @@ public:
       }
     }
   }
-  
+
+  // ******************************************************** Curve::set_color
+  void set_color( const Color& col )
+  {
+    _fg_col = col;
+  }
   
   /** Draw curve with OpenGL */
   void render()
@@ -65,7 +92,7 @@ public:
     // }
 
     // Couleur rouge
-    glColor4d( 1.0, 0.0, 0.0, 1.0);
+    glColor4d( _fg_col.r, _fg_col.g, _fg_col.b, 1.0);
     // -------------------------------------------------------------------------
     //  Rendering using GL_LINE_STRIP
     // -------------------------------------------------------------------------
@@ -85,10 +112,12 @@ public:
   const BoundingBox& get_bbox() {return _bbox;}; 
 
 private:
-  /** Les données sont une list de Sample */
+  /** Data are a list of Samples*/
   std::list<Sample> _data;
-  /** Bounding box autour des données */
+  /** Bounding box around Data */
   BoundingBox _bbox;
+  /** Color for the Curve */
+  Color _fg_col;
 
 public:
   /** Create artificial data y=sin(x) pour x=[0,2PI[ */

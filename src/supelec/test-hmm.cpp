@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <iostream>
 #include <utility>
+#include <vector>
 
 void print(const std::string& name, bica::sampler::HMM& h, int nb) {
   std::cout << name << " : " << std::fixed;
