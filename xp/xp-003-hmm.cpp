@@ -34,6 +34,8 @@
 #include <layer.hpp>
 #include <ridge_regression.hpp>
 
+#include <noise.hpp>
+
 #include <gl_plot.hpp>
 
 // Parsing command line options
@@ -69,27 +71,35 @@ std::unique_ptr<ESN>     _esn;
 using LayerData = std::vector<Layer::Tinput>;
 LayerData                _data_lay_in;
 
+// WNoise
+using PtrWNoiseData = std::unique_ptr<WNoise::Data>;
+PtrWNoiseData            _noise;
+
 // Options
 std::unique_ptr<std::string> _opt_expr               = nullptr;
 std::unique_ptr<std::string> _opt_filesave_hmm       = nullptr;
 std::unique_ptr<std::string> _opt_fileload_hmm       = nullptr;
-unsigned int                 _opt_traj_length;
+unsigned int                 _opt_traj_length        = 10;
 std::unique_ptr<std::string> _opt_filesave_traj      = nullptr;
 std::unique_ptr<std::string> _opt_fileload_traj      = nullptr;
-Reservoir::Toutput_size      _opt_res_size;
-double                       _opt_res_scaling;
-double                       _opt_res_radius;
-double                       _opt_res_leak;
-bool                         _opt_res_forward;
-bool                         _opt_res_szita;
-double                       _opt_res_szita_val;
+Reservoir::Toutput_size      _opt_res_size           = 10;
+double                       _opt_res_scaling        = 1.0;
+double                       _opt_res_radius         = 0.99; 
+double                       _opt_res_leak           = 0.1;
+bool                         _opt_res_forward        = false;
+bool                         _opt_res_szita          = false;
+double                       _opt_res_szita_val      = 5.0;
 std::unique_ptr<std::string> _opt_filesave_esn       = nullptr;
 std::unique_ptr<std::string> _opt_fileload_esn       = nullptr;
-double                       _opt_regul;
-unsigned int                 _opt_test_length;
+double                       _opt_noise_level        = 0.1;
+unsigned int                 _opt_noise_length       = 100;
+std::unique_ptr<std::string> _opt_filesave_noise     = nullptr;
+std::unique_ptr<std::string> _opt_fileload_noise     = nullptr;
+double                       _opt_regul              = 1.0;
+unsigned int                 _opt_test_length        = 10;
 std::unique_ptr<std::string> _opt_file_result        = nullptr;
-bool                         _opt_graph;
-bool                         _opt_verb;
+bool                         _opt_graph              = false;
+bool                         _opt_verb               = false;
 // Learn
 RidgeRegression::Data        _sample_data;
 // ***************************************************************************
@@ -104,23 +114,28 @@ void setup_options(int argc, char **argv)
     ("save_hmm", po::value<std::string>(), "save HMM in filename")
     ("load_hmm,m", po::value<std::string>(), "load HMM from filename")
 
-    ("length_traj", po::value<unsigned int>(&_opt_traj_length)->default_value(10),
-     "create a Traj with length")
+    ("length_traj", po::value<unsigned int>(&_opt_traj_length)->default_value(_opt_traj_length), "create a Traj with length")
     ("save_traj", po::value<std::string>(), "save Traj in filename")
     ("load_traj,t", po::value<std::string>(), "load Traj from filename")
 
-    ("res_size", po::value<unsigned int>(&_opt_res_size)->default_value(10), "reservoir size")
-    ("res_forward", po::value<bool>(&_opt_res_forward)->default_value(false), "reservoir input forwarding")
-    ("res_szita_init", po::value<bool>(&_opt_res_szita)->default_value(false), "reservoir: use szita initialisation")
-    ("res_szita_val", po::value<double>(&_opt_res_szita_val)->default_value(5.0), "reservoir: value for init weights")
-    ("res_scaling", po::value<double>(&_opt_res_scaling)->default_value(1.0), "reservoir input scaling")
-    ("res_radius", po::value<double>(&_opt_res_radius)->default_value(0.99), "reservoir spectral radius")
-    ("res_leak", po::value<double>(&_opt_res_leak)->default_value(0.1), "reservoir leaking rate")
+    ("res_size", po::value<unsigned int>(&_opt_res_size)->default_value(_opt_res_size),"reservoir size")
+    ("res_forward", "reservoir input forwarding")
+    ("res_szita_init", "reservoir: use szita initialisation")
+    ("res_szita_val", po::value<double>(&_opt_res_szita_val)->default_value(_opt_res_szita_val), "reservoir: value for init weights")
+    ("res_scaling", po::value<double>(&_opt_res_scaling)->default_value(_opt_res_scaling), "reservoir input scaling")
+    ("res_radius", po::value<double>(&_opt_res_radius)->default_value(_opt_res_radius), "reservoir spectral radius")
+    ("res_leak", po::value<double>(&_opt_res_leak)->default_value(_opt_res_leak), "reservoir leaking rate")
     ("save_esn", po::value<std::string>(), "save ESN in filename")
     ("load_esn,e", po::value<std::string>(), "load ESN from filename")
-
-    ("regul", po::value<double>(&_opt_regul)->default_value(1.0), "regul for RidgeRegrression")
-    ("test_length,l", po::value<unsigned int>(&_opt_test_length)->default_value(10), "Length of test")
+    
+    ("noise_length", po::value<unsigned int>(&_opt_noise_length)->default_value(_opt_noise_length), "Length of noise to generate")
+    ("noise_level",  po::value<double>(&_opt_noise_level)->default_value(_opt_noise_level), "Level of noise to generate")    
+    ("save_noise", po::value<std::string>(), "save WNoise in filename")
+    ("load_noise,n", po::value<std::string>(), "load WNoise from filename")
+    
+    ("regul", po::value<double>(&_opt_regul)->default_value(_opt_regul), "regul for RidgeRegrression")
+    ("test_length,l", po::value<unsigned int>(&_opt_test_length)->default_value(_opt_test_length), "Length of test")
+    
     ("output,o",  po::value<std::string>(), "Output file for results")
     ("graph,g", "graphics" )
     ("verb,v", "verbose" )
@@ -181,12 +196,26 @@ void setup_options(int argc, char **argv)
     _opt_fileload_esn = make_unique<std::string>(vm["load_esn"].as< std::string>());
   }
 
+  // WNoise
+  if (vm.count("save_noise")) {
+    _opt_filesave_noise = make_unique<std::string>(vm["save_noise"].as< std::string>());
+  }
+  if (vm.count("load_noise")) {
+    _opt_fileload_noise = make_unique<std::string>(vm["load_noise"].as< std::string>());
+  }
+
   // RESULT
   if (vm.count("output")) {
     _opt_file_result = make_unique<std::string>(vm["output"].as< std::string>());
   }
 
   // Options
+  if( vm.count("res_forward") ) {
+    _opt_res_forward = true;
+  }
+  if( vm.count("res_szita_init") ) {
+    _opt_res_szita = true;
+  }
   if( vm.count("verb") ) {
     _opt_verb = true;
   }
@@ -351,9 +380,65 @@ ESN load_esn(const std::string& filename )
 
   return esn;
 }
+// ************************************************************** create_noise
+WNoise::Data save_noise( const std::string& filename,
+			 const unsigned int length,
+			 const double level,
+			 const unsigned int dim)
+{
+  WNoise wnoise( length, level, dim );
+  wnoise.create_sequence();
+  
+  // Sauve dans JSON
+  std::string fn_json = filename+".json";
+  if( _opt_verb )
+    std::cout << "Write WNoise dans " << fn_json << std::endl;
+  rapidjson::Document doc;
+  rapidjson::Value obj = wnoise.serialize( doc );
+  std::ofstream jfile( fn_json );
+  jfile << str_obj(obj) << std::endl;
+  jfile.close();
+
+  // Sauve les data
+  std::string fn_data = filename+".data";
+  std::cout << "Write WNoise dans " << fn_data << std::endl;
+  std::ofstream ofile( fn_data );
+
+  // inform traj
+  ofile << "## \"length\": \"" << _opt_noise_length << "\"" << std::endl;
+  ofile << "## \"level\": \"" << _opt_noise_level << "\"" << std::endl;
+  
+  WNoise::write( ofile, wnoise.data() );
+  ofile.close();
+
+  return wnoise.data();
+}
+// **************************************************************** load_noise
+WNoise::Data load_noise( const std::string& filename )
+{
+  WNoise::Data data_wnoise;
+  std::ifstream ifile( filename );
+  WNoise::read( ifile, data_wnoise );
+  ifile.close();
+
+  return data_wnoise;
+}
 // ***************************************************************************
 // ***************************************************************** make data
 // ***************************************************************************
+void push_noise( const ESN& esn,
+		 const WNoise::Data::iterator& it_begin,
+		 const WNoise::Data::iterator& it_end )
+{
+  for (auto it = it_begin; it != it_end; ++it) {
+    // input
+    Reservoir::Tinput res_in;
+    res_in.push_back( 1.0 ); // biais value
+    res_in.insert( res_in.end(), it->begin(), it->end() );
+    // forward through reservoir
+    auto res_out = esn.res->forward( res_in );
+  }
+}
 LayerData
 compute_lay_input( const Traj::iterator& it_traj_begin,
 		   const Traj::iterator& it_traj_end,
@@ -593,10 +678,31 @@ int main(int argc, char *argv[])
      _esn = make_unique<ESN>( load_esn( *_opt_fileload_esn ));
    }
 
+   // WNoise_______________________
+   if( _opt_filesave_noise ) {
+     if( _opt_verb )
+       std::cout << "__CREATE and SAVE WNoise to " << *_opt_filesave_noise << std::endl;
+     _noise = make_unique<WNoise::Data>( save_noise( *_opt_filesave_noise,
+						     _opt_noise_length, _opt_noise_level,
+						     1 /*dimension*/ )
+					 );
+   }
+   if( _opt_fileload_noise ) {
+     if( _opt_verb ) {
+       std::cout << "__LOAD WNoise from " << *_opt_fileload_noise << std::endl;
+     }
+     _noise = make_unique<WNoise::Data>( load_noise( *_opt_fileload_noise ));
+   }
+   
   // Learn_________________________
   if( _pb and _data and _esn ) {
     if( _opt_verb )
       std::cout << "__LEARN" << std::endl;
+    if( _noise ) {
+      if( _opt_verb )
+	std::cout << "  + WNoise" << std::endl;
+      push_noise( *_esn, _noise->begin(), _noise->end() );
+    }
     // Compute and save RES internal state (ie. layer input)
     _data_lay_in = compute_lay_input( _data->begin(), _data->end(), *_esn );
     // DEBUG
@@ -611,8 +717,8 @@ int main(int argc, char *argv[])
     std::vector<RidgeRegression::Toutput> result_learn;
     for( const auto& pred_in: _data_lay_in) {
       auto pred_out = _esn->lay->forward( pred_in );
-      std::cout << "IN: " << utils::str_vec(pred_in);
-      std::cout << " --> " << utils::str_vec(pred_out) << std::endl;
+      //std::cout << "IN: " << utils::str_vec(pred_in);
+      //std::cout << " --> " << utils::str_vec(pred_out) << std::endl;
       result_learn.push_back( pred_out );
     }
     

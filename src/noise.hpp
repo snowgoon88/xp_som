@@ -48,7 +48,7 @@ public:
     for( unsigned int i = 0; i < nb_pt; ++i) {
       std::vector<double> element;
       for( unsigned int j = 0; j < dim; ++j) {
-	element.push_back( (gsl_rng_uniform_pos(rnd)-0.5) * level );
+	element.push_back( (gsl_rng_uniform_pos(rnd)-0.5) * level * 2.0 );
       }
       v_noise.push_back( element );
     }
