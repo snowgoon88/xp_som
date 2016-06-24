@@ -439,6 +439,9 @@ void push_noise( const ESN& esn,
     auto res_out = esn.res->forward( res_in );
   }
 }
+/**
+ * Make LayerData : a sequence of [1.0; res->forward( [1.0; input] ) ]
+ */
 LayerData
 compute_lay_input( const Traj::iterator& it_traj_begin,
 		   const Traj::iterator& it_traj_end,
@@ -483,28 +486,29 @@ void learn( ESN& esn,
       for ( ;
 	    it_input != it_input_end and it_target != it_target_end;
 	    ++it_input, ++it_target) {
-	Layer::Toutput samp_tar{ it_target->id_o};
-	sample_data.push_back( RidgeRegression::Sample( *it_input, samp_tar) );
+	// samp_in is elements 1:end of it_input
+	RidgeRegression::Tinput samp_in;
+	samp_in.insert( samp_in.end(), it_input->begin()+1, it_input->end() );
+	// samp_tar is observation of it_target
+	RidgeRegression::Toutput samp_tar{ it_target->id_o };
+
+	sample_data.push_back( RidgeRegression::Sample( samp_in, samp_tar) );
       }
   }
   // DEBUG
   // for( const auto& samp:  _sample_data) {
   //   std::cout << utils::str_vec(samp.first) << " -> " << utils::str_vec(samp.second) << std::endl;
   // }
-
-  // DEBUG
-  //std::cout << "___ Regression" << std::endl;
-  //std::cout << "    Before W " << esn.lay->str_dump() << std::endl;
-  RidgeRegression reg( esn.lay->input_size(),
-		       esn.lay->output_size(),
-		       0 /* idx intercept */
-		       );
-  // learn
-  auto error = reg.learn( sample_data, esn.lay->weights(), regul );
-  // DEBUG std::cout << "    After W " << esn.lay->str_dump() << std::endl;
-
   // DEBUG : learning sample in file
   auto ofile = std::ofstream( "dbg_learn_data" );
+  ofile << "## \"hmm_exp\": \"" << _pb->expr << "\"," << std::endl;
+  ofile << "## \"traj_name\" : \"" << *_opt_fileload_traj << "\"," << std::endl;
+  ofile << "## \"esn_name\": \"" << *_opt_fileload_esn << "\"," << std::endl;
+  if( _opt_fileload_noise ) {
+    ofile << "## \"noise_name\": \"" << *_opt_fileload_noise << "\"," << std::endl;
+  }
+  ofile << "## \"regul\": " << _opt_regul << "," << std::endl;
+  ofile << "## \"test_length\": " << _opt_test_length << "," << std::endl;
   // Header ColNames
   // input
   for( unsigned int i = 0; i < _esn->lay->input_size(); ++i) {
@@ -528,6 +532,71 @@ void learn( ESN& esn,
     ofile << std::endl;
   }
   ofile.close();
+
+  // RIDGE REGRESSION
+  if( _opt_verb ) std::cout << "  + Regression" << std::endl;
+  // DEBUG
+  //std::cout << "    Before W " << esn.lay->str_dump() << std::endl;
+  // std::cout << "   make " <<  esn.lay->input_size()-1;
+  // std::cout << " x " << esn.lay->output_size()<< std::endl;
+  auto reg = RidgeRegression( esn.lay->input_size()-1,
+			      esn.lay->output_size(),
+			      -1 /* idx intercept => not used */
+			      );
+  RidgeRegression::TWeightsPtr w = gsl_matrix_calloc( esn.lay->output_size(),
+						      esn.lay->input_size()-1 );
+  // learn
+  reg.center_and_learn( sample_data, w, regul );
+  // Build the proper Layer Weight matrix
+  auto lay = esn.lay->weights();
+  // weight submatrix : all except first column
+  auto lay_w = gsl_matrix_submatrix( lay, 0, 1,
+				     esn.lay->output_size(),
+				     esn.lay->input_size()-1 ).matrix;
+  // lay_w <- copy( w )
+  gsl_matrix_memcpy( &lay_w, w);
+  // divide every row by vec_sd_x
+  for( unsigned int row = 0; row < lay_w.size1; ++row) {
+    auto vrlay = gsl_matrix_row( &lay_w, row ).vector;
+    gsl_vector_div( &vrlay, reg.sd_x() );
+  }
+  // multiply every column by vec sd_y
+  for( unsigned int col = 0; col < lay_w.size2; ++col) {
+    auto vclay = gsl_matrix_column( &lay_w, col ).vector;
+    gsl_vector_mul( &vclay, reg.sd_y() );
+  }
+  // constant components : lay first column
+  auto vbias = gsl_matrix_column( lay, 0 ).vector;
+  // multiply scaled weights with mu_x
+  gsl_blas_dgemv( CblasNoTrans, -1.0, &lay_w, reg.mu_x(), 0.0, &vbias );
+  // and add mu
+  gsl_vector_add( &vbias, reg.mu_y() );
+
+    //DEBUG : print out lauer weights
+  // std::cout << "Layer weights:" << std::endl;
+  // std::cout << utils::gsl::str_mat( lay ) << std::endl;
+
+  // DEBUG : save learned Weights
+  std::ofstream ofile_w( "dbg_weights" );
+  // Header comments
+  ofile << "## \"hmm_exp\": \"" << _pb->expr << "\"," << std::endl;
+  ofile << "## \"traj_name\" : \"" << *_opt_fileload_traj << "\"," << std::endl;
+  ofile << "## \"esn_name\": \"" << *_opt_fileload_esn << "\"," << std::endl;
+  if( _opt_fileload_noise ) {
+    ofile << "## \"noise_name\": \"" << *_opt_fileload_noise << "\"," << std::endl;
+  }
+  ofile << "## \"regul\": " << _opt_regul << "," << std::endl;
+  ofile << "## \"test_length\": " << _opt_test_length << "," << std::endl;
+  // Header ColNames
+  for( unsigned int i = 0; i < lay->size2; ++i) {
+    ofile_w << "inw_" << i << "\t";
+  }
+  ofile_w << std::endl;
+  // Data
+  _esn->lay->write( ofile_w );
+  ofile_w << std::endl;
+  
+  ofile_w.close();
 };
 // ***************************************************************************
 // ******************************************************************* graph

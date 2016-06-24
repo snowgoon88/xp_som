@@ -187,9 +187,9 @@ l_traj_size = [500,1000,2000,10000]
 *** TODO pour apprendre, il faut transition ->V(S) (pour voir)
 * [0/1] Utils
 ** TODO Un seul namespace dans utils, la différence se fera par l'objet que l'on veut striser
-* [3/3] Check Ridge Regression
+* [2/3] Check Ridge Regression
 https://onlinecourses.science.psu.edu/stat857/node/155
 http://www.astrostatistics.psu.edu/su07/R/html/MASS/html/lm.ridge.html
 ** DONE RidgeReg with GIVEN regul param
-** DONE Compare with R
+** TODO Compare with R
 ** DONE Ne pas accorder de pénalité pour le poids associé à 'intercept' dans RR
