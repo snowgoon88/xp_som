@@ -70,7 +70,14 @@ http://stackoverflow.com/questions/7758580/writing-your-own-stl-container/775962
 
 ** TODO Cherche le meilleur Ridge Coef
 * TODO Data en séquence
-* [1/1] XP
+* XP HMM
+** Séquence
+wbuild/xp/xp-003-hmm --create_hmm "AAAAF" --save_hmm my_hmm
+wbuild/xp/xp-003-hmm -m my_hmm --length_traj 1000 --save_traj my_traj
+wbuild/xp/xp-003-hmm -m my_hmm -t my_traj --res_size 10 --save_esn my_esn 
+wbuild/xp/xp-003-hmm -m my_hmm -t my_traj -e my_esn --noise_length 500 --save_noise my_noise
+wbuild/xp/xp-003-hmm -m my_hmm -t my_traj -e my_esn -o my_res00 -g
+wbuild/xp/xp-003-hmm -m my_hmm -t my_traj -e my_esn -n my_noise.dat -o my_res01 -g
 * TODO [7/10] XP POMDP 
 J'ai l'impression qu'essayer d'apprendre les transitions ne marche que dans des cas quasi déterministes, non? Dans ce cas, faudrait plutôt essayer de voir si on peut pas apprendre V(s) ou V(o) ??
 ** DONE ajout d'un jsonreader pour transition
@@ -187,9 +194,9 @@ l_traj_size = [500,1000,2000,10000]
 *** TODO pour apprendre, il faut transition ->V(S) (pour voir)
 * [0/1] Utils
 ** TODO Un seul namespace dans utils, la différence se fera par l'objet que l'on veut striser
-* [2/3] Check Ridge Regression
+* [3/3] Check Ridge Regression
 https://onlinecourses.science.psu.edu/stat857/node/155
 http://www.astrostatistics.psu.edu/su07/R/html/MASS/html/lm.ridge.html
 ** DONE RidgeReg with GIVEN regul param
-** TODO Compare with R
+** DONE Compare with R
 ** DONE Ne pas accorder de pénalité pour le poids associé à 'intercept' dans RR

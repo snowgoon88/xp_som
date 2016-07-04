@@ -100,6 +100,7 @@ unsigned int                 _opt_test_length        = 10;
 std::unique_ptr<std::string> _opt_file_result        = nullptr;
 bool                         _opt_graph              = false;
 bool                         _opt_verb               = false;
+bool                         _opt_debug              = false;
 // Learn
 RidgeRegression::Data        _sample_data;
 // ***************************************************************************
@@ -139,6 +140,7 @@ void setup_options(int argc, char **argv)
     ("output,o",  po::value<std::string>(), "Output file for results")
     ("graph,g", "graphics" )
     ("verb,v", "verbose" )
+    ("debug,d", "debug ESN internal values")
     //("verb,v", po::value<bool>(&_opt_verb)->default_value(false), "verbose" )
   ;
 
@@ -221,6 +223,9 @@ void setup_options(int argc, char **argv)
   }
   if( vm.count("graph") ) {
     _opt_graph = true;
+  }
+  if( vm.count("debug") ) {
+    _opt_debug = true;
   }
 };
 
@@ -500,38 +505,40 @@ void learn( ESN& esn,
   //   std::cout << utils::str_vec(samp.first) << " -> " << utils::str_vec(samp.second) << std::endl;
   // }
   // DEBUG : learning sample in file
-  auto ofile = std::ofstream( "dbg_learn_data" );
-  ofile << "## \"hmm_exp\": \"" << _pb->expr << "\"," << std::endl;
-  ofile << "## \"traj_name\" : \"" << *_opt_fileload_traj << "\"," << std::endl;
-  ofile << "## \"esn_name\": \"" << *_opt_fileload_esn << "\"," << std::endl;
-  if( _opt_fileload_noise ) {
-    ofile << "## \"noise_name\": \"" << *_opt_fileload_noise << "\"," << std::endl;
-  }
-  ofile << "## \"regul\": " << _opt_regul << "," << std::endl;
-  ofile << "## \"test_length\": " << _opt_test_length << "," << std::endl;
-  // Header ColNames
-  // input
-  for( unsigned int i = 0; i < _esn->lay->input_size(); ++i) {
-    ofile << "in_" << i << "\t";
-  }
-  // target
-  for( unsigned int i = 0; i < _esn->lay->output_size(); ++i) {
-    ofile << "ta_" << i << "\t";
-  }
-  ofile << std::endl;
-  // Data
-  for( auto& sample: sample_data) {
-    //in
-    for( auto& var: sample.first) {
-      ofile << var << "\t";
+  if( _opt_debug ) {
+    auto ofile = std::ofstream( "dbg_learn_data" );
+    ofile << "## \"hmm_exp\": \"" << _pb->expr << "\"," << std::endl;
+    ofile << "## \"traj_name\" : \"" << *_opt_fileload_traj << "\"," << std::endl;
+    ofile << "## \"esn_name\": \"" << *_opt_fileload_esn << "\"," << std::endl;
+    if( _opt_fileload_noise ) {
+      ofile << "## \"noise_name\": \"" << *_opt_fileload_noise << "\"," << std::endl;
+    }
+    ofile << "## \"regul\": " << _opt_regul << "," << std::endl;
+    ofile << "## \"test_length\": " << _opt_test_length << "," << std::endl;
+    // Header ColNames
+    // input
+    for( unsigned int i = 0; i < _esn->lay->input_size(); ++i) {
+      ofile << "in_" << i << "\t";
     }
     // target
-    for( auto& var: sample.second) {
-      ofile << var << "\t";
+    for( unsigned int i = 0; i < _esn->lay->output_size(); ++i) {
+      ofile << "ta_" << i << "\t";
     }
     ofile << std::endl;
+    // Data
+    for( auto& sample: sample_data) {
+      //in
+      for( auto& var: sample.first) {
+	ofile << var << "\t";
+      }
+      // target
+      for( auto& var: sample.second) {
+	ofile << var << "\t";
+      }
+      ofile << std::endl;
+    }
+    ofile.close();
   }
-  ofile.close();
 
   // RIDGE REGRESSION
   if( _opt_verb ) std::cout << "  + Regression" << std::endl;
@@ -577,26 +584,28 @@ void learn( ESN& esn,
   // std::cout << utils::gsl::str_mat( lay ) << std::endl;
 
   // DEBUG : save learned Weights
-  std::ofstream ofile_w( "dbg_weights" );
-  // Header comments
-  ofile << "## \"hmm_exp\": \"" << _pb->expr << "\"," << std::endl;
-  ofile << "## \"traj_name\" : \"" << *_opt_fileload_traj << "\"," << std::endl;
-  ofile << "## \"esn_name\": \"" << *_opt_fileload_esn << "\"," << std::endl;
-  if( _opt_fileload_noise ) {
-    ofile << "## \"noise_name\": \"" << *_opt_fileload_noise << "\"," << std::endl;
-  }
-  ofile << "## \"regul\": " << _opt_regul << "," << std::endl;
-  ofile << "## \"test_length\": " << _opt_test_length << "," << std::endl;
-  // Header ColNames
-  for( unsigned int i = 0; i < lay->size2; ++i) {
-    ofile_w << "inw_" << i << "\t";
-  }
-  ofile_w << std::endl;
-  // Data
-  _esn->lay->write( ofile_w );
-  ofile_w << std::endl;
+  if( _opt_debug ) {
+    std::ofstream ofile_w( "dbg_weights" );
+    // Header comments
+    ofile_w << "## \"hmm_exp\": \"" << _pb->expr << "\"," << std::endl;
+    ofile_w << "## \"traj_name\" : \"" << *_opt_fileload_traj << "\"," << std::endl;
+    ofile_w << "## \"esn_name\": \"" << *_opt_fileload_esn << "\"," << std::endl;
+    if( _opt_fileload_noise ) {
+      ofile_w << "## \"noise_name\": \"" << *_opt_fileload_noise << "\"," << std::endl;
+    }
+    ofile_w << "## \"regul\": " << _opt_regul << "," << std::endl;
+    ofile_w << "## \"test_length\": " << _opt_test_length << "," << std::endl;
+    // Header ColNames
+    for( unsigned int i = 0; i < lay->size2; ++i) {
+      ofile_w << "inw_" << i << "\t";
+    }
+    ofile_w << std::endl;
+    // Data
+    _esn->lay->write( ofile_w );
+    ofile_w << std::endl;
   
-  ofile_w.close();
+    ofile_w.close();
+  }
 };
 // ***************************************************************************
 // ******************************************************************* graph
@@ -764,7 +773,7 @@ int main(int argc, char *argv[])
    }
    
   // Learn_________________________
-  if( _pb and _data and _esn ) {
+  if( _opt_fileload_hmm and _opt_fileload_traj and _opt_fileload_esn ) {
     if( _opt_verb )
       std::cout << "__LEARN" << std::endl;
     if( _noise ) {
@@ -851,6 +860,9 @@ int main(int argc, char *argv[])
        ofile << "## \"hmm_exp\": \"" << _pb->expr << "\"," << std::endl;
        ofile << "## \"traj_name\" : \"" << *_opt_fileload_traj << "\"," << std::endl;
        ofile << "## \"esn_name\": \"" << *_opt_fileload_esn << "\"," << std::endl;
+       if( _opt_fileload_noise ) {
+	 ofile << "## \"noise_name\": " << *_opt_fileload_noise << "," << std::endl;
+       }
        ofile << "## \"regul\": " << _opt_regul << "," << std::endl;
        ofile << "## \"test_length\": " << _opt_test_length << "," << std::endl;
        // Header ColNames
