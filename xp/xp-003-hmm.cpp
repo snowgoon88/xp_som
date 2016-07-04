@@ -799,6 +799,38 @@ int main(int argc, char *argv[])
       //std::cout << " --> " << utils::str_vec(pred_out) << std::endl;
       result_learn.push_back( pred_out );
     }
+    // Compute squared_sum of weights : along the first row of weights
+    auto penalized_weights = 0.0;
+    auto lay_w = _esn->lay->weights();
+    for( unsigned int i = 1; i < lay_w->size2; ++i) {
+      penalized_weights += gsl_matrix_get( lay_w, 0, i) * gsl_matrix_get( lay_w, 0, i);
+    }
+    penalized_weights = penalized_weights * _opt_regul;
+    // Compute MSE for learning
+    auto idx_sample = 0;
+    auto mse_learn = 0.0;
+    for (auto it = _data->begin()+1; it != _data->end()-_opt_test_length; ++it) {
+      mse_learn += (it->id_o - result_learn[idx_sample][0])
+	* (it->id_o - result_learn[idx_sample][0]);
+      idx_sample++;
+    }
+    mse_learn = mse_learn / (_data->size() - _opt_test_length );
+    // and testing
+    auto mse_test = 0.0;
+    // Keep going one with the next values of idx_sample
+    for (auto it = _data->end()-_opt_test_length; it != _data->end(); ++it) {
+      mse_test += (it->id_o - result_learn[idx_sample][0])
+	* (it->id_o - result_learn[idx_sample][0]);
+      idx_sample++;
+    }
+    mse_test = mse_test / (_opt_test_length);
+    if( _opt_verb ) {
+      std::cout << "  => MSE_learn =" << mse_learn;
+      std::cout << "  MSE_test =" << mse_test << std::endl;
+      std::cout << "  => PErr_learn=" << mse_learn+penalized_weights;
+      std::cout << "  PErr_test=" << mse_test+penalized_weights;
+      std::cout << "  PWeights= " << penalized_weights << std::endl;
+    }
     
     // to file ____________________
     auto idx_out = 0;
