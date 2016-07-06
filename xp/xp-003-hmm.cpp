@@ -406,7 +406,8 @@ WNoise::Data save_noise( const std::string& filename,
 
   // Sauve les data
   std::string fn_data = filename+".data";
-  std::cout << "Write WNoise dans " << fn_data << std::endl;
+  if( _opt_verb )
+	  std::cout << "Write WNoise dans " << fn_data << std::endl;
   std::ofstream ofile( fn_data );
 
   // inform traj
