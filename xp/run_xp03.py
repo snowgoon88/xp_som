@@ -76,6 +76,7 @@ def xp():
     # l_test_length = [10]
 
     l_hmm = ['ABCDCB','AAAAAF']
+    l_hmm_names = ['AB', 'AA']
     l_traj_size = [500]
     l_esn_size = [10,20]
     l_leak = [0.1,0.5]
@@ -89,11 +90,11 @@ def xp():
     nb_noise   = 2
     nb_repeat  = 1       ## no need to repeat : deterministic learning
     nb_start   = 0       ## start numbering files with
-    generate_hmm  = True    ## need to generate hmm
+    generate_hmm  = True     ## need to generate hmm
     generate_traj = True     ## need to generate traj
     generate_esn  = True     ## need to generate esn
     generate_noise= True     ## need to generate oise
-    learn         = True    ## learn
+    learn         = True     ## learn
 
     if generate_hmm:
         ## Pour chaque expression
@@ -101,8 +102,8 @@ def xp():
         pbar = pb.ProgressBar(maxval=len(l_hmm),
                               widgets = ['  ',pb.SimpleProgress(), ' ', pb.Bar()]).start()
         id_hmm = 0
-        for hmm_exp in l_hmm:
-            hmm_name = "data_hmm/hmm_"+hmm_exp+".json"
+        for hmm_exp,hmm_n in zip(l_hmm,l_hmm_names):
+            hmm_name = "data_hmm/hmm_"+hmm_n+".json"
             hmm_args = [ "--create_hmm", hmm_exp,
                          "--save_hmm", hmm_name ]
             ## generate traj
@@ -121,9 +122,10 @@ def xp():
         pbar = pb.ProgressBar(maxval=nb_combination,
                               widgets = ['  ',pb.SimpleProgress(), ' ', pb.Bar()]).start()
         id_xp = 0
-        for hmm_expr, traj_size, id_traj in it.product(l_hmm, l_traj_size, range(nb_traj)):
-            hmm_name = "data_hmm/hmm_"+hmm_expr+".json"
-            traj_name = "data_hmm/traj_"+hmm_expr+"_"+str(traj_size)+"_n{0:03d}".format( id_traj )+".data"
+        for hmm_n, traj_size, id_traj in it.product(l_hmm_names, l_traj_size, range(nb_traj)):
+
+            hmm_name = "data_hmm/hmm_"+hmm_n+".json"
+            traj_name = "data_hmm/traj_"+hmm_n+"_"+str(traj_size)+"_n{0:03d}".format( id_traj )+".data"
             traj_args = [ "-m", hmm_name,
                           "--length_traj", str(traj_size),
                           "--save_traj", traj_name ]
@@ -186,13 +188,13 @@ def xp():
 
     if learn:
         # ## Apprentissage pour toutes les combinaisons
-        nb_combination = len(l_hmm)*len(l_test_length)*len(l_traj_size)*len(l_esn_size)*len(l_leak)*len(l_forward)*len(l_regul)*len(l_noise_length)
+        nb_combination = len(l_hmm_names)*len(l_test_length)*len(l_traj_size)*len(l_esn_size)*len(l_leak)*len(l_forward)*len(l_regul)*len(l_noise_length)
         print "__LEARN","  "+str(nb_esn*nb_traj*nb_noise)+" x nb_config="+str(nb_combination)
         pbar = pb.ProgressBar(maxval=nb_combination,
                               widgets = ['  ',pb.SimpleProgress(), ' ', pb.Bar()]).start()
         id_xp = 0
         
-        for hmm_expr,traj_size,esn_size,leak,fg_forward,noise_length,regul,length_test in it.product( l_hmm, l_traj_size, l_esn_size, l_leak, l_forward, l_noise_length, l_regul, l_test_length ):
+        for hmm_expr,traj_size,esn_size,leak,fg_forward,noise_length,regul,length_test in it.product( l_hmm_names, l_traj_size, l_esn_size, l_leak, l_forward, l_noise_length, l_regul, l_test_length ):
             for id_esn,id_traj,id_noise in it.product( range(nb_esn), range(nb_traj), range(nb_noise)):
                 hmm_name = "data_hmm/hmm_"+hmm_expr+".json"
                 traj_name = "data_hmm/traj_"+hmm_expr+"_"+str(traj_size)+"_n{0:03d}".format( id_traj )+".data"
