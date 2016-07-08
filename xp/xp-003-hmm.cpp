@@ -98,6 +98,7 @@ std::unique_ptr<std::string> _opt_fileload_noise     = nullptr;
 double                       _opt_regul              = 1.0;
 unsigned int                 _opt_test_length        = 10;
 std::unique_ptr<std::string> _opt_file_result        = nullptr;
+std::unique_ptr<std::string> _opt_filesave_learned   = nullptr;
 bool                         _opt_graph              = false;
 bool                         _opt_verb               = false;
 bool                         _opt_debug              = false;
@@ -138,6 +139,7 @@ void setup_options(int argc, char **argv)
     ("test_length,l", po::value<unsigned int>(&_opt_test_length)->default_value(_opt_test_length), "Length of test")
     
     ("output,o",  po::value<std::string>(), "Output file for results")
+    ("save_learned,s",  po::value<std::string>(), "Save Resulting ESN")
     ("graph,g", "graphics" )
     ("verb,v", "verbose" )
     ("debug,d", "debug ESN internal values")
@@ -209,6 +211,10 @@ void setup_options(int argc, char **argv)
   // RESULT
   if (vm.count("output")) {
     _opt_file_result = make_unique<std::string>(vm["output"].as< std::string>());
+  }
+  // Save learned ESN
+  if (vm.count("save_learned")) {
+    _opt_filesave_learned = make_unique<std::string>(vm["save_learned"].as< std::string>());
   }
 
   // Options
@@ -792,6 +798,13 @@ int main(int argc, char *argv[])
 	   _data->begin()+1, _data->end()-_opt_test_length,             // target
 	   _opt_regul );
 
+    // Save learned ESN
+    if( _opt_filesave_learned ) {
+      if( _opt_verb )
+	std::cout << "__SAVE Learned ESN to " << *_opt_filesave_learned << std::endl;
+      save_esn( *_opt_filesave_learned, *_esn);
+    }
+    
     // Erreur d'apprentissage
     std::vector<RidgeRegression::Toutput> result_learn;
     for( const auto& pred_in: _data_lay_in) {

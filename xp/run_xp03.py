@@ -33,7 +33,7 @@ def sub_xp03( name_hmm, name_traj, name_esn, regul, name_noise, name_output, pos
 # ********************************************************************* repeat
 def repeat( name_hmm, name_traj, name_esn,
             regul, test_length, name_noise,
-            name_output,
+            name_output, name_save,
             nb_repeat, idx_start=0, nb_max=2 ):
     """
     Launch nb_repeat copies of function fun, with parameters param in parallel
@@ -50,6 +50,8 @@ def repeat( name_hmm, name_traj, name_esn,
     args.extend( ['-l', str(test_length)] )
     if( name_noise ):
         args.extend( ['-n', name_noise] )
+    if( name_save ):
+        args.extend( ['-s', name_save] )
     # repeat
     for idx in range(nb_repeat):
         tmp_args = list(args)
@@ -75,15 +77,15 @@ def xp():
     # l_leak = [0.1,0.5]
     # l_test_length = [10]
 
-    l_hmm = ['ABCDCB','AAAAAF']
-    l_hmm_names = ['AB', 'AA']
-    l_traj_size = [500]
+    l_hmm = ['ABCDEFEDCB','AAAAAF','AAAAAAAF']
+    l_hmm_names = ['ABCDEF', '5AF','7AF']
+    l_traj_size = [100,500,1000]
     l_esn_size = [10,20]
-    l_leak = [0.1,0.5]
+    l_leak = [0.1,0.5,0.9]
     l_forward = [ True, False ]
     l_noise_length = [0,500]
-    l_regul = [0.01, 0.1]
-    l_test_length = [10]
+    l_regul = [0.01, 0.1,1.0,10.0]
+    l_test_length = [10,50]
     
     nb_traj    = 2       ## how many instances of each traj config
     nb_esn     = 2       ## how many instances of each esn config
@@ -95,6 +97,7 @@ def xp():
     generate_esn  = True     ## need to generate esn
     generate_noise= True     ## need to generate oise
     learn         = True     ## learn
+    save_learned  = True     ## save learned ESN 
 
     if generate_hmm:
         ## Pour chaque expression
@@ -204,10 +207,15 @@ def xp():
                 esn_name += "_n{0:03d}".format( id_esn )+".json"
                 noise_name = "data_hmm/noise_"+str(noise_length)+"_n{0:03d}".format( id_noise )+".data"
                 
-                output_name = "data_hmm/result_"+hmm_expr+"_"+str(traj_size)+"_"+str(esn_size)+"_"+str(leak)+"_"+str(regul)
+                ## allow saving ESNs
+                output_name = hmm_expr+"_"+str(traj_size)+"_"+str(esn_size)+"_"+str(leak)+"_"+str(regul)
                 if( fg_forward ):
                     output_name += "_for"
-                output_name += "_e{0:03d}".format(id_esn)+"_t{0:03d}".format(id_traj)+"_"+str(noise_length)+"_n{0:03d}".format(id_noise)+"_l"+str(length_test)+".data"
+                output_name += "_e{0:03d}".format(id_esn)+"_t{0:03d}".format(id_traj)+"_"+str(noise_length)+"_n{0:03d}".format(id_noise)+"_l"+str(length_test)
+                save_name = None
+                if( save_learned ):
+                    save_name = "data_hmm/savedesn_"+output_name+".json"
+                output_name = "data_hmm/result_"+output_name+".data"
                 ## Run XP
                 repeat( name_hmm = hmm_name,
                         name_traj=    traj_name,
@@ -216,6 +224,7 @@ def xp():
                         test_length = length_test,
                         name_noise = noise_name,
                         name_output = output_name,
+                        name_save = save_name,
                         nb_repeat = nb_repeat,
                         idx_start = nb_start
                 )
