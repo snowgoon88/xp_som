@@ -87,8 +87,8 @@ def xp():
     l_regul = [0.01, 0.1,1.0,10.0]
     l_test_length = [10,50]
     
-    nb_traj    = 2       ## how many instances of each traj config
-    nb_esn     = 2       ## how many instances of each esn config
+    nb_traj    = 1       ## how many instances of each traj config
+    nb_esn     = 5       ## how many instances of each esn config
     nb_noise   = 2
     nb_repeat  = 1       ## no need to repeat : deterministic learning
     nb_start   = 0       ## start numbering files with

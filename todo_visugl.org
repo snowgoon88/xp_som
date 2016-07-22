@@ -50,10 +50,33 @@ std::string("ABCD"),           // periodic
                                // alterne 1) AAAAAAAAAAAF gaussien
                                //         2) soit A, soit F
 ** DONE test-hmm.cpp
-** DONE [3/3] Apprendre (o)_t -> o_{t+1} avec réservoir
+** DONE [3/4] Apprendre (o)_t -> o_{t+1} avec réservoir
 *** DONE générer trajectoire HMM
 *** DONE initialiser différemment ESN (Szita)
 *** DONE xp-003-HMM
+** <2016-07-21 Thu>
+l_hmm = ['ABCDEFEDCB','AAAAAF','AAAAAAAF']
+    l_hmm_names = ['ABCDEF', '5AF','7AF']
+    l_traj_size = [100,500,1000]
+    l_esn_size = [10,20]
+    l_leak = [0.1,0.5,0.9]
+    l_forward = [ True, False ]
+    l_noise_length = [0,500]
+    l_regul = [0.01, 0.1,1.0,10.0]
+    l_test_length = [10,50]
+    
+    nb_traj    = 2       ## how many instances of each traj config
+    nb_esn     = 2       ## how many instances of each esn config
+    nb_noise   = 2
+    nb_repeat  = 1       ## no need to repeat : deterministic learning
+    nb_start   = 0       ## start numbering files with
+    generate_hmm  = True     ## need to generate hmm
+    generate_traj = True     ## need to generate traj
+    generate_esn  = True     ## need to generate esn
+    generate_noise= True     ## need to generate oise
+    learn         = True     ## learn
+    save_learned  = True     ## save learned ESN 
+*** R : df_5AF, df_7AF et df_ABCDE
 ** TODO [0/1] Visualization with R
 *** TODO Tester si autres scripts marchent.
 ** DONE visualization on-line
