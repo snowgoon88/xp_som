@@ -77,6 +77,107 @@ l_hmm = ['ABCDEFEDCB','AAAAAF','AAAAAAAF']
     learn         = True     ## learn
     save_learned  = True     ## save learned ESN 
 *** R : df_5AF, df_7AF et df_ABCDE
+*** Résultats
+**** DONE 5AF (ltest=50)
+- 10 meilleurs et 10 pires INSTANCES comme plot dans Pic
+- Chercher si avec ltraj=100 et l_esn=10 on peut avoir bon résultats => OUI
+- paramètre regul semble important (0.01, voire 0.1 mais pas plus)
+- 10 meilleurs INSTANCES dans Pic
+- cela se confirme en moyenne, mais il y a aussi avec regul=10
+     ltraj lesn leak regul fw lnoise ltest type prec_err      mse_err
+1086  1000   20  0.1  0.01  Y    500    50 test        1 1.765566e-07
+1140  1000   20  0.1 10.00  Y    500    50 test    1.000 8.434848e-04
+1146  1000   20  0.5 10.00  Y    500    50 test    1.000 8.434848e-04
+1152  1000   20  0.9 10.00  Y    500    50 test    1.000 8.434848e-04
+996   1000   20  0.1 10.00  Y      0    50 test    1.000 1.360339e-03
+1002  1000   20  0.5 10.00  Y      0    50 test    1.000 1.360339e-03
+1008  1000   20  0.9 10.00  Y      0    50 test    1.000 1.360339e-03
+**** DONE 7AF (ltest=50)
+- même constations que pour 5AF
+- On essaie aussi avec ltraj=100 et lesn=10
+=> Cela n'est plus suffisant pour apprendre !! best_prec = 0.76, et les meilleurs sont SANS forward ( moins de poids ??)
+- 10 meilleurs INSTANCES dans Pic
+- En moyenne, bcp moins de contextes donnent un bon résultats.
+=> Dans l'ordre
+     ltraj lesn leak regul fw lnoise ltest type prec_err      mse_err
+1086  1000   20  0.1  0.01  Y    500    50 test    1.000 1.818500e-05
+1092  1000   20  0.5  0.01  Y    500    50 test    1.000 1.818500e-05
+1098  1000   20  0.9  0.01  Y    500    50 test    1.000 1.818500e-05
+942   1000   20  0.1  0.01  Y      0    50 test    1.000 6.270271e-05
+948   1000   20  0.5  0.01  Y      0    50 test    1.000 6.270271e-05
+954   1000   20  0.9  0.01  Y      0    50 test    1.000 6.270271e-05
+1085   500   20  0.1  0.01  Y    500    50 test    1.000 6.834068e-05
+1091   500   20  0.5  0.01  Y    500    50 test    1.000 6.834068e-05
+1097   500   20  0.9  0.01  Y    500    50 test    1.000 6.834068e-05
+941    500   20  0.1  0.01  Y      0    50 test    1.000 2.338607e-04
+947    500   20  0.5  0.01  Y      0    50 test    1.000 2.338607e-04
+953    500   20  0.9  0.01  Y      0    50 test    1.000 2.338607e-04
+1104  1000   20  0.1  0.10  Y    500    50 test    0.986 4.611783e-04
+1110  1000   20  0.5  0.10  Y    500    50 test    0.986 4.611783e-04
+1116  1000   20  0.9  0.10  Y    500    50 test    0.986 4.611783e-04
+1014  1000   20  0.1  0.01  N    500    50 test    0.972 5.631581e-04
+1020  1000   20  0.5  0.01  N    500    50 test    0.972 5.631581e-04
+1026  1000   20  0.9  0.01  N    500    50 test    0.972 5.631581e-04
+1103   500   20  0.1  0.10  Y    500    50 test    0.952 1.386075e-03
+1109   500   20  0.5  0.10  Y    500    50 test    0.952 1.386075e-03
+1115   500   20  0.9  0.10  Y    500    50 test    0.952 1.386075e-03
+1013   500   20  0.1  0.01  N    500    50 test    0.952 1.495854e-03
+1019   500   20  0.5  0.01  N    500    50 test    0.952 1.495854e-03
+1025   500   20  0.9  0.01  N    500    50 test    0.952 1.495854e-03
+869    500   20  0.1  0.01  N      0    50 test    0.952 4.949468e-03
+875    500   20  0.5  0.01  N      0    50 test    0.952 4.949468e-03
+**** DONE ABCDEF
+- Bcp de bon résultats (médiane err_prec = 1)
+- Les meilleurs sont avec ltraj=1000,lesn=20,forward=Y
+- 10 best et 10 worst dans Pic
+- En moyenn
+     ltraj lesn leak regul fw lnoise ltest type prec_err      mse_err
+1086  1000   20  0.1  0.01  Y    500    50 test        1 9.801589e-07
+1092  1000   20  0.5  0.01  Y    500    50 test        1 9.801589e-07
+1098  1000   20  0.9  0.01  Y    500    50 test        1 9.801589e-07
+942   1000   20  0.1  0.01  Y      0    50 test        1 1.388668e-06
+948   1000   20  0.5  0.01  Y      0    50 test        1 1.388668e-06
+954   1000   20  0.9  0.01  Y      0    50 test        1 1.388668e-06
+1014  1000   20  0.1  0.01  N    500    50 test        1 2.482809e-06
+1020  1000   20  0.5  0.01  N    500    50 test        1 2.482809e-06
+1026  1000   20  0.9  0.01  N    500    50 test        1 2.482809e-06
+1085   500   20  0.1  0.01  Y    500    50 test        1 4.170694e-06
+1091   500   20  0.5  0.01  Y    500    50 test        1 4.170694e-06
+1097   500   20  0.9  0.01  Y    500    50 test        1 4.170694e-06
+941    500   20  0.1  0.01  Y      0    50 test        1 7.021464e-06
+947    500   20  0.5  0.01  Y      0    50 test        1 7.021464e-06
+953    500   20  0.9  0.01  Y      0    50 test        1 7.021464e-06
+870   1000   20  0.1  0.01  N      0    50 test        1 7.797301e-06
+876   1000   20  0.5  0.01  N      0    50 test        1 7.797301e-06
+882   1000   20  0.9  0.01  N      0    50 test        1 7.797301e-06
+1013   500   20  0.1  0.01  N    500    50 test        1 9.676237e-06
+- Mais ca marrche aussi avec ltraj=100 et lesn=20
+084   100   20  0.1  0.01  Y    500    50 test     1.00 2.217160e-04
+012   100   20  0.1  0.01  N    500    50 test     1.00 3.010283e-04
+- Un peu moins avec lesn=10
+     ltraj lesn leak regul fw lnoise ltest type prec_err     mse_err
+1081   100   10  0.1  0.01  Y    500    50 test     0.98 0.001469465
+1087   100   10  0.5  0.01  Y    500    50 test     0.98 0.001469465
+1093   100   10  0.9  0.01  Y    500    50 test     0.98 0.001469465
+1009   100   10  0.1  0.01  N    500    50 test     0.94 0.002306352
+1015   100   10  0.5  0.01  N    500    50 test     0.94 0.002306352
+1021   100   10  0.9  0.01  N    500    50 test     0.94 0.002306352
+1099   100   10  0.1  0.10  Y    500    50 test     0.92 0.003070745
+1105   100   10  0.5  0.10  Y    500    50 test     0.92 0.003070745
+1111   100   10  0.9  0.10  Y    500    50 test     0.92 0.003070745
+1027   100   10  0.1  0.10  N    500    50 test     0.89 0.003371991
+1033   100   10  0.5  0.10  N    500    50 test     0.89 0.003371991
+1039   100   10  0.9  0.10  N    500    50 test     0.89 0.003371991
+937    100   10  0.1  0.01  Y      0    50 test     0.80 0.005466400
+943    100   10  0.5  0.01  Y      0    50 test     0.80 0.005466400
+949    100   10  0.9  0.01  Y      0    50 test     0.80 0.005466400
+865    100   10  0.1  0.01  N      0    50 test     0.78 0.005447919
+871    100   10  0.5  0.01  N      0    50 test     0.78 0.005447919
+877    100   10  0.9  0.01  N      0    50 test     0.78 0.005447919
+=> du bruit, faible regul
+- 10 plot de  
+     ltraj lesn leak regul fw lnoise ltest type prec_err     mse_err
+1081   100   10  0.1  0.01  Y    500    50 test     0.98 0.001469465
 ** TODO [0/1] Visualization with R
 *** TODO Tester si autres scripts marchent.
 ** DONE visualization on-line

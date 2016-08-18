@@ -6,6 +6,16 @@ require(ggplot2)
 ## attach(df)
 ## idx_best <- order( mse_err )
 ## plot_many_traj( df, idx_best[1:10], "Pic/")
+##
+## EXEMPLE ##################################"
+## attach( df_7A.test)
+## ttest <- df_7A.test[ ltraj==100 & lesn==10,]
+## summary( ttest )
+## idx_t <- order( - ttest$prec_err, ttest$mse_err )
+## ttest[ idx_t[1:20], ]
+## plot_many_traj( ttest, "data_hmm/res_7AF", idx_t[1:10], "Pic_tmp/", 12, 13)
+## search()
+## detach( df_7A.test)
 ###############################################################################
 
 ###############################################################################
@@ -46,12 +56,18 @@ make_df_hmm <- function( path ) {
 
 ###############################################################################
 ## Plot MANY trajectory
+## @param df : df[,1] is the name of the file
+## @param dir : directory where the data files are
+## @param l_indices : indices of the row to print, in the chosen df
+## @param rep : directory to save the files
+## @param id_prec ! index of prec_err column
+## @param id_mse : index of mse_err column
 ###############################################################################
-plot_many_traj <- function( df, l_indices, rep="" ) 
+plot_many_traj <- function( df, dir, l_indices, rep="", id_prec=16, id_mse=17 ) 
 {
   for(row in l_indices) {
-    str_tit <- paste( df[row,1], " MSE=", df[row,17], sep="")
-    str_file <- paste( "data_hmm", df[row,1], sep="/")
+    str_tit <- paste( df[row,2], " PREC=", format(df[row,id_prec], digits=4), " MSE=", format(df[row,id_mse], digits=3), sep="")
+    str_file <- paste( dir, df[row,1], sep="/")
     png( filename = paste( rep, df[row,1], ".png", sep=""),
           width = 800, height=600)
     print( plot_one_traj( str_file, str_tit) )
@@ -157,8 +173,8 @@ compute_stat <- function( data ) {
   return( data.frame( prec_err, mse_err ))
 }
 
-df <- make_df_hmm( "data_hmm" )
-plot_many_traj( df, c(87,940), "Pic/")
+##df <- make_df_hmm( "data_hmm" )
+##plot_many_traj( df, c(87,940), "Pic/")
 
 
 
