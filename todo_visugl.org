@@ -23,7 +23,7 @@
 
 * DONE [1/1] Constructeurs, Copy, Move
 ** DONE tester Copy pour Layer
-* TODO [3/4] BICA -HMM
+* TODO [6/7] BICA -HMM
 ** Séquence
 wbuild/xp/xp-003-hmm --create_hmm "AAAAF" --save_hmm my_hmm
 wbuild/xp/xp-003-hmm -m my_hmm --length_traj 1000 --save_traj my_traj
@@ -50,11 +50,11 @@ std::string("ABCD"),           // periodic
                                // alterne 1) AAAAAAAAAAAF gaussien
                                //         2) soit A, soit F
 ** DONE test-hmm.cpp
-** DONE [3/4] Apprendre (o)_t -> o_{t+1} avec réservoir
+** DONE [3/3] Apprendre (o)_t -> o_{t+1} avec réservoir
 *** DONE générer trajectoire HMM
 *** DONE initialiser différemment ESN (Szita)
 *** DONE xp-003-HMM
-** <2016-07-21 Thu>
+** DONE <2016-07-21 Thu> 51F, 7AF, ABCDEF
 l_hmm = ['ABCDEFEDCB','AAAAAF','AAAAAAAF']
     l_hmm_names = ['ABCDEF', '5AF','7AF']
     l_traj_size = [100,500,1000]
@@ -178,7 +178,65 @@ l_hmm = ['ABCDEFEDCB','AAAAAF','AAAAAAAF']
 - 10 plot de  
      ltraj lesn leak regul fw lnoise ltest type prec_err     mse_err
 1081   100   10  0.1  0.01  Y    500    50 test     0.98 0.001469465
-** TODO [0/1] Visualization with R
+** DONE <2016-09-20 Tue> p05ABCB
+l_hmm = ['! .05 ABCB']
+    l_hmm_names = ['p05ABCB']
+    l_traj_size = [100,500,1000]
+    l_esn_size = [10,20]
+    l_leak = [0.1,0.5,0.9]
+    l_forward = [ True, False ]
+    l_noise_length = [0,500]
+    l_regul = [0.01, 0.1,1.0,10.0]
+    l_test_length = [50]
+    
+    nb_traj    = 2       ## how many instances of each traj config
+    nb_esn     = 5       ## how many instances of each esn config
+    nb_noise   = 2
+    nb_repeat  = 1       ## no need to repeat : deterministic learning
+    nb_start   = 0       ## start numbering files with
+    generate_hmm  = True     ## need to generate hmm
+    generate_traj = True     ## need to generate traj
+    generate_esn  = False     ## need to generate esn
+    generate_noise= False     ## need to generate oise
+    learn         = True     ## learn
+    save_learned  = True     ## save learned ESN 
+*** R : df_p05ABCB.rdata
+*** DONE Résultats
+Comme les précédents
+**** p05ABCB (ltest=50)
+VOIR r_scripts/session_p05ABCB_161124
+***** DONE 10 meilleures et pires INSTANCES comme plot dans Pic
+***** DONE Résultats en moyenne (2( meilleurs)
+les traj les plus longues et les réseaux les plus gros; et plutôt avec FORWARD
+    ltraj lesn leak regul fw lnoise ltest prec_err     mse_err
+90   1000   20  0.9  0.01  Y      0    50    0.948 0.002880622
+288  1000   20  0.9 10.00  Y    500    50    0.948 0.002977148
+87   1000   10  0.9  0.01  Y      0    50    0.946 0.003218926
+108  1000   20  0.9  0.10  Y      0    50    0.944 0.002904071
+126  1000   20  0.9  1.00  Y      0    50    0.944 0.002940892
+144  1000   20  0.9 10.00  Y      0    50    0.944 0.003035688
+286   100   20  0.9 10.00  Y    500    50    0.944 0.003418050
+105  1000   10  0.9  0.10  Y      0    50    0.942 0.003272301
+252  1000   20  0.9  0.10  Y    500    50    0.942 0.002881387
+231  1000   10  0.9  0.01  Y    500    50    0.941 0.003165217
+196   100   20  0.9  1.00  N    500    50    0.940 0.003249341
+234  1000   20  0.9  0.01  Y    500    50    0.940 0.002843301
+270  1000   20  0.9  1.00  Y    500    50    0.939 0.002929746
+162  1000   20  0.9  0.01  N    500    50    0.939 0.002877010
+180  1000   20  0.9  0.10  N    500    50    0.938 0.002911614
+198  1000   20  0.9  1.00  N    500    50    0.937 0.002984891
+36   1000   20  0.9  0.10  N      0    50    0.936 0.002986612
+18   1000   20  0.9  0.01  N      0    50    0.936 0.002936599
+249  1000   10  0.9  0.10  Y    500    50    0.934 0.003203526
+244   100   20  0.5  0.10  Y    500    50    0.932 0.003396738
+267  1000   10  0.9  1.00  Y    500    50    0.932 0.003300518
+214   100   20  0.9 10.00  N    500    50    0.931 0.003496479
+123  1000   10  0.9  1.00  Y      0    50    0.930 0.003473488
+54   1000   20  0.9  1.00  N      0    50    0.928 0.003145100
+216  1000   20  0.9 10.00  N    500    50    0.928 0.003234090
+
+** TODO autres chaines
+** DONE [0/1] Visualization with R
 *** TODO Tester si autres scripts marchent.
 ** DONE visualization on-line
 * TODO Rec-SOM

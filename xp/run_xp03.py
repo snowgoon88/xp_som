@@ -77,25 +77,25 @@ def xp():
     # l_leak = [0.1,0.5]
     # l_test_length = [10]
 
-    l_hmm = ['ABCDEFEDCB','AAAAAF','AAAAAAAF']
-    l_hmm_names = ['ABCDEF', '5AF','7AF']
+    l_hmm = ['! .05 ABCB']
+    l_hmm_names = ['p05ABCB']
     l_traj_size = [100,500,1000]
     l_esn_size = [10,20]
     l_leak = [0.1,0.5,0.9]
     l_forward = [ True, False ]
     l_noise_length = [0,500]
     l_regul = [0.01, 0.1,1.0,10.0]
-    l_test_length = [10,50]
+    l_test_length = [50]
     
-    nb_traj    = 1       ## how many instances of each traj config
+    nb_traj    = 2       ## how many instances of each traj config
     nb_esn     = 5       ## how many instances of each esn config
     nb_noise   = 2
     nb_repeat  = 1       ## no need to repeat : deterministic learning
     nb_start   = 0       ## start numbering files with
     generate_hmm  = True     ## need to generate hmm
     generate_traj = True     ## need to generate traj
-    generate_esn  = True     ## need to generate esn
-    generate_noise= True     ## need to generate oise
+    generate_esn  = False     ## need to generate esn
+    generate_noise= False     ## need to generate oise
     learn         = True     ## learn
     save_learned  = True     ## save learned ESN 
 
@@ -201,7 +201,7 @@ def xp():
             for id_esn,id_traj,id_noise in it.product( range(nb_esn), range(nb_traj), range(nb_noise)):
                 hmm_name = "data_hmm/hmm_"+hmm_expr+".json"
                 traj_name = "data_hmm/traj_"+hmm_expr+"_"+str(traj_size)+"_n{0:03d}".format( id_traj )+".data"
-                esn_name = "data_hmm/esn_"+str(esn_size)+"_1_0.99_"+str(leak_rate)
+                esn_name = "data_hmm/esn_"+str(esn_size)+"_1_0.99_"+str(leak)
                 if( fg_forward ):
                     esn_name += "_for"
                 esn_name += "_n{0:03d}".format( id_esn )+".json"
@@ -214,8 +214,8 @@ def xp():
                 output_name += "_e{0:03d}".format(id_esn)+"_t{0:03d}".format(id_traj)+"_"+str(noise_length)+"_n{0:03d}".format(id_noise)+"_l"+str(length_test)
                 save_name = None
                 if( save_learned ):
-                    save_name = "data_hmm/savedesn_"+output_name+".json"
-                output_name = "data_hmm/result_"+output_name+".data"
+                    save_name = "data_hmm/New/savedesn_"+output_name+".json"
+                output_name = "data_hmm/New/result_"+output_name+".data"
                 ## Run XP
                 repeat( name_hmm = hmm_name,
                         name_traj=    traj_name,
