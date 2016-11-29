@@ -23,8 +23,12 @@ namespace hmm {
 typedef std::pair<std::pair<T,O>, unsigned int> THMM;
   
 // ****************************************************** bica::hmm::serialize
-rj::Value serialize( rj::Document& doc, const std::string hmm_expr )
+rj::Value serialize( rj::Document& doc, const std::string& hmm_expr )
 {
+  // DEBUG
+  //std::cout << "serialize hmm_expr=" << hmm_expr << std::endl;
+  //std::cout << "          c_str=" << hmm_expr.c_str() << std::endl;
+  
   // rj::Object qui contient les données
   rj::Value obj;
   obj.SetObject();

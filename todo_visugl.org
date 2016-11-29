@@ -23,7 +23,7 @@
 
 * DONE [1/1] Constructeurs, Copy, Move
 ** DONE tester Copy pour Layer
-* TODO [6/7] BICA -HMM
+* TODO [6/9] BICA -HMM
 ** Séquence
 wbuild/xp/xp-003-hmm --create_hmm "AAAAF" --save_hmm my_hmm
 wbuild/xp/xp-003-hmm -m my_hmm --length_traj 1000 --save_traj my_traj
@@ -235,6 +235,8 @@ les traj les plus longues et les réseaux les plus gros; et plutôt avec FORWARD
 54   1000   20  0.9  1.00  N      0    50    0.928 0.003145100
 216  1000   20  0.9 10.00  N    500    50    0.928 0.003234090
 
+** TODO p05ABCDEFEDCB
+** TODO p05AAAAAF
 ** TODO autres chaines
 ** DONE [0/1] Visualization with R
 *** TODO Tester si autres scripts marchent.

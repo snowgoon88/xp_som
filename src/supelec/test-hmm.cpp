@@ -69,6 +69,7 @@ int main(int argc, char* argv[]) {
       "AB*D",                        // periodic, mais avec *=uniform obs
       "+ ABC & DEF",                 // suite de 2 HMM
       "! .05 ABCD",                  // bruit gaussien sur obs
+      "! .05 ABCDEFEDCB",
       "+ ! .05 ABC & DEF",           // suite gaussien puis deterministe
       "| .05 ABC .05 DEF",           // alterne entre deux deterministes
       "| .05 ! .05 ABCD .01 *",      // alterne entre 1) Gaussien 2) random O

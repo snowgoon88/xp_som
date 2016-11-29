@@ -77,9 +77,9 @@ def xp():
     # l_leak = [0.1,0.5]
     # l_test_length = [10]
 
-    l_hmm = ['! .05 ABCB']
-    l_hmm_names = ['p05ABCB']
-    l_traj_size = [100,500,1000]
+    l_hmm = ['! .05 ABCDEFEDCB']
+    l_hmm_names = ['p05ABCDEFEDCB']
+    l_traj_size = [100,500,1000,2000]
     l_esn_size = [10,20]
     l_leak = [0.1,0.5,0.9]
     l_forward = [ True, False ]
