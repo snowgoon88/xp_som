@@ -4,6 +4,7 @@
  * test-002-neuron.cpp
  *
  * - create DSOM::Neuron
+ * - Read/Write DSOM::Neuron
  */
 #include <iostream>                     // std::cout
 #include <fstream>                      // std::ofstream
@@ -55,20 +56,13 @@ void tt_neur_wr()
   ofile << str_obj( obj ) << std::endl;
   ofile.close();
 
-  // Read from file
-  std::cout << "UNSERIALZE" << std::endl;
-  std::ifstream ifile( N_FILE );
-  // Wrapper pour lire document
-  JSON::IStreamWrapper instream(ifile);
-  // Parse into a document
-  rj::Document read_doc;
-  read_doc.ParseStream( instream );
-  ifile.close();
+  // Read from JSON
+  std::ifstream ifile(N_FILE);
+  Model::DSOM::Neuron n_read( ifile );
+  std::cout << "***** N_READ ***" << "\n";
+  std::cout << n_read.str_dump() << std::endl;
+  std::cout << "***** N_end ****" << "\n";
 
-  Model::DSOM::Neuron read_n( read_doc );
-  std::cout << "READ NEUR *******" << std::endl << read_n.str_dump() << std::endl;
-  
-  
   //*** PERSISTENCE ***
   // std::ofstream outfile( "neurone.sav" );
   // n.write( outfile );
