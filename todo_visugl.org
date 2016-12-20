@@ -23,7 +23,7 @@
 
 * DONE [1/1] Constructeurs, Copy, Move
 ** DONE tester Copy pour Layer
-* TODO [6/9] BICA -HMM
+* TODO [8/10] BICA -HMM
 ** Séquence
 wbuild/xp/xp-003-hmm --create_hmm "AAAAF" --save_hmm my_hmm
 wbuild/xp/xp-003-hmm -m my_hmm --length_traj 1000 --save_traj my_traj
@@ -206,7 +206,7 @@ Comme les précédents
 **** p05ABCB (ltest=50)
 VOIR r_scripts/session_p05ABCB_161124
 ***** DONE 10 meilleures et pires INSTANCES comme plot dans Pic
-***** DONE Résultats en moyenne (2( meilleurs)
+***** DONE Résultats en moyenne (25 meilleurs)
 les traj les plus longues et les réseaux les plus gros; et plutôt avec FORWARD
     ltraj lesn leak regul fw lnoise ltest prec_err     mse_err
 90   1000   20  0.9  0.01  Y      0    50    0.948 0.002880622
@@ -235,9 +235,118 @@ les traj les plus longues et les réseaux les plus gros; et plutôt avec FORWARD
 54   1000   20  0.9  1.00  N      0    50    0.928 0.003145100
 216  1000   20  0.9 10.00  N    500    50    0.928 0.003234090
 
-** TODO p05ABCDEFEDCB
-** TODO p05AAAAAF
-** TODO autres chaines
+** DONE <2016-11-30 Wed> p05ABCDEFEDCB
+l_hmm = ['! .05 ABCDEFEDCB']
+    l_hmm_names = ['p05ABCDEFEDCB']
+    l_traj_size = [100,500,1000,2000]
+    l_esn_size = [10,20]
+    l_leak = [0.1,0.5,0.9]
+    l_forward = [ True, False ]
+    l_noise_length = [0,500]
+    l_regul = [0.01, 0.1,1.0,10.0]
+    l_test_length = [50]
+    
+    nb_traj    = 2       ## how many instances of each traj config
+    nb_esn     = 5       ## how many instances of each esn config
+    nb_noise   = 2
+    nb_repeat  = 1       ## no need to repeat : deterministic learning
+    nb_start   = 0       ## start numbering files with
+    generate_hmm  = True     ## need to generate hmm
+    generate_traj = True     ## need to generate traj
+    generate_esn  = False     ## need to generate esn
+    generate_noise= False     ## need to generate oise
+    learn         = True     ## learn
+    save_learned  = True     ## save learned ESN 
+*** R : df_p05ABCDEFEDCB.rdata
+*** DONE Résultats
+***** 10 meilleures et pires INSTANCES comme plot dans Pic
+***** Résultats en moyenne (30 meilleurs)
+Il faut un "gros" esn, avec leaky assez haut et du bruit (pour les premiers)
+    ltraj lesn leak regul fw lnoise ltest prec_err     mse_err
+240  2000   20  0.9  0.10  N    500    50    0.901 0.003659408
+311  1000   20  0.9  0.01  Y    500    50    0.893 0.004065725
+216  2000   20  0.9  0.01  N    500    50    0.889 0.003634816
+335  1000   20  0.9  0.10  Y    500    50    0.889 0.004112659
+111  1000   20  0.5  0.01  Y      0    50    0.884 0.004007151
+119  1000   20  0.9  0.01  Y      0    50    0.884 0.004109359
+214   500   20  0.9  0.01  N    500    50    0.884 0.004206693
+312  2000   20  0.9  0.01  Y    500    50    0.883 0.003969087
+143  1000   20  0.9  0.10  Y      0    50    0.882 0.004215824
+215  1000   20  0.9  0.01  N    500    50    0.882 0.004169597
+264  2000   20  0.9  1.00  N    500    50    0.882 0.003878625
+303  1000   20  0.5  0.01  Y    500    50    0.879 0.004102738
+110   500   20  0.5  0.01  Y      0    50    0.876 0.004265230
+238   500   20  0.9  0.10  N    500    50    0.876 0.004390473
+120  2000   20  0.9  0.01  Y      0    50    0.874 0.004048605
+302   500   20  0.5  0.01  Y    500    50    0.873 0.004306892
+24   2000   20  0.9  0.01  N      0    50    0.872 0.003900116
+336  2000   20  0.9  0.10  Y    500    50    0.871 0.003998231
+48   2000   20  0.9  0.10  N      0    50    0.870 0.003973434
+206   500   20  0.5  0.01  N    500    50    0.870 0.004636049
+359  1000   20  0.9  1.00  Y    500    50    0.868 0.004532948
+239  1000   20  0.9  0.10  N    500    50    0.866 0.004327435
+22    500   20  0.9  0.01  N      0    50    0.864 0.004619682
+263  1000   20  0.9  1.00  N    500    50    0.861 0.004820195
+328  2000   20  0.5  0.10  Y    500    50    0.861 0.004263758
+23   1000   20  0.9  0.01  N      0    50    0.860 0.004486881
+72   2000   20  0.9  1.00  N      0    50    0.860 0.004407411
+288  2000   20  0.9 10.00  N    500    50    0.860 0.004814376
+304  2000   20  0.5  0.01  Y    500    50    0.860 0.004238826
+112  2000   20  0.5  0.01  Y      0    50    0.858 0.004287934
+** DONE <2016-12-20 Tue> p05AAAAAF
+l_hmm = ['! .05 AAAAAF']
+    l_hmm_names = ['p05AAAAAF']
+    l_traj_size = [100,500,1000,2000]
+    l_esn_size = [10,20]
+    l_leak = [0.1,0.5,0.9]
+    l_forward = [ True, False ]
+    l_noise_length = [0,500]
+    l_regul = [0.01, 0.1,1.0,10.0]
+    l_test_length = [50]
+    
+    nb_traj    = 2       ## how many instances of each traj config
+    nb_esn     = 5       ## how many instances of each esn config
+    nb_noise   = 2
+    nb_repeat  = 1       ## no need to repeat : deterministic learning
+    nb_start   = 0       ## start numbering files with
+    generate_hmm  = True     ## need to generate hmm
+    generate_traj = True     ## need to generate traj
+    generate_esn  = False     ## need to generate esn
+    generate_noise= False     ## need to generate oise
+    learn         = True     ## learn
+    save_learned  = True     ## save learned ESN 
+*** R : df_p05AAAAAF.rdata
+*** Résultats
+***** 10 meilleures et pires INSTANCES comme plot dans Pic
+***** Résultats en moyenne (30 meilleurs)
+ltraj lesn leak regul fw lnoise ltest prec_err     mse_err
+311  1000   20  0.9  0.01  Y    500    50    0.891 0.004251172
+336  2000   20  0.9  0.10  Y    500    50    0.881 0.004789378
+120  2000   20  0.9  0.01  Y      0    50    0.872 0.005041548
+335  1000   20  0.9  0.10  Y    500    50    0.872 0.004500103
+312  2000   20  0.9  0.01  Y    500    50    0.871 0.004743521
+360  2000   20  0.9  1.00  Y    500    50    0.870 0.005178340
+144  2000   20  0.9  0.10  Y      0    50    0.868 0.005074269
+119  1000   20  0.9  0.01  Y      0    50    0.864 0.004855129
+143  1000   20  0.9  0.10  Y      0    50    0.864 0.005089554
+216  2000   20  0.9  0.01  N    500    50    0.851 0.005018916
+168  2000   20  0.9  1.00  Y      0    50    0.848 0.005390173
+215  1000   20  0.9  0.01  N    500    50    0.834 0.005344498
+240  2000   20  0.9  0.10  N    500    50    0.829 0.005556742
+239  1000   20  0.9  0.10  N    500    50    0.824 0.006197300
+310   500   20  0.9  0.01  Y    500    50    0.820 0.005553121
+24   2000   20  0.9  0.01  N      0    50    0.818 0.006147999
+48   2000   20  0.9  0.10  N      0    50    0.812 0.006572256
+359  1000   20  0.9  1.00  Y    500    50    0.811 0.005753680
+334   500   20  0.9  0.10  Y    500    50    0.803 0.005757001
+167  1000   20  0.9  1.00  Y      0    50    0.796 0.006277051
+384  2000   20  0.9 10.00  Y    500    50    0.788 0.007029268
+192  2000   20  0.9 10.00  Y      0    50    0.786 0.007232797
+118   500   20  0.9  0.01  Y      0    50    0.782 0.006405694
+142   500   20  0.9  0.10  Y      0    50    0.776 0.006555891
+264  2000   20  0.9  1.00  N    500    50    0.776 0.007611161
+** TODO p05AAAAAAAF
+** TODO autres chaines (12 A?)
 ** DONE [0/1] Visualization with R
 *** TODO Tester si autres scripts marchent.
 ** DONE visualization on-line
