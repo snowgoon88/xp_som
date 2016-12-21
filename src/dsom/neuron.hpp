@@ -303,6 +303,16 @@ public:
 
   // ********************************************************* Neuron::forward
   /** compute distance from a given input */
+  TNumber computeDistance( Eigen::VectorXd &input )
+  {
+	return sqrt((this->weights - input).cwiseProduct( this->weights - input).sum());
+  }
+  TNumber computeDistanceNormed( Eigen::VectorXd &input )
+  {
+	double dim = (double) input.size();
+	return sqrt((this->weights - input).cwiseProduct( this->weights - input).sum()) /
+	  sqrt( dim );
+  }
   //TNumber computeDistance( TWeight &input ) {};
   /** compute normed distance from a given input (ie. between 0 and 1 */
   TNumber computeDistanceNormed( const TWeight& input ) const
