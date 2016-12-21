@@ -15,32 +15,35 @@ using namespace utils::rj;
 // ******************************************************************** Global
 #define N_FILE "dsom.data"
 
-// void tt_network_step()
-// {
-//   DSOM::Network net(2, 10, 1);
-//   float max_dist = net.computeAllDist();
-//   std::cout << "max dist=" << max_dist << "\n***********\n" << net.dumpToString();
+void tt_network_step()
+{
+  // 2D input, 10 neurons, 1D output
+  Model::DSOM::Network net(2, 10, 1);
+  auto max_dist = net.computeAllDist();
+  std::cout << "max dist=" << max_dist << "\n***********\n" << net.str_dump();
 
-//   Eigen::VectorXf v1(2);
-//   v1 << 0.5, 0.5;
-//   std::cout << "v1 = " << v1 << "\n";
+  // one input
+  Eigen::VectorXd v1(2);
+  v1 << 0.5, 0.5;
+  std::cout << "v1 = " << v1 << "\n";
 
-//   Eigen::VectorXf out = net.forward( v1 );
-//   std::cout << "out=\n" << out << "\n";
-//   std::cout << "Winner is " << net._winner_neur << " at " << net._winner_dist << "\n";
+  auto out = net.forward( v1 );
+  std::cout << "out=\n" << out << "\n";
+  std::cout << "Winner is " << net.get_winner() << " at " << net.get_winner_dist() << "\n";
 
 //   float win_dist = net.computeWinner( v1 );
 //   std::cout << "Winner is " << net._winner_neur << " at " << win_dist << "\n";
 
 //   net.deltaW( v1, 1.0, 1.0);
-// }
+}
 
+/** Test regularly setting input weigths in 2d space */
 // void tt_network_regular_weights()
 // {
-//   DSOM::Network net(2, 9, 1);
-//   std::cout << "***********\n" << net.dumpToString();
+//   Model::DSOM::Network net(2, 9, 1);
+//   std::cout << "***********\n" << net.str_dump();
 //   net.set_regular_weights();
-//   std::cout << "***********\n" << net.dumpToString();
+//   std::cout << "***********\n" << net.str_dump();
 // }
 /** Create Model::DSOM::Network */
 void tt_network_create()
@@ -95,5 +98,9 @@ int main(int argc, char *argv[])
   tt_network_create();
   std::cout << "__READ/WRITE DSOM" << std::endl;
   tt_net_wr();
+  // std::cout << "__REGULAR WEIGHTS DSOM" << std::endl;
+  // tt_network_regular_weights();
+  std::cout << "__STEP DSOM" << std::endl;
+  tt_network_step();
   return 0;
 }

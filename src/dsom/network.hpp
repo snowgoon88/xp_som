@@ -137,6 +137,11 @@ public:
 	return ss.str();
   }
   // *********************************************************** Network::DIST
+  /** 
+   * Compute distance between all Neurones
+   * Useful only for nb_link > 0
+   * Return : distance max between neurones
+   */
   double computeAllDist()
   {
 	_max_dist_neurone = 0;
@@ -221,6 +226,31 @@ public:
 
 	return max_dist;
   }
+  // *********************************************************** Network::play
+  double computeWinner( Eigen::VectorXd &input )
+  {
+	_winner_dist = std::numeric_limits<double>::max();
+  
+	for( unsigned int i=0; i<v_neur.size(); i++) {
+	  auto tmp = v_neur[i]->computeDistance( input );
+	  //std::cout << "win_dist[" << i << "] = " << tmp << "\n";
+	  if( tmp < _winner_dist ) {
+		_winner_dist = tmp;
+		_winner_neur = i;
+	  }
+	}
+	return _winner_dist;
+  }
+  Eigen::VectorXd forward( Eigen::VectorXd &input )
+  {
+	Eigen::VectorXd output(v_neur.size());
+  
+	for( unsigned int i=0; i<v_neur.size(); i++) {
+	  output[i] = v_neur[i]->computeDistance( input );
+	}
+	_winner_dist = output.minCoeff( &_winner_neur );
+	return output;
+  }
   // ********************************************************** Network::is_in
   bool is_in( unsigned int elem,  std::list<unsigned int> ll )
   {
@@ -285,8 +315,11 @@ public:
 	  _max_dist_neurone = v_neur[0]->computeDistance( *(v_neur[nb_neur-1]) );
 	}
   }
-private:
   // ****************************************************** Network::attributs
+public:
+  unsigned int get_winner() const { return _winner_neur; }
+  double get_winner_dist() const { return _winner_dist; }
+private:
   /** Random engine */
   std::default_random_engine _rnd;
   
