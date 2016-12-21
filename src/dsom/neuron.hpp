@@ -296,7 +296,10 @@ public:
   }
   // ******************************************************** Neuron::distance
   /** compute distance to another neurone */
-  //TNumber computeDistance( Neuron &neur) {};
+  TNumber computeDistance( Neuron &neur)
+  {
+	return sqrt((_pos - neur._pos).cwiseProduct( _pos - neur._pos).sum());
+  }
 
   // ********************************************************* Neuron::forward
   /** compute distance from a given input */
