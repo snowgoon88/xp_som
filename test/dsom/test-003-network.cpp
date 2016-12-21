@@ -31,10 +31,10 @@ void tt_network_step()
   std::cout << "out=\n" << out << "\n";
   std::cout << "Winner is " << net.get_winner() << " at " << net.get_winner_dist() << "\n";
 
-//   float win_dist = net.computeWinner( v1 );
-//   std::cout << "Winner is " << net._winner_neur << " at " << win_dist << "\n";
+  auto win_dist = net.computeWinner( v1 );
+  std::cout << "Winner is " << net.get_winner() << " at " << win_dist << "\n";
 
-//   net.deltaW( v1, 1.0, 1.0);
+  net.deltaW( v1, 1.0, 1.0);
 }
 
 /** Test regularly setting input weigths in 2d space */

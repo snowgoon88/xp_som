@@ -12,6 +12,7 @@
 #include <limits>                   // max dbl
 
 #include <dsom/neuron.hpp>
+#include <dsom/utils.hpp>
 
 #include "rapidjson/prettywriter.h" // rapidjson
 #include "rapidjson/document.h"     // rapidjson's DOM-style API
@@ -251,6 +252,64 @@ public:
 	_winner_dist = output.minCoeff( &_winner_neur );
 	return output;
   }
+  // ******************************************************* Network::backward
+  double hnDistance( double dist_neur_win, double win_dist, double ela)
+  {
+	if( win_dist < 0.000001 ) win_dist = 0.000001;
+  
+	return exp( -1.0 * (dist_neur_win*dist_neur_win)/( ela * ela * win_dist * win_dist ) );
+  }
+  void deltaW( Eigen::VectorXd &input, double eps, double ela, double verb=false)
+  {
+	// NON-Regular GRID
+	if( _nb_link > 0 ) {
+	  // All neigbors of the winner will be adapted
+	  Neuron *win = v_neur[_winner_neur];
+	  if( verb ) {
+		std::cout << "Network::deltaW for Winner Neurone\n";
+		std::cout << win->str_dump() << "\n";
+		std::cout << "At winning distance of " << _winner_dist;
+		std::cout << " from input " << utils::eigen::str_vec(input) << "\n";
+      
+		std::cout << "N[#]\t dp\t dw\t k\t (ratio)\t delta\t dW\n";
+	  }
+	  std::list<Neur_Dist>::iterator i_neigh;
+	  for( i_neigh= win->l_neighbors.begin();
+		   i_neigh != win->l_neighbors.end();
+		   i_neigh++) {
+		auto delta = eps * v_neur[(*i_neigh).index]->computeDistance( input ) * this->hnDistance( (*i_neigh).dist/_max_dist_neurone, _winner_dist, ela);
+		auto delta_weight = delta * (input - v_neur[(*i_neigh).index]->weights);
+		
+		if( verb ) {
+		  std::cout << "N[" << (*i_neigh).index << "]\t";
+		  std::cout << " " << (*i_neigh).dist << " / " << _max_dist_neurone << "\t";
+		  std::cout << " " << v_neur[(*i_neigh).index]->computeDistance( input ) << "\t";
+		  std::cout << " " << hnDistance( (*i_neigh).dist/_max_dist_neurone, _winner_dist, ela) << " (" << ((*i_neigh).dist/_max_dist_neurone/_winner_dist)*((*i_neigh).dist/_max_dist_neurone/_winner_dist) << ")\t";
+		  std::cout << " " << delta << "\tdW=" << utils::eigen::str_vec(delta_weight) << "\n";
+		}      
+		v_neur[(*i_neigh).index]->add_to_weights( delta_weight );
+	  }
+	  if( verb ) {
+		std::cout << "********\n";
+	  }
+	}
+	// REGULAR GRID
+	else if (_nb_link < 0 ) {
+	  // All neurones will be adapted
+	  for( unsigned int indn = 0; indn < v_neur.size(); indn++ ) {
+		auto delta = eps * v_neur[indn]->computeDistance( input ) * this->hnDistance( v_neur[indn]->computeDistance( *(v_neur[_winner_neur]) ) /_max_dist_neurone, _winner_dist, ela);
+		auto delta_weight = delta * (input - v_neur[indn]->weights);
+      
+		if( verb ) {
+		  std::cout << "Neurone " << indn << "\n";
+		  std::cout << "Distance to winner " << v_neur[indn]->computeDistance( *(v_neur[_winner_neur]) ) /_max_dist_neurone << "\n";
+		  std::cout << "hnDist = " << this->hnDistance( v_neur[indn]->computeDistance( *(v_neur[_winner_neur]) ) /_max_dist_neurone, _winner_dist, ela) << "\n";
+		  std::cout << "delta=" << delta << "\ndW=" << delta_weight << "\n";
+		}      
+		v_neur[indn]->add_to_weights( delta_weight );
+	  }
+	}
+  }
   // ********************************************************** Network::is_in
   bool is_in( unsigned int elem,  std::list<unsigned int> ll )
   {
@@ -319,6 +378,7 @@ public:
 public:
   unsigned int get_winner() const { return _winner_neur; }
   double get_winner_dist() const { return _winner_dist; }
+  double get_max_dist_neurone() { return _max_dist_neurone; }
 private:
   /** Random engine */
   std::default_random_engine _rnd;
