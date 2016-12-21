@@ -42,7 +42,7 @@ using namespace utils::rj;
 //   net.set_regular_weights();
 //   std::cout << "***********\n" << net.dumpToString();
 // }
-
+/** Create Model::DSOM::Network */
 void tt_network_create()
 {
   Model::DSOM::Network net(3, 25, 2);
@@ -58,21 +58,34 @@ void tt_network_create()
   std::cout << "***********\n" << net.str_dump();
   std::cout << "\n MAX = " << max_dist << "\n";
 }
-// void tt_net_wr()
-// {
-//   DSOM::Network net(2, 10, 2);
-//   std::cout << "***********\n" << net.dumpToString();
+/** Read/TODO Write Model::DSOM::Network */
+void tt_net_wr()
+{
+  Model::DSOM::Network net(2, 10, 2);
+  std::cout << "***********\n" << net.str_dump();
 
-//   std::ofstream outfile( "network.sav" );
-//   net.write( outfile );
-//   outfile.close();
+  //*** JSON ***
+  rapidjson::Document doc;
+  rapidjson::Value obj = net.serialize( doc );
+  std::cout << str_obj( obj ) << std::endl;
+  // Write un a file
+  std::ofstream ofile(N_FILE);
+  ofile << str_obj( obj ) << std::endl;
+  ofile.close();
 
-//   Persistence save("network.sav" );
+  // Read from JSON
+  std::ifstream ifile(N_FILE);
+  Model::DSOM::Network net_read( ifile );
+  std::cout << "***** NETWORK_READ ***" << "\n";
+  std::cout << net_read.str_dump() << std::endl;
+  std::cout << "***** NETWORK_end ****" << "\n";
+  
+  // Persistence save("network.sav" );
 
-//   DSOM::Network netr( save );
-//   std::cout << "*****\n" <<netr.dumpToString() << "\n";  
+  // DSOM::Network netr( save );
+  // std::cout << "*****\n" <<netr.dumpToString() << "\n";  
 
-// }
+}
 
 
 // ***************************************************************************
@@ -80,7 +93,7 @@ int main(int argc, char *argv[])
 {
   std::cout << "__CREATE DSOM" << std::endl;
   tt_network_create();
-  // std::cout << "__READ/WRITE neurone" << std::endl;
-  // tt_neur_wr();
+  std::cout << "__READ/WRITE DSOM" << std::endl;
+  tt_net_wr();
   return 0;
 }

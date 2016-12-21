@@ -114,6 +114,17 @@ public:
 	  _max_dist_neurone = v_neur[0]->computeDistance( *(v_neur[nb_neur-1]) );
 	}
   }
+  /** Creation from JSON file */
+  Network( std::istream& is )
+  {
+	// Wrapper pour lire document
+    JSON::IStreamWrapper instream(is);
+    // Parse into a document
+    rj::Document doc;
+    doc.ParseStream( instream );
+
+    unserialize( doc );
+  }
   // ************************************************************ Network::str
   std::string str_dump()
   {
@@ -219,7 +230,61 @@ public:
 	}
 	return false;
   }
+  // *********************************************************** Network::JSON
+  rj::Value serialize( rj::Document& doc )
+  {
+	// rj::Object that holds the data
+	rj::Value rj_node;
+	rj_node.SetObject();
+	
+	// global data
+	rj_node.AddMember( "nb_neur", rj::Value(v_neur.size()), doc.GetAllocator());
+	rj_node.AddMember( "nb_link", rj::Value(_nb_link), doc.GetAllocator());
+	rj_node.AddMember( "size_grid", rj::Value(_size_grid), doc.GetAllocator());
 
+	// Array of neurons
+	rj::Value rj_neur;
+	rj_neur.SetArray();
+	for( auto& n: v_neur) {
+	  rj_neur.PushBack( n->serialize(doc), doc.GetAllocator());
+	}
+	rj_node.AddMember( "neurons", rj_neur, doc.GetAllocator());
+	
+	return rj_node;
+  }
+  void unserialize( const rj::Value& obj )
+  {
+	// global data
+	int nb_neur = obj["nb_neur"].GetInt();
+	_nb_link = obj["nb_link"].GetInt();
+	_size_grid = obj["size_grid"].GetInt();
+
+	// Neurons
+	v_neur.clear();
+	const rj::Value& n = obj["neurons"];
+	assert( n.IsArray() );
+	for( unsigned int i = 0; i < n.Size(); ++i) {
+	  Neuron *neur = new Neuron( n[i] );
+	  v_neur.push_back(neur);
+	}
+
+	// Now, eventually links and distance
+	// NON-Regular GRID
+	if( _nb_link > 0 ) {
+	  _max_dist_neurone = 1.0;
+	  computeAllDist();
+	}
+	// Regular GRID
+	else if( _nb_link < 0 ) {
+	  // Check dimension
+	  if( pow( _size_grid, -_nb_link) != nb_neur) {
+		std::cerr << "Incompatible size nb_neur=" << nb_neur << ", size=" << _size_grid << ", dim=" << _nb_link << "\n"; 
+		exit(1);
+	  }
+
+	  _max_dist_neurone = v_neur[0]->computeDistance( *(v_neur[nb_neur-1]) );
+	}
+  }
 private:
   // ****************************************************** Network::attributs
   /** Random engine */
