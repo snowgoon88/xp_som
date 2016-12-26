@@ -4,7 +4,7 @@
 #define DSOM_NEURON_HPP
 
 /** 
- * Neuron for DSOM kinf of Networks.
+ * Neuron for DSOM kind of Networks.
  */
 
 #include <iostream>
@@ -17,7 +17,7 @@
 
 #include "rapidjson/prettywriter.h" // rapidjson
 #include "rapidjson/document.h"     // rapidjson's DOM-style API
-// #include <json_wrapper.hpp>         // JSON::OStreamWrapper et IStreamWrapper
+#include <json_wrapper.hpp>         // JSON::OStreamWrapper et IStreamWrapper
 namespace rj = rapidjson;
 
 // ********************************************************************* Model
@@ -60,7 +60,7 @@ public:
     this->weights = Eigen::VectorXd::Random(dim_weights);
     // Scale
     this->weights= (this->weights.array() - -1.0) / (1.0 - -1.0) * (w_max - w_min) + w_min;
-  };
+  }
   /** Creation with index, position and random weights in [w_min,w_max]^dim */
   Neuron( int index, const Eigen::Ref<const TPos>& pos,
 	  int dim_weights, TNumber w_min=0, TNumber w_max=1) : 
@@ -88,7 +88,7 @@ public:
     l_link(n.l_link), l_neighbors(n.l_neighbors),
     _pos(n._pos)
   {
-  };
+  }
   /** Creation from assignment */
   Neuron& operator=( const Neuron& n )
   {
@@ -100,13 +100,33 @@ public:
       weights = n.weights;
     }
     return *this;
-  };
+  }
+  /** Creation from JSON file */
+  Neuron( std::istream& is )
+  {
+	// Wrapper pour lire document
+    JSON::IStreamWrapper instream(is);
+    // Parse into a document
+    rj::Document doc;
+    doc.ParseStream( instream );
+
+    // std::cout << "Document read" << std::endl;
+    // for (rj::Value::ConstMemberIterator itr = doc.MemberBegin();
+	//  itr != doc.MemberEnd(); ++itr) {
+    //   std::cout << "Doc has " << itr->name.GetString() << std::endl;
+    // }
+
+    unserialize( doc );
+  }
+  Neuron( const rj::Value& obj )
+  {
+	unserialize( obj );
+  }
   // ********************************************************* Neuron::destroy
   /** Destruction */
   ~Neuron()
   {
-  };
-
+  }
   // ************************************************************* Neuron::str
   /** dump to STR */
   std::string str_dump() 
@@ -126,7 +146,7 @@ public:
       ss << "(" << (*i_neigh).index << ", " << (*i_neigh).dist << ") ";
     }
     return ss.str();
-  };
+  }
   /** display to STR */
   std::string str_display() const
   {
@@ -141,7 +161,7 @@ public:
     }
   
     return ss.str();
-  };
+  }
   // ************************************************************ Neuron::JSON
   rj::Value serialize( rj::Document& doc )
   {
@@ -257,7 +277,7 @@ public:
   void add_link( unsigned int n_ind )
   {
     this->l_link.push_front( n_ind );
-  };
+  }
   /** check if already has a link */
   bool has_link( unsigned int n_ind ) 
   {
@@ -266,8 +286,7 @@ public:
       if( n_ind == (*i_link) ) return true;
     }
     return false;
-  };
-  
+  }
   /** add a neighbor with distance */
   void add_neighbor( unsigned int n_ind, TNumber n_dist)
   {
@@ -275,7 +294,7 @@ public:
     elem.index = n_ind;
     elem.dist = n_dist;
     this->l_neighbors.push_front( elem );
-  };  
+  }  
   /** update existing distance if inferior or add new distance */
   void update_neighbor( unsigned int n_ind, TNumber n_dist)
   {
@@ -291,13 +310,26 @@ public:
       }
     }
     this->add_neighbor( n_ind, n_dist );
-  };
+  }
   // ******************************************************** Neuron::distance
   /** compute distance to another neurone */
-  //TNumber computeDistance( Neuron &neur) {};
+  TNumber computeDistance( Neuron &neur)
+  {
+	return sqrt((_pos - neur._pos).cwiseProduct( _pos - neur._pos).sum());
+  }
 
   // ********************************************************* Neuron::forward
   /** compute distance from a given input */
+  TNumber computeDistance( Eigen::VectorXd &input )
+  {
+	return sqrt((this->weights - input).cwiseProduct( this->weights - input).sum());
+  }
+  TNumber computeDistanceNormed( Eigen::VectorXd &input )
+  {
+	double dim = (double) input.size();
+	return sqrt((this->weights - input).cwiseProduct( this->weights - input).sum()) /
+	  sqrt( dim );
+  }
   //TNumber computeDistance( TWeight &input ) {};
   /** compute normed distance from a given input (ie. between 0 and 1 */
   TNumber computeDistanceNormed( const TWeight& input ) const
@@ -312,7 +344,6 @@ public:
   {
     this->weights = this->weights +  delta_weight;
   }
-
   // ****************************************************** Neuron::attributes
   /** Index */
   int index;

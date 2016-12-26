@@ -8,7 +8,6 @@
  */
 
 #include <gsl/gsl_matrix.h>           // gsl Matrices
-
 #include "rapidjson/document.h"       // rapidjson's DOM-style API
 #include "rapidjson/prettywriter.h"   // rapidjson
 #include "rapidjson/stringbuffer.h"   // rapidjson

@@ -4,6 +4,7 @@
  * test-002-neuron.cpp
  *
  * - create DSOM::Neuron
+ * - Read/Write DSOM::Neuron
  */
 #include <iostream>                     // std::cout
 #include <fstream>                      // std::ofstream
@@ -67,7 +68,6 @@ void tt_neur_wr()
 
   Model::DSOM::Neuron read_n( read_doc );
   std::cout << "READ NEUR *******" << std::endl << read_n.str_dump() << std::endl;
-  
   
   //*** PERSISTENCE ***
   // std::ofstream outfile( "neurone.sav" );
