@@ -37,14 +37,14 @@ void tt_network_step()
   std::cout << "__AFTER" << std::endl << net.str_dump();
 }
 
-// /** Test regularly setting input weigths in 2d space */
-// // void tt_network_regular_weights()
-// // {
-// //   Model::DSOM::Network net(2, 9, 1);
-// //   std::cout << "***********\n" << net.str_dump();
-// //   net.set_regular_weights();
-// //   std::cout << "***********\n" << net.str_dump();
-// // }
+/** Test regularly setting input weigths in 2d space */
+void tt_network_regular_weights()
+{
+  Model::DSOM::Network net(2, 9, 1);
+  std::cout << "***********\n" << net.str_dump();
+  net.set_regular_weights();
+  std::cout << "***********\n" << net.str_dump();
+}
 /** Create Model::DSOM::Network */
 void tt_network_create()
 {
@@ -111,8 +111,8 @@ int main(int argc, char *argv[])
   tt_network_create();
   // std::cout << "__READ/WRITE DSOM" << std::endl;
   // tt_net_wr();
-  // // std::cout << "__REGULAR WEIGHTS DSOM" << std::endl;
-  // // tt_network_regular_weights();
+  std::cout << "__REGULAR WEIGHTS DSOM" << std::endl;
+  tt_network_regular_weights();
   std::cout << "__STEP DSOM" << std::endl;
   tt_network_step();
   return 0;

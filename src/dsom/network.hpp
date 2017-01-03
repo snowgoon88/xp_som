@@ -140,6 +140,40 @@ public:
 	}
 	return ss.str();
   }
+  // ******************************************** Network::set_regular_weights
+  void set_regular_weights()
+  {
+    int dim_weights = v_neur[0]->weights.size();
+
+    // si _nb_link > 0, must check dimensions and nb_neur
+    if( _nb_link > 0 ) {
+      // Check dimension
+      auto size_grid = pow( (double) v_neur.size(), 1.0 / (double) dim_weights );
+      _size_grid = abs( floor( size_grid));
+      if( pow( _size_grid, dim_weights) != v_neur.size()) {
+	std::cerr << "Incompatible size nb_neur=" << v_neur.size() << ", size=" << _size_grid << ", dim=" << dim_weights << "\n"; 
+	return;
+      }
+    }
+    else if( -_nb_link != dim_weights ) {
+      std::cerr << "dim_weights=" << dim_weights << " is not compatible with internal regular grid dimension _nb_link=" << _nb_link << "\n";
+      return;
+    }
+  
+    // Initialize weights
+    if( dim_weights == 2 ) {
+      for( int i=0; i < _size_grid; i++) {
+	for( int j=0; j < _size_grid; j++) {
+	  Eigen::VectorXd v(dim_weights);
+	  v << (double) i / (double) (_size_grid-1), (double) j / (double) (_size_grid-1);
+	  v_neur[i*_size_grid+j]->weights = v;
+	}
+      }
+    }
+    else {
+      std::cerr << "TODO initialise with dim_weight != 2 ....\n";
+    }
+  }
   // *********************************************************** Network::DIST
   /** 
    * Compute distance between all Neurones
