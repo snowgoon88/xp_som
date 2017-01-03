@@ -20,6 +20,7 @@ void tt_network_step()
 {
   // 2D input, 16 neurons, on a 2D grid */
   Model::DSOM::Network net(2, 9, -2);
+
   auto max_dist = net.computeAllDist();
   std::cout << "max dist=" << max_dist << "\n***********\n" << net.str_dump();
 

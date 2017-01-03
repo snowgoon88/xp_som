@@ -72,6 +72,13 @@ public:
     this->weights = Eigen::VectorXd::Random(dim_weights);
     // Scale
     this->weights= (this->weights.array() - -1.0) / (1.0 - -1.0) * (w_max - w_min) + w_min;
+  };
+  /** Creation from JSON doc */
+  Neuron( const rj::Value& obj ) :
+    index(0)
+  {
+    // decode d'après obj
+    unserialize( obj );
   }
   /** Creation from Persistence (file). */
   //Neuron( Persistence& save ) {};

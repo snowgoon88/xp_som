@@ -339,6 +339,7 @@ public:
 	rj_node.AddMember( "nb_link", rj::Value(_nb_link), doc.GetAllocator());
 	rj_node.AddMember( "size_grid", rj::Value(_size_grid), doc.GetAllocator());
 	rj_node.AddMember( "max_dist_input", rj::Value(_max_dist_input), doc.GetAllocator());
+
 	// Array of neurons
 	rj::Value rj_neur;
 	rj_neur.SetArray();
@@ -356,7 +357,7 @@ public:
 	_nb_link = obj["nb_link"].GetInt();
 	_size_grid = obj["size_grid"].GetInt();
 	_max_dist_input = obj["max_dist_input"].GetDouble();
-	
+
 	// Neurons
 	v_neur.clear();
 	const rj::Value& n = obj["neurons"];

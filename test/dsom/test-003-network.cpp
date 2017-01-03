@@ -34,6 +34,7 @@ void tt_network_step()
   auto win_dist = net.computeWinner( v1 );
   std::cout << "Winner is " << net.get_winner() << " at " << win_dist << "\n";
 
+  net.forward( v1 );
   net.deltaW( v1, 1.0, 1.0, true);
 }
 
