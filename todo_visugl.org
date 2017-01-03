@@ -493,10 +493,14 @@ http://www.astrostatistics.psu.edu/su07/R/html/MASS/html/lm.ridge.html
 ** DONE RidgeReg with GIVEN regul param
 ** DONE Compare with R
 ** DONE Ne pas accorder de pénalité pour le poids associé à 'intercept' dans RR
-* [4/6] DSOM
+* [4/9] DSOM
+** TODO plot uniform density with R
+** TODO normal density
+** TODO ring density
 ** DONE to double
 ** DONE Eigen Random ?? => entre -1 et 1 ??
 ** TODO Eigen Random Seed ??
+=> use srand if needed
 ** [2/2] Serialize
 *** DONE Write to JSON
 *** DONE Read from JSON
