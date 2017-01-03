@@ -118,10 +118,6 @@ public:
 
     unserialize( doc );
   }
-  Neuron( const rj::Value& obj )
-  {
-	unserialize( obj );
-  }
   // ********************************************************* Neuron::destroy
   /** Destruction */
   ~Neuron()
