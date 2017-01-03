@@ -19,7 +19,7 @@ using namespace utils::rj;
 void tt_network_step()
 {
   // 2D input, 16 neurons, on a 2D grid */
-  Model::DSOM::Network net(2, 16, -2);
+  Model::DSOM::Network net(2, 9, -2);
   auto max_dist = net.computeAllDist();
   std::cout << "max dist=" << max_dist << "\n***********\n" << net.str_dump();
 
@@ -31,7 +31,9 @@ void tt_network_step()
   auto win_dist = net.computeWinner( v1 );
   std::cout << "Winner is " << net.get_winner() << " at " << win_dist << "\n";
 
-  net.deltaW( v1, 1.0, 1.0);
+  net.forward( v1 );
+  net.deltaW( v1, 1.0, 1.0, true);
+  std::cout << "__AFTER" << std::endl << net.str_dump();
 }
 
 // /** Test regularly setting input weigths in 2d space */
@@ -96,7 +98,7 @@ void tt_create()
   pos1 << 2, 1;
   Model::DSOM::Neuron n2(1, pos1, 3);
 
-  std::cout << "dist = " << n1.computeDistance( n2 ) << "\n"; 
+  std::cout << "dist = " << n1.computeDistancePos( n2 ) << "\n"; 
 }
 
 // ***************************************************************************

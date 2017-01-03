@@ -10,6 +10,7 @@
 #include <sstream>
 #include <random>                   // std::uniform_int...
 #include <limits>                   // max dbl
+#include <algorithm>    // std::max
 
 #include <dsom/neuron.hpp>
 #include <dsom/utils.hpp>
@@ -38,7 +39,8 @@ public:
    * nb_link < 0 : mean regular grid of dimension |nb_link|
    */
   Network( int dim_input, int nb_neur, int nb_link=5,
-		   float w_min=0.0, float w_max=1.0 )
+	   float w_min=0.0, float w_max=1.0 ) :
+    _max_dist_neurone(0.0), _max_dist_input(0.0) 
   {
 	// Init Random Engine
 	std::random_device rnd_seeder;
@@ -112,7 +114,7 @@ public:
 		}
 	  }
 
-	  _max_dist_neurone = v_neur[0]->computeDistance( *(v_neur[nb_neur-1]) );
+	  _max_dist_neurone = v_neur[0]->computeDistancePos( *(v_neur[nb_neur-1]) );
 	}
   }
   /** Creation from JSON file */
@@ -130,7 +132,8 @@ public:
   std::string str_dump()
   {
 	std::stringstream ss;
-	ss << "Net " << _size_grid << "^" << _nb_link << "\n";
+	ss << "Net " << _size_grid << "^" << _nb_link;
+	ss << " max_d_input=" << _max_dist_input << "\n";
 
 	for( unsigned int i=0; i<v_neur.size(); i++) {
 	  ss << (*v_neur[i]).str_dump() << "\n";
@@ -233,7 +236,7 @@ public:
 	_winner_dist = std::numeric_limits<double>::max();
   
 	for( unsigned int i=0; i<v_neur.size(); i++) {
-	  auto tmp = v_neur[i]->computeDistance( input );
+	  auto tmp = v_neur[i]->computeDistanceInput( input );
 	  //std::cout << "win_dist[" << i << "] = " << tmp << "\n";
 	  if( tmp < _winner_dist ) {
 		_winner_dist = tmp;
@@ -247,9 +250,14 @@ public:
 	Eigen::VectorXd output(v_neur.size());
   
 	for( unsigned int i=0; i<v_neur.size(); i++) {
-	  output[i] = v_neur[i]->computeDistance( input );
+	  output[i] = v_neur[i]->computeDistanceInput( input );
 	}
 	_winner_dist = output.minCoeff( &_winner_neur );
+
+	// And update max_distance
+	auto max_dist_sample = output.maxCoeff();
+	_max_dist_input = std::max( _max_dist_input, max_dist_sample);
+	
 	return output;
   }
   // ******************************************************* Network::backward
@@ -261,54 +269,54 @@ public:
   }
   void deltaW( Eigen::VectorXd &input, double eps, double ela, double verb=false)
   {
-	// NON-Regular GRID
-	if( _nb_link > 0 ) {
-	  // All neigbors of the winner will be adapted
-	  Neuron *win = v_neur[_winner_neur];
-	  if( verb ) {
-		std::cout << "Network::deltaW for Winner Neurone\n";
-		std::cout << win->str_dump() << "\n";
-		std::cout << "At winning distance of " << _winner_dist;
-		std::cout << " from input " << utils::eigen::str_vec(input) << "\n";
-      
-		std::cout << "N[#]\t dp\t dw\t k\t (ratio)\t delta\t dW\n";
-	  }
-	  std::list<Neur_Dist>::iterator i_neigh;
-	  for( i_neigh= win->l_neighbors.begin();
-		   i_neigh != win->l_neighbors.end();
-		   i_neigh++) {
-		auto delta = eps * v_neur[(*i_neigh).index]->computeDistance( input ) * this->hnDistance( (*i_neigh).dist/_max_dist_neurone, _winner_dist, ela);
-		auto delta_weight = delta * (input - v_neur[(*i_neigh).index]->weights);
+    // NON-Regular GRID
+    if( _nb_link > 0 ) {
+      // All neigbors of the winner will be adapted
+      Neuron *win = v_neur[_winner_neur];
+      if( verb ) {
+	std::cout << "Network::deltaW for Winner Neurone\n";
+	std::cout << win->str_dump() << "\n";
+	std::cout << "At winning distance of " << _winner_dist;
+	std::cout << " from input " << utils::eigen::str_vec(input) << "\n";
+	
+	std::cout << "N[#]\t dp\t dw\t k\t (ratio)\t delta\t dW\n";
+      }
+      std::list<Neur_Dist>::iterator i_neigh;
+      for( i_neigh= win->l_neighbors.begin();
+	   i_neigh != win->l_neighbors.end();
+	   i_neigh++) {
+	auto delta = eps * v_neur[(*i_neigh).index]->computeDistanceInput( input ) / _max_dist_input * this->hnDistance( (*i_neigh).dist/_max_dist_neurone, _winner_dist/_max_dist_input, ela);
+	auto delta_weight = delta * (input - v_neur[(*i_neigh).index]->weights);
 		
-		if( verb ) {
-		  std::cout << "N[" << (*i_neigh).index << "]\t";
-		  std::cout << " " << (*i_neigh).dist << " / " << _max_dist_neurone << "\t";
-		  std::cout << " " << v_neur[(*i_neigh).index]->computeDistance( input ) << "\t";
-		  std::cout << " " << hnDistance( (*i_neigh).dist/_max_dist_neurone, _winner_dist, ela) << " (" << ((*i_neigh).dist/_max_dist_neurone/_winner_dist)*((*i_neigh).dist/_max_dist_neurone/_winner_dist) << ")\t";
-		  std::cout << " " << delta << "\tdW=" << utils::eigen::str_vec(delta_weight) << "\n";
-		}      
-		v_neur[(*i_neigh).index]->add_to_weights( delta_weight );
-	  }
-	  if( verb ) {
-		std::cout << "********\n";
-	  }
-	}
-	// REGULAR GRID
-	else if (_nb_link < 0 ) {
-	  // All neurones will be adapted
-	  for( unsigned int indn = 0; indn < v_neur.size(); indn++ ) {
-		auto delta = eps * v_neur[indn]->computeDistance( input ) * this->hnDistance( v_neur[indn]->computeDistance( *(v_neur[_winner_neur]) ) /_max_dist_neurone, _winner_dist, ela);
-		auto delta_weight = delta * (input - v_neur[indn]->weights);
+	if( verb ) {
+	  std::cout << "N[" << (*i_neigh).index << "]\t";
+	  std::cout << " " << (*i_neigh).dist << " / " << _max_dist_neurone << "\t";
+	  std::cout << " " << v_neur[(*i_neigh).index]->computeDistanceInput( input ) / _max_dist_input << "\t";
+	  std::cout << " " << hnDistance( (*i_neigh).dist/_max_dist_neurone, _winner_dist/_max_dist_input, ela) << " (" << ((*i_neigh).dist/_max_dist_neurone/_winner_dist*_max_dist_input)*((*i_neigh).dist/_max_dist_neurone/_winner_dist*_max_dist_input) << ")\t";
+	  std::cout << " " << delta << "\tdW=" << utils::eigen::str_vec(delta_weight) << "\n";
+	}      
+	v_neur[(*i_neigh).index]->add_to_weights( delta_weight );
+      }
+      if( verb ) {
+	std::cout << "********\n";
+      }
+    }
+    // REGULAR GRID
+    else if (_nb_link < 0 ) {
+      // All neurones will be adapted
+      for( unsigned int indn = 0; indn < v_neur.size(); indn++ ) {
+	auto delta = eps * v_neur[indn]->computeDistanceInput( input ) / _max_dist_input * this->hnDistance( v_neur[indn]->computeDistancePos( *(v_neur[_winner_neur]) ) /_max_dist_neurone, _winner_dist/_max_dist_input, ela);
+	auto delta_weight = delta * (input - v_neur[indn]->weights);
       
-		if( verb ) {
-		  std::cout << "Neurone " << indn << "\n";
-		  std::cout << "Distance to winner " << v_neur[indn]->computeDistance( *(v_neur[_winner_neur]) ) /_max_dist_neurone << "\n";
-		  std::cout << "hnDist = " << this->hnDistance( v_neur[indn]->computeDistance( *(v_neur[_winner_neur]) ) /_max_dist_neurone, _winner_dist, ela) << "\n";
-		  std::cout << "delta=" << delta << "\ndW=" << delta_weight << "\n";
-		}      
-		v_neur[indn]->add_to_weights( delta_weight );
-	  }
-	}
+	if( verb ) {
+	  std::cout << "Neurone " << indn << "\n";
+	  std::cout << "Distance to winner " << v_neur[indn]->computeDistancePos( *(v_neur[_winner_neur]) ) /_max_dist_neurone << "\n";
+	  std::cout << "hnDist = " << this->hnDistance( v_neur[indn]->computeDistancePos( *(v_neur[_winner_neur]) ) /_max_dist_neurone, _winner_dist/_max_dist_input, ela) << "\n";
+	  std::cout << "delta=" << delta << "\ndW=" << delta_weight << "\n";
+	}      
+	v_neur[indn]->add_to_weights( delta_weight );
+      }
+    }
   }
   // ********************************************************** Network::is_in
   bool is_in( unsigned int elem,  std::list<unsigned int> ll )
@@ -330,7 +338,7 @@ public:
 	rj_node.AddMember( "nb_neur", rj::Value(v_neur.size()), doc.GetAllocator());
 	rj_node.AddMember( "nb_link", rj::Value(_nb_link), doc.GetAllocator());
 	rj_node.AddMember( "size_grid", rj::Value(_size_grid), doc.GetAllocator());
-
+	rj_node.AddMember( "max_dist_input", rj::Value(_max_dist_input), doc.GetAllocator());
 	// Array of neurons
 	rj::Value rj_neur;
 	rj_neur.SetArray();
@@ -347,7 +355,8 @@ public:
 	int nb_neur = obj["nb_neur"].GetInt();
 	_nb_link = obj["nb_link"].GetInt();
 	_size_grid = obj["size_grid"].GetInt();
-
+	_max_dist_input = obj["max_dist_input"].GetDouble();
+	
 	// Neurons
 	v_neur.clear();
 	const rj::Value& n = obj["neurons"];
@@ -371,7 +380,7 @@ public:
 		exit(1);
 	  }
 
-	  _max_dist_neurone = v_neur[0]->computeDistance( *(v_neur[nb_neur-1]) );
+	  _max_dist_neurone = v_neur[0]->computeDistancePos( *(v_neur[nb_neur-1]) );
 	}
   }
   // ****************************************************** Network::attributs
@@ -397,6 +406,8 @@ private:
   double _winner_dist;
   /** The maximum distance between neurones */
   double _max_dist_neurone;
+  /** The maximum distance between inputs */
+  double _max_dist_input;
 }; // class Network
 }; // namespace DSOM
 }; // namespace Model

@@ -294,33 +294,32 @@ public:
     }
     this->add_neighbor( n_ind, n_dist );
   }
+  // ********************************************************* Neuron::forward
   // ******************************************************** Neuron::distance
   /** compute distance to another neurone */
-  TNumber computeDistance( Neuron &neur)
+  TNumber computeDistancePos( Neuron &neur)
   {
 	return sqrt((_pos - neur._pos).cwiseProduct( _pos - neur._pos).sum());
   }
-
-  // ********************************************************* Neuron::forward
   /** compute distance from a given input */
-  TNumber computeDistance( Eigen::VectorXd &input )
+  TNumber computeDistanceInput( Eigen::VectorXd &input )
   {
 	return sqrt((this->weights - input).cwiseProduct( this->weights - input).sum());
   }
-  TNumber computeDistanceNormed( Eigen::VectorXd &input )
-  {
-	double dim = (double) input.size();
-	return sqrt((this->weights - input).cwiseProduct( this->weights - input).sum()) /
-	  sqrt( dim );
-  }
-  //TNumber computeDistance( TWeight &input ) {};
-  /** compute normed distance from a given input (ie. between 0 and 1 */
-  TNumber computeDistanceNormed( const TWeight& input ) const
-  {
-    TNumber dim = input.size();
-    return sqrt((this->weights - input).cwiseProduct(this->weights - input).sum()) /
-      sqrt( dim );
-  };
+  // TNumber computeDistanceNormed( Eigen::VectorXd &input )
+  // {
+  // 	double dim = (double) input.size();
+  // 	return sqrt((this->weights - input).cwiseProduct( this->weights - input).sum()) /
+  // 	  sqrt( dim );
+  // }
+  // //TNumber computeDistance( TWeight &input ) {};
+  // /** compute normed distance from a given input (ie. between 0 and 1 */
+  // TNumber computeDistanceNormed( const TWeight& input ) const
+  // {
+  //   TNumber dim = input.size();
+  //   return sqrt((this->weights - input).cwiseProduct(this->weights - input).sum()) /
+  //     sqrt( dim );
+  // };
   // ******************************************************** Neuron::backward
   /** Add to current weights */
   void add_to_weights( const TWeight& delta_weight )
@@ -341,10 +340,8 @@ public:
 };
 // ******************************************************************** Neuron
 // ***************************************************************************
+}; // namespace DSOM
 
-
-}; // DSOM
-
-}; // Model
+}; // namespace Model
 
 #endif // DSOM_NEURON_HPP
