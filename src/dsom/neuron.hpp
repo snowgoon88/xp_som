@@ -54,7 +54,7 @@ public:
   Neuron( int index, int dim_weights, TNumber w_min=0, TNumber w_max=1) :
     index(index)
   {
-    //std::cerr << "Create Neurone " << index << "\n";
+    std::cerr << "Create Neurone " << index << "\n";
     
     // Generate weights between -1 and 1 (Eigen)
     this->weights = Eigen::VectorXd::Random(dim_weights);
@@ -66,7 +66,7 @@ public:
 	  int dim_weights, TNumber w_min=0, TNumber w_max=1) : 
     index(index), _pos(pos)
   {
-    //std::cerr << "Create Neurone " << index << "\n";
+    std::cerr << "Create Neurone " << index << "\n";
 
     // Generate weights between -1 and 1 (Eigen)
     this->weights = Eigen::VectorXd::Random(dim_weights);
@@ -78,7 +78,7 @@ public:
     index(0)
   {
     // decode d'après obj
-    unserialize( obj );
+    this->unserialize( obj );
   }
   /** Creation from Persistence (file). */
   //Neuron( Persistence& save ) {};
@@ -88,10 +88,13 @@ public:
     l_link(n.l_link), l_neighbors(n.l_neighbors),
     _pos(n._pos)
   {
+    std::cout << "Copy Neuron" << std::endl;
   }
   /** Creation from assignment */
   Neuron& operator=( const Neuron& n )
   {
+    std::cout << "Assign Nuron" << std::endl;
+    
     if (this != &n) { // protect against invalid self-assignment
       index = n.index;
       l_link = n.l_link;
@@ -128,7 +131,7 @@ public:
   std::string str_dump() 
   {
     std::stringstream ss;
-    ss << str_display() << "\n";
+    ss << this->str_display() << "\n";
   
     ss << "    link=";
     std::list<unsigned int>::iterator i_link;
@@ -147,7 +150,7 @@ public:
   std::string str_display() const
   {
     std::stringstream ss;
-    ss << "[" << this->index << "] at (";
+    ss << "Neuron [" << this->index << "] at (";
     for( unsigned int i = 0; i < _pos.size(); i++) {
       ss<< _pos[i] << ", ";
     }

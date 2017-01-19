@@ -66,8 +66,8 @@ void test_ring()
 // ********************************************************************** main
 int main(int argc, char *argv[])
 {
-  // test_uniform();
-  // test_normal();
+  test_uniform();
+  test_normal();
   test_ring();
   return 0;
 }

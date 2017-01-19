@@ -493,8 +493,12 @@ http://www.astrostatistics.psu.edu/su07/R/html/MASS/html/lm.ridge.html
 ** DONE RidgeReg with GIVEN regul param
 ** DONE Compare with R
 ** DONE Ne pas accorder de pénalité pour le poids associé à 'intercept' dans RR
-* [6/9] DSOM
-** TODO plot densities with R
+* [7/10] DSOM
+** TODO [/] plot DSOM in R
+*** $neurons : list
+*** $neurons[[1]]$pos : list of 2 values
+*** $neurons [ [1] ]$link : list of neigbors id
+** DONE plot densities with R
 ** DONE normal density
 ** DONE ring density
 ** DONE to double
