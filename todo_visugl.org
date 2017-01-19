@@ -511,3 +511,6 @@ http://www.astrostatistics.psu.edu/su07/R/html/MASS/html/lm.ridge.html
 ** TODO Copy operator/assignment => copie de l_link et l_neighbors
 ** DONE quelles fonctions utiles ?
 ** DONE need regularly put pos neurons
+* [1/2] REC_DSOM
+** DONE recurrent neuron [dsom/r_neuron.hpp]
+** TODO recurrent network [dsom/r_network.hpp]
