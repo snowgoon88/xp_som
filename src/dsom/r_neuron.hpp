@@ -82,6 +82,12 @@ public:
     }
     return *this;
   }
+  /** Creation from JSON doc */
+  RNeuron( const rj::Value& obj ) : Neuron(0,1)
+  {
+    // decode d'après obj
+    this->unserialize( obj );
+  }
   /** Creation from JSON file */
   RNeuron( std::istream& is ) : Neuron(0,1)
   {
