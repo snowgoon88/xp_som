@@ -166,7 +166,18 @@ public:
       this->r_weights(i) = rw[i].GetDouble();
     }
   }
-  // ****************************************************** Neuron::attributes
+  // *************************************************** RNeuron::similarities
+  TNumber similaritiesInput( const TWeight& input, const TNumber& sigma )
+  {
+	auto dist = (weights - input).cwiseProduct( weights - input).sum();
+	return exp( - dist / (2.0 * sigma * sigma) );
+  }
+  TNumber similaritiesRecurrent( const TRWeight& pos, const TNumber& sigma )
+  {
+	auto dist = (r_weights - pos).cwiseProduct( r_weights - pos).sum();
+	return exp( - dist / (2.0 * sigma * sigma) );
+  }
+  // ***************************************************** RNeuron::attributes
   /** RWeights */
   TRWeight r_weights;
 };
