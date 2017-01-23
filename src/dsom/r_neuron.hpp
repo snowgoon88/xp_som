@@ -31,6 +31,7 @@ public:
   using TWeight  = Eigen::VectorXd;
   using TRWeight = Eigen::VectorXd;
   using TPos     = Eigen::VectorXi;
+  using TRPos    = Eigen::VectorXd;
 public:
   // ******************************************************** Neuron::creation
   /** 
@@ -40,12 +41,15 @@ public:
   RNeuron( int index, int dim_weights, TNumber w_min=0, TNumber w_max=1) :
     Neuron(index,dim_weights,w_min,w_max)
   {
-    std::cerr << "Create RNeurone " << index << "\n";
+    //std::cerr << "Create RNeurone " << index << "\n";
     
     // Generate r_weights between 0 and 1 (Eigen) ^ dim (TODO=1)
     this->r_weights = Eigen::VectorXd::Random(1);
     // Scale (TODO dim=1)
     this->r_weights= (this->r_weights.array() - -1.0) / (1.0 - -1.0) * (1.0 - 0.0) + 0.0;
+
+	// RPos
+	r_pos = TRPos( _pos.size() );
   }
   /** 
    * Creation with index, position and random weights in [w_min,w_max]^dim
@@ -55,18 +59,21 @@ public:
 	  int dim_weights, TNumber w_min=0, TNumber w_max=1) :
     Neuron( index, pos, dim_weights, w_min, w_max)
   {
-    std::cerr << "Create RNeurone " << index << "\n";
+    //std::cerr << "Create RNeurone " << index << "\n";
 
     auto dim = _pos.size();
     // Generate r_weights between 0 and 1 (Eigen) ^ dim_pos
     this->r_weights = Eigen::VectorXd::Random(dim);
     // Scale
     this->r_weights= (this->r_weights.array() - -1.0) / (1.0 - -1.0) * (1.0 - 0.0) + 0.0;
+
+	// RPos
+	r_pos = TRPos( _pos.size() );
     
-  };
+  }
   /** Creation with copy */
   RNeuron( const RNeuron& n ) :
-    Neuron( n ), r_weights( n.r_weights )
+    Neuron( n ), r_pos(n.r_pos), r_weights( n.r_weights )
   {
   }
   /** Creation from assignment */
@@ -78,6 +85,7 @@ public:
       l_neighbors = n.l_neighbors;
       _pos = n._pos;
       weights = n.weights;
+	  r_pos = n.r_pos;
       r_weights = n.r_weights;
     }
     return *this;
@@ -137,6 +145,12 @@ public:
     ss << "RNeuron ";
     ss << Neuron::str_display();
 
+	ss << "=(";
+    for( unsigned int i = 0; i < r_pos.size(); i++) {
+      ss << r_pos[i] << ", ";
+    }
+	ss << ")";
+	
     ss << " rw=";
     for( int i=0; i < this->r_weights.size(); i++) {
       ss << this->r_weights(i) << " ";
@@ -149,7 +163,9 @@ public:
   {
     // rj::Object qui contient les données
     rj::Value rj_node = Neuron::serialize( doc );
-    
+
+	// TODO r_pos
+	
     // rj::Array with RWeights
     rj::Value rj_rw;
     rj_rw.SetArray();
@@ -163,7 +179,10 @@ public:
   void unserialize( const rj::Value& obj)
   {
     Neuron::unserialize( obj );
+	
+	// TODO r_pos
 
+	
     // RWeights
     const rj::Value& rw = obj["r_weights"];
     assert( rw.IsArray() );
@@ -184,6 +203,8 @@ public:
 	return exp( - dist / (2.0 * sigma * sigma) );
   }
   // ***************************************************** RNeuron::attributes
+  /** RPos */
+  TRPos r_pos;
   /** RWeights */
   TRWeight r_weights;
 };

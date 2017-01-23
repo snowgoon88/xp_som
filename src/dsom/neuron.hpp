@@ -54,7 +54,7 @@ public:
   Neuron( int index, int dim_weights, TNumber w_min=0, TNumber w_max=1) :
     index(index)
   {
-    std::cerr << "Create Neurone " << index << "\n";
+    //std::cerr << "Create Neurone " << index << "\n";
     
     // Generate weights between -1 and 1 (Eigen)
     this->weights = Eigen::VectorXd::Random(dim_weights);
@@ -66,7 +66,7 @@ public:
 	  int dim_weights, TNumber w_min=0, TNumber w_max=1) : 
     index(index), _pos(pos)
   {
-    std::cerr << "Create Neurone " << index << "\n";
+    //std::cerr << "Create Neurone " << index << "\n";
 
     // Generate weights between -1 and 1 (Eigen)
     this->weights = Eigen::VectorXd::Random(dim_weights);
@@ -88,12 +88,12 @@ public:
     l_link(n.l_link), l_neighbors(n.l_neighbors),
     _pos(n._pos)
   {
-    std::cout << "Copy Neuron" << std::endl;
+    //std::cout << "Copy Neuron" << std::endl;
   }
   /** Creation from assignment */
   Neuron& operator=( const Neuron& n )
   {
-    std::cout << "Assign Nuron" << std::endl;
+    //std::cout << "Assign Nuron" << std::endl;
     
     if (this != &n) { // protect against invalid self-assignment
       index = n.index;

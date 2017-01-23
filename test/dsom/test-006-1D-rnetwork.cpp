@@ -53,26 +53,26 @@ void tt_net_wr()
 }
 
 /** Step forward and backward */
-void tt_network_step()
-{
-  // 1D input, 7 neurons, on a 1D grid */
-  Model::DSOM::Network net(1, 7, -1);
+// void tt_network_step()
+// {
+//   // 1D input, 7 neurons, on a 1D grid */
+//   Model::DSOM::Network net(1, 7, -1);
 
-  auto max_dist = net.computeAllDist();
-  std::cout << "max dist=" << max_dist << "\n***********\n" << net.str_dump();
+//   auto max_dist = net.computeAllDist();
+//   std::cout << "max dist=" << max_dist << "\n***********\n" << net.str_dump();
 
-  // one input
-  Eigen::VectorXd v1(1);
-  v1 << 0.57;
-  std::cout << "v1 = " << v1 << "\n";
+//   // one input
+//   Eigen::VectorXd v1(1);
+//   v1 << 0.57;
+//   std::cout << "v1 = " << v1 << "\n";
 
-  auto win_dist = net.computeWinner( v1 );
-  std::cout << "Winner is " << net.get_winner() << " at " << win_dist << "\n";
+//   auto win_dist = net.computeWinner( v1 );
+//   std::cout << "Winner is " << net.get_winner() << " at " << win_dist << "\n";
 
-  // net.forward( v1 );
-  // net.deltaW( v1, 1.0, 1.0, true);
-  // std::cout << "__AFTER" << std::endl << net.str_dump();
-}
+//   // net.forward( v1 );
+//   // net.deltaW( v1, 1.0, 1.0, true);
+//   // std::cout << "__AFTER" << std::endl << net.str_dump();
+// }
 // ***************************************************************************
 int main(int argc, char *argv[])
 {

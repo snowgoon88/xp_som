@@ -87,7 +87,7 @@ class Axis
 public:
   /** Creation */
   Axis() : _title("X"), _range({-1.0,1.0,3,9}) { init_font(); };
-  Axis( const std::string& title = "X",
+  Axis( const std::string& title,
 	const Range& range= {-1.0, 1.0, 2, 10} ) :
     _title(title),
     _range(range) { init_font(); };

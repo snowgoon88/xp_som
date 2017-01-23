@@ -33,6 +33,8 @@ namespace DSOM
   class RNetwork
 {
 public:
+  using TNumber = RNeuron::TNumber;
+public:
   // ****************************************************** RNetwork::creation
   /** 
    * Creation with dim of input and dsom neurons.
@@ -41,7 +43,10 @@ public:
    */
   RNetwork( int dim_input, int nb_neur, int nb_link=5,
 	    float w_min=0.0, float w_max=1.0 ) :
-    _max_dist_neurone(0.0), _max_dist_input(0.0) 
+	_winner_neur(0),
+    _max_dist_neurone(0.0), _max_dist_input(0.0),
+	_sim_w(nb_neur,0.0), _sim_rec(nb_neur,0.0), _sim_merged(nb_neur,0.0),
+	_sim_convol(nb_neur,0.0)
   {
     // Init Random Engine
     std::random_device rnd_seeder;
@@ -99,16 +104,17 @@ public:
 	}
       }
       else if( _nb_link == -1 ) {
-	for( int i=0; i < _size_grid; i++) {
-	  Eigen::VectorXi v(-_nb_link);
-	  v << i;
-	  RNeuron *n = new RNeuron( i, v, dim_input, w_min, w_max );
-	  v_neur.push_back(n);
-	}
+		for( int i=0; i < _size_grid; i++) {
+		  Eigen::VectorXi v(-_nb_link);
+		  v << i;
+		  RNeuron *n = new RNeuron( i, v, dim_input, w_min, w_max );
+		  n->r_pos << (RNeuron::TNumber) i / (RNeuron::TNumber) _size_grid;
+		  v_neur.push_back(n);
+		}
       }
       else {
-	std::cerr << "dim=" << _nb_link << " not implemented yet\n";
-	exit(1);
+		std::cerr << "dim=" << _nb_link << " not implemented yet\n";
+		exit(1);
       }
     
       // Create links
@@ -154,40 +160,6 @@ public:
 	  ss << (*v_neur[i]).str_dump() << "\n";
 	}
 	return ss.str();
-  }
-  // ******************************************* RNetwork::set_regular_weights
-  void set_regular_weights()
-  {
-    int dim_weights = v_neur[0]->weights.size();
-
-    // si _nb_link > 0, must check dimensions and nb_neur
-    if( _nb_link > 0 ) {
-      // Check dimension
-      auto size_grid = pow( (double) v_neur.size(), 1.0 / (double) dim_weights );
-      _size_grid = abs( floor( size_grid));
-      if( pow( _size_grid, dim_weights) != v_neur.size()) {
-	std::cerr << "Incompatible size nb_neur=" << v_neur.size() << ", size=" << _size_grid << ", dim=" << dim_weights << "\n"; 
-	return;
-      }
-    }
-    else if( -_nb_link != dim_weights ) {
-      std::cerr << "dim_weights=" << dim_weights << " is not compatible with internal regular grid dimension _nb_link=" << _nb_link << "\n";
-      return;
-    }
-  
-    // Initialize weights
-    if( dim_weights == 2 ) {
-      for( int i=0; i < _size_grid; i++) {
-	for( int j=0; j < _size_grid; j++) {
-	  Eigen::VectorXd v(dim_weights);
-	  v << (double) i / (double) (_size_grid-1), (double) j / (double) (_size_grid-1);
-	  v_neur[i*_size_grid+j]->weights = v;
-	}
-      }
-    }
-    else {
-      std::cerr << "TODO initialise with dim_weight != 2 ....\n";
-    }
   }
   // *********************************************************** Network::DIST
   /** 
@@ -279,20 +251,50 @@ public:
 
 	return max_dist;
   }
-  // *********************************************************** Network::play
-  double computeWinner( Eigen::VectorXd &input )
+  // ********************************************************** RNetwork::play
+  TNumber computeWinner( RNeuron::TWeight &input,
+						 const RNeuron::TNumber& beta=1.0,
+						 const TNumber& sig_input = 1.0,
+						 const RNeuron::TNumber& sig_recur = 1.0,
+						 const RNeuron::TNumber& sig_conv  = 1.0 )
   {
-    _winner_dist = std::numeric_limits<double>::max();
-    
-    for( unsigned int i=0; i<v_neur.size(); i++) {
-      auto tmp = v_neur[i]->computeDistanceInput( input );
-      //std::cout << "win_dist[" << i << "] = " << tmp << "\n";
-      if( tmp < _winner_dist ) {
-	_winner_dist = tmp;
-	_winner_neur = i;
-      }
-    }
-    return _winner_dist;
+	// compute both similarities ==> merged
+	RNeuron::TWeight sim( v_neur.size() );
+	_sim_w.clear();
+	_sim_rec.clear();
+	_sim_merged.clear();
+	for( unsigned int i=0; i<v_neur.size(); i++) {
+	  _sim_w.push_back( v_neur[i]->similaritiesInput( input, sig_input ) );
+	  _sim_rec.push_back( v_neur[i]->similaritiesRecurrent( v_neur[_winner_neur]->r_pos, sig_recur )); 
+	  _sim_merged.push_back( sqrt( _sim_w[i] * (beta+(1-beta) * _sim_rec[i] )) );
+	}
+	// // Convolution with gaussian
+	// integral of a.exp(-x^2/(2c^2)) = ac.sqrt(2.PI)
+	_sim_convol.clear();
+	for( int i=0; i< (int) v_neur.size(); i++) {
+	  TNumber val = 0.0;
+	  auto pos_i = v_neur[i]->r_pos(0);
+	  for( int j=i-((int)v_neur.size())/2; j<i+(int)v_neur.size()/2; j++) {
+		auto pos_j = 0.0 + (TNumber) j / (TNumber) v_neur.size();
+		// TODO specific to 1D grid network
+		auto k = ((j < 0) ? j+v_neur.size() : j);
+		k = (k >= v_neur.size() ? k-v_neur.size() : k);
+
+		auto dist = (pos_i - pos_j) / 1.0 ;
+		// std::cout << "i,j,k=" << i<<", "<<j<<", "<<k<<" => "<<pos_i << " - " << pos_j;
+		// std::cout << " : " <<  exp( - (dist*dist) / (2.0 * sig_conv * sig_conv)) << " * " << _sim_merged[k];
+		val += _sim_merged[k] * exp( - (dist*dist) / (2.0 * sig_conv * sig_conv));
+		// std::cout << " --> " << val << " (" << (val / (sig_conv * sqrt(2*M_PI))) << ")" << std::endl;
+	  }
+	  std::cout << "val[" << i << "]=" << val << std::endl;
+	  _sim_convol.push_back( val ); /// (sig_conv * sqrt(2*M_PI)) );
+	}
+	// max and argmax
+	auto it_max = std::max_element( _sim_convol.begin(), _sim_convol.end() );
+	_winner_similarity = *it_max;
+	_winner_neur = std::distance( _sim_convol.begin(), it_max );
+
+	return _winner_similarity;
   }
   Eigen::VectorXd forward( Eigen::VectorXd &input )
   {
@@ -441,7 +443,7 @@ public:
 private:
   /** Random engine */
   std::default_random_engine _rnd;
-  
+public:
   /** All the neurons */
   std::vector<DSOM::RNeuron *> v_neur;
   
@@ -458,7 +460,15 @@ private:
   double _max_dist_neurone;
   /** The maximum distance between inputs */
   double _max_dist_input;
-}; // class Network
+
+  /** Similarities */
+  std::vector<RNeuron::TNumber> _sim_w;
+  std::vector<RNeuron::TNumber> _sim_rec;
+  std::vector<RNeuron::TNumber> _sim_merged;
+  std::vector<RNeuron::TNumber> _sim_convol;
+  /** Similarity with the Winner */
+  double _winner_similarity;
+}; // class RNetwork
 }; // namespace DSOM
 }; // namespace Model
 

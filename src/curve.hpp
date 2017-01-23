@@ -34,7 +34,7 @@ public:
 public:
   // ********************************************************* Curve::creation
   /** Creation */
-  Curve() : _fg_col{1,0,0} // red
+  Curve() : _fg_col{1,0,0}, _line_width(1.f) // red,thin
   {}
   ~Curve() {std::cout << "Curve destroyed" << std::endl;};
 
@@ -92,6 +92,10 @@ public:
   {
     _fg_col = col;
   }
+  void set_width( const GLfloat& width )
+  {
+	_line_width = width;
+  }
   
   /** Draw curve with OpenGL */
   void render()
@@ -107,7 +111,7 @@ public:
     // -------------------------------------------------------------------------
     glEnable (GL_BLEND);
     glEnable (GL_LINE_SMOOTH);
-    glLineWidth (1.0);
+    glLineWidth( _line_width );
 
     glBegin(GL_LINE_STRIP);
     for( auto& pt: _data) {
@@ -118,7 +122,8 @@ public:
   }
 
   /** get BoundingBox */
-  const BoundingBox& get_bbox() {return _bbox;}; 
+  const BoundingBox& get_bbox() const {return _bbox;}
+  std::list<Sample> get_samples() const { return _data; }
 
 private:
   /** Data are a list of Samples*/
@@ -127,7 +132,9 @@ private:
   BoundingBox _bbox;
   /** Color for the Curve */
   Color _fg_col;
-
+  /** Line Width */
+  GLfloat _line_width;
+  
 public:
   /** Create artificial data y=sin(x) pour x=[0,2PI[ */
   void create_data()
