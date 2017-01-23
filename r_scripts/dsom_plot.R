@@ -58,5 +58,23 @@ mk_all_link <- function( allpos, l_neurons )
   return (mylinks)
 }
 ##
-ggplot() + geom_segment( data=sgments, aes(x=x,y=y,xend=xend,yend=yend)) + geom_point( data=mypts, aes(x=x,y=y), shape = 21, colour = "black", fill = "white", size=4, stroke=2)
+## ggplot() + geom_segment( data=sgments, aes(x=x,y=y,xend=xend,yend=yend)) + geom_point( data=mypts, aes(x=x,y=y), shape = 21, colour = "black", fill = "white", size=4, stroke=2)
 
+## return ggplot elements (segment+points) to display a network.
+## gnet <- gplot_network( jdata )
+## ggplot() + gnet[1] + gnet[2]
+gplot_network <- function( data_json )
+{
+  #compute the weight_positions of the neurons
+  wpos <- mk_wpos( data_json )
+  # compute the links
+  wlink <- mk_all_link( wpos, data_json$neurons)
+  # as data.frames
+  wpos <- as.data.frame( wpos )
+  names(wpos) <- c("x","y")
+  wlink <- as.data.frame( wlink )
+  names(wlink) <- c("x","y","xend","yend")
+  
+  return (c(geom_segment( data=wlink, aes(x=x,y=y,xend=xend,yend=yend)),
+          geom_point( data=wpos, aes(x=x,y=y), shape = 21, colour = "black", fill = "white", size=4, stroke=2)))
+}

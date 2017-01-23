@@ -43,10 +43,14 @@ public:
    */
   RNetwork( int dim_input, int nb_neur, int nb_link=5,
 	    float w_min=0.0, float w_max=1.0 ) :
-	_winner_neur(0),
-    _max_dist_neurone(0.0), _max_dist_input(0.0),
-	_sim_w(nb_neur,0.0), _sim_rec(nb_neur,0.0), _sim_merged(nb_neur,0.0),
-	_sim_convol(nb_neur,0.0)
+    _winner_neur(0), _old_winner_neur(0),
+    _winner_dist(std::numeric_limits<double>::max()),
+    _winner_dist_input(std::numeric_limits<double>::max()),
+    _winner_dist_rec(std::numeric_limits<double>::max()),
+    _max_dist_neurone(0.0), _max_dist_input(0.0), _max_dist_rec(0.0),
+    _sim_w(nb_neur,0.0), _sim_rec(nb_neur,0.0), _sim_merged(nb_neur,0.0),
+    _sim_convol(nb_neur,0.0),
+    _winner_similarity(0.0)
   {
     // Init Random Engine
     std::random_device rnd_seeder;
@@ -296,20 +300,20 @@ public:
 
 	return _winner_similarity;
   }
-  Eigen::VectorXd forward( Eigen::VectorXd &input )
+  void forward( Eigen::VectorXd &input )
   {
-	Eigen::VectorXd output(v_neur.size());
-  
-	for( unsigned int i=0; i<v_neur.size(); i++) {
-	  output[i] = v_neur[i]->computeDistanceInput( input );
-	}
-	_winner_dist = output.minCoeff( &_winner_neur );
+    // Compute the winner, this will update similarities
+    computeWinner( input );
 
-	// And update max_distance
-	auto max_dist_sample = output.maxCoeff();
-	_max_dist_input = std::max( _max_dist_input, max_dist_sample);
-	
-	return output;
+    // and then, compute distances and update max_distances
+    for( unsigned int i = 0; i < v_neur.size(); ++i) {
+      // input
+      auto dist_input = v_neur[_winner_neur]->computeDistanceInput( input );
+      _max_dist_input = std::max( _max_dist_input, dist_input);
+      // rec
+      auto dist_rec = v_neur[_winner_neur]->computeDistanceRPos( v_neur[_old_winner_neur]->r_pos );
+      _max_dist_rec = std::max( _max_dist_rec, dist_rec);
+    }
   }
   // ******************************************************* Network::backward
   double hnDistance( double dist_neur_win, double win_dist, double ela)
@@ -320,7 +324,7 @@ public:
   }
   void deltaW( Eigen::VectorXd &input, double eps, double ela, double verb=false)
   {
-    // NON-Regular GRID
+    // TODO NON-Regular GRID
     if( _nb_link > 0 ) {
       // All neigbors of the winner will be adapted
       Neuron *win = v_neur[_winner_neur];
@@ -354,20 +358,35 @@ public:
     }
     // REGULAR GRID
     else if (_nb_link < 0 ) {
-      // All neurones will be adapted
-      for( unsigned int indn = 0; indn < v_neur.size(); indn++ ) {
-	auto delta = eps * v_neur[indn]->computeDistanceInput( input ) / _max_dist_input * this->hnDistance( v_neur[indn]->computeDistancePos( *(v_neur[_winner_neur]) ) /_max_dist_neurone, _winner_dist/_max_dist_input, ela);
-	auto delta_weight = delta * (input - v_neur[indn]->weights);
+      auto old_win_rpos = v_neur[_old_winner_neur]->r_pos;
       
+      // All neurones will be adapted, difference betwenn weights and r_weights
+      for( unsigned int indn = 0; indn < v_neur.size(); indn++ ) {
+	// normalized distance to input (ie with weights)
+	auto dnorm_in = v_neur[indn]->computeDistanceInput( input ) / _max_dist_input;
+	// normalized distance to previous winner (ie with r_weights)
+	auto dnorm_rec = v_neur[indn]->computeDistanceRPos( old_win_rpos ) / _max_dist_rec;
+
+      // hn_distance
+	auto hn_input = hnDistance( v_neur[indn]->computeDistancePos( *(v_neur[_winner_neur]) ) /_max_dist_neurone, _winner_dist_input / _max_dist_input, ela );
+	auto hn_rec = hnDistance( v_neur[indn]->computeDistancePos( *(v_neur[_winner_neur]) ) /_max_dist_neurone, _winner_dist_rec / _max_dist_rec, ela );
+
+	
+	// Delta W / RecWeights
+	auto delta_w = eps * dnorm_in * hn_input * (input - v_neur[indn]->weights);
+	auto delta_rw = eps * dnorm_rec * hn_rec * (old_win_rpos - v_neur[indn]->r_weights);
+	
 	if( verb ) {
-	  std::cout << "Neurone " << indn << "\n";
-	  std::cout << "Distance to winner " << v_neur[indn]->computeDistancePos( *(v_neur[_winner_neur]) ) /_max_dist_neurone << "\n";
-	  std::cout << "hnDist = " << this->hnDistance( v_neur[indn]->computeDistancePos( *(v_neur[_winner_neur]) ) /_max_dist_neurone, _winner_dist/_max_dist_input, ela) << "\n";
-	  std::cout << "delta=" << delta << "\ndW=" << delta_weight << "\n";
+	  std::cout << "RNeurone " << indn << "\n";
+	  std::cout << "INPUT: dnorm= " << dnorm_in << "; hn=" << hn_input << " => delta=" << delta_w << std::endl;
+	  std::cout << "REC  : dnorm= " << dnorm_rec << "; hn=" << hn_rec << " =>  delta=" << delta_rw << std::endl;
 	}      
-	v_neur[indn]->add_to_weights( delta_weight );
+	v_neur[indn]->add_to_weights( delta_w );
+	v_neur[indn]->add_to_r_weights( delta_rw );
       }
     }
+
+    _old_winner_neur = _winner_neur;
   }
   // ********************************************************** Network::is_in
   bool is_in( unsigned int elem,  std::list<unsigned int> ll )
@@ -454,12 +473,15 @@ public:
 
   /** The current winner neurone. */
   unsigned int _winner_neur;
+  unsigned int _old_winner_neur;
   /** The current winner distance */
   double _winner_dist;
+  double _winner_dist_input, _winner_dist_rec;
   /** The maximum distance between neurones */
   double _max_dist_neurone;
   /** The maximum distance between inputs */
   double _max_dist_input;
+  double _max_dist_rec;
 
   /** Similarities */
   std::vector<RNeuron::TNumber> _sim_w;

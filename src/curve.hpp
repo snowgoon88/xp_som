@@ -38,6 +38,11 @@ public:
   {}
   ~Curve() {std::cout << "Curve destroyed" << std::endl;};
 
+  // ************************************************************ Curve::clear
+  void clear()
+  {
+    _data.clear();
+  }
   // ******************************************************* Curve::add_sample
   template<typename Itr>
   void add_sample( const Itr& x_data_begin, const Itr& x_data_end,

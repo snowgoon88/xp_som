@@ -202,6 +202,18 @@ public:
 	auto dist = (r_weights - pos).cwiseProduct( r_weights - pos).sum();
 	return exp( - dist / (2.0 * sigma * sigma) );
   }
+  // ******************************************************* RNeuron::distance
+  /** compute distance from given r_pos */
+  TNumber computeDistanceRPos( const TRWeight& r_pos )
+  {
+    return sqrt((this->r_weights - r_pos).cwiseProduct( this->r_weights - r_pos).sum());
+  }
+  // ********************************************************* RNeuron::update
+  /** Add to current r_weights */
+  void add_to_r_weights( const TRWeight& delta_rweight )
+  {
+    this->r_weights = this->r_weights +  delta_rweight;
+  }
   // ***************************************************** RNeuron::attributes
   /** RPos */
   TRPos r_pos;
