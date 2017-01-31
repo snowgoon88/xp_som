@@ -29,7 +29,8 @@ public:
    * Create with title and size
    */
   Window(const std::string& title = "RecDSOM", int width=640, int height=400) :
-    _axis_x(), _axis_y(), _c_weights() // "X", {-1.0, .0, 8, 10} ), _axis_y( "Y", {-1.0, 1.0, 4, 10} )
+    _axis_x(), _axis_y(), _c_weights(), // "X", {-1.0, .0, 8, 10} ), _axis_y( "Y", {-1.0, 1.0, 4, 10} )
+	_nb_iter(0)
   {
     std::cout << "Window creation" << std::endl;
 
@@ -62,7 +63,8 @@ public:
   void init()
   {
 	// Recurrent DSOM
-	_rdsom = new RNetwork( 1, 100, -1 );
+	_rdsom = new RNetwork( 1, 500, -1 );
+	std::cout << "__CREATION" << std::endl << _rdsom->str_dump() << std::endl;
 	// one input
 	Eigen::VectorXd i1(1);
 	i1 << 0.33;;
@@ -81,16 +83,23 @@ public:
 	}
 	// similarity input in red, rec in green, merged in blue
 	_c_sim_input.set_color( {1.0, 0.0, 0.0} );
-	_c_sim_input.set_color( {0.0, 1.0, 0.0} );
+	_c_sim_rec.set_color( {0.0, 1.0, 0.0} );
 	_c_sim_merged.set_color( {0.0, 0.0, 1.0} );
 	_c_sim_convol.set_color( {0.0, 0.0, 1.0} );
 	_c_sim_convol.set_width( 2.f );
+	// hn
+	_c_sim_hn_dist.set_color( {1.0, 0.0, 0.0} );
+	_c_sim_hn_dist.set_width( 2.f );
+	_c_sim_hn_rec.set_color( {0.0, 1.0, 0.0} );
+	_c_sim_hn_rec.set_width( 2.f );
 	
 	for( unsigned int i = 0; i < _rdsom->v_neur.size(); ++i) {
 	  _c_sim_input.add_sample( {(double)i, _rdsom->_sim_w[i], 0.0} );
 	  _c_sim_rec.add_sample( {(double)i, _rdsom->_sim_rec[i], 0.0} );
 	  _c_sim_merged.add_sample( {(double)i, _rdsom->_sim_merged[i], 0.0} );
 	  _c_sim_convol.add_sample( {(double)i, _rdsom->_sim_convol[i], 0.0} );
+	  _c_sim_hn_dist.add_sample( {(double)i, _rdsom->_sim_hn_dist[i], 0.0} );
+	  _c_sim_hn_rec.add_sample( {(double)i, _rdsom->_sim_hn_rec[i], 0.0} );
 	}
   }
   
@@ -136,6 +145,8 @@ public:
 	  _c_sim_rec.render();
       _c_sim_merged.render();
 	  _c_sim_convol.render();
+	  _c_sim_hn_dist.render();
+	  _c_sim_hn_rec.render();
 	  
       glfwSwapBuffers( _window_input );
 
@@ -175,6 +186,8 @@ public:
 	  _c_sim_rec.render();
       _c_sim_merged.render();
 	  _c_sim_convol.render();
+	  _c_sim_hn_dist.render();
+	  _c_sim_hn_rec.render();
 	  
       glfwSwapBuffers( _window_rec );
       
@@ -201,8 +214,11 @@ private:
   Curve _c_sim_rec;
   Curve _c_sim_merged;
   Curve _c_sim_convol;
+  Curve _c_sim_hn_dist, _c_sim_hn_rec;
   /** RecDSOM */
   RNetwork* _rdsom;
+  /** nb_iterations */
+  int _nb_iter;
   //******************************************************************************
   /**
    * Callback for key events
@@ -235,24 +251,32 @@ private:
   void step_learn( int key )
   {
     // one input
-    Eigen::VectorXd i1 = Eigen::VectorXd::Random(1);
-    i1 = (i1.array() - -1.0) / (1.0 - -1.0);
-    
+    // Eigen::VectorXd i1 = Eigen::VectorXd::Random(1);
+    // i1 = (i1.array() - -1.0) / (1.0 - -1.0);
+	Eigen::VectorXd i1(1);
+	i1 << (double) (_nb_iter % 3) / 4.0 + 0.1;
+	
     _rdsom->forward( i1 );
-    _rdsom->deltaW( i1, 0.1, 100.0, true );
+    _rdsom->deltaW( i1, 0.1, 0.2, true );
 
     _c_weights.clear();
     _c_sim_input.clear();
     _c_sim_rec.clear();
     _c_sim_merged.clear();
     _c_sim_convol.clear();
+	_c_sim_hn_dist.clear();
+	_c_sim_hn_rec.clear();
     for( unsigned int i = 0; i < _rdsom->v_neur.size(); ++i) {
       _c_weights.add_sample( {(double)i, _rdsom->v_neur[i]->weights(0), 0.0} ); 
       _c_sim_input.add_sample( {(double)i, _rdsom->_sim_w[i], 0.0} );
       _c_sim_rec.add_sample( {(double)i, _rdsom->_sim_rec[i], 0.0} );
       _c_sim_merged.add_sample( {(double)i, _rdsom->_sim_merged[i], 0.0} );
       _c_sim_convol.add_sample( {(double)i, _rdsom->_sim_convol[i], 0.0} );
-    }
+	  _c_sim_hn_dist.add_sample( {(double)i, _rdsom->_sim_hn_dist[i], 0.0} );
+	  _c_sim_hn_rec.add_sample( {(double)i, _rdsom->_sim_hn_rec[i], 0.0} );
+	}
+
+	_nb_iter++;
   }
   // ***************************************************************************
   /**

@@ -1,16 +1,27 @@
 /* -*- coding: utf-8 -*- */
 
 #pragma once
+
+/** 
+ * A Curve rended in OpenGL.
+ *
+ * Samples can be static copies of data
+ * - add_sample
+ * - add_time_serie
+ *
+ * Samples can be dynamical and come from
+ * - a container : 
+ * - something with constant iterators :
+ */
+
 #include <list>
 #include <iostream>
 #include <math.h>
+#include <functional>
 
-/** 
- * Trace une courbe en OpenGL.
- */
-const unsigned int _nb_data = 100;
-
-
+// ***************************************************************************
+// ********************************************************************* Curve
+// ***************************************************************************
 class Curve
 {
 public:
@@ -42,6 +53,7 @@ public:
   void clear()
   {
     _data.clear();
+	_bbox = {0.0, 0.0, 0.0, 0.0};
   }
   // ******************************************************* Curve::add_sample
   template<typename Itr>
@@ -58,7 +70,7 @@ public:
     }
   }
   /** Add a point to the Curve and adjust _bbox */
-  void add_sample( const Sample& sample)
+  void add_sample( const Sample sample)
   {
     //std::cout << "Curve::add_sample" << std::endl;
     // First sample ?
@@ -88,7 +100,8 @@ public:
   {
     auto it = data_begin;
     for (auto t_data=0.0; it != data_end; ++it, t_data+=1.0) {
-      add_sample( Sample{t_data, it, 0.0} );
+	  const Sample s = {t_data, it, 0.0};
+      add_sample( s );
     }
   }
 
@@ -97,11 +110,12 @@ public:
   {
     _fg_col = col;
   }
+  // ******************************************************** Curve::set_width
   void set_width( const GLfloat& width )
   {
 	_line_width = width;
   }
-  
+  // *********************************************************** Curve::render
   /** Draw curve with OpenGL */
   void render()
   {
@@ -109,7 +123,7 @@ public:
     //   std::cout << "[ " << pt.x << "; " << pt.y << "; " << pt.z << "]" << std::endl;
     // }
 
-    // Couleur rouge
+    // Color
     glColor4d( _fg_col.r, _fg_col.g, _fg_col.b, 1.0);
     // -------------------------------------------------------------------------
     //  Rendering using GL_LINE_STRIP
@@ -125,11 +139,10 @@ public:
     glEnd();
     
   }
-
+  // ******************************************************** Curve::attributs
   /** get BoundingBox */
   const BoundingBox& get_bbox() const {return _bbox;}
   std::list<Sample> get_samples() const { return _data; }
-
 private:
   /** Data are a list of Samples*/
   std::list<Sample> _data;
@@ -144,6 +157,8 @@ public:
   /** Create artificial data y=sin(x) pour x=[0,2PI[ */
   void create_data()
   {
+	const unsigned int _nb_data = 100;
+	
     std::cout << "Create_data nb=" << _nb_data << std::endl;
     for( unsigned int i=0; i < _nb_data; ++i) {
       Sample pt;
@@ -157,4 +172,51 @@ public:
     std::cout << "bbox = {" << get_bbox().x_min <<"; " << get_bbox().x_max << "; ";
     std::cout << get_bbox().y_min << "; " << get_bbox().y_max << "}" << std::endl;
   }
+};
+// ***************************************************************************
+
+// ***************************************************************************
+// ****************************************************************** CurveDyn
+// ***************************************************************************
+template< typename T>
+class CurveDyn : public Curve
+{
+public:
+  // ****************************************************** CurveDyn::creation
+  /**
+   * With a Container and a Functor that access
+   * the elemen inside a element of class T.
+   * By default, it only dereferences the Iterator
+   */
+  using FunIt =  std::function<const double (typename T::const_iterator )>;
+  CurveDyn( T& container,
+			std::function<const double (typename T::const_iterator)> fun = [] (typename T::const_iterator it) -> const double {const double res = *(it); return res;} ) :
+	Curve(),
+	_model(container), _fun_it(fun)
+  {
+	auto it= _model.begin();
+	for( double t_data=0.0;
+		 it != _model.end();
+		 ++it, t_data+=1.0 ) {
+	  const Sample s{t_data, _fun_it(it), 0.0};
+	  add_sample( s );
+	}
+  }
+  // ******************************************************** CurveDyn::update
+  void update()
+  {
+	clear();
+	auto it = _model.begin();
+	for( auto t_data=0.0;
+		 it != _model.end();
+		 ++it, t_data+=1.0 ) {
+	  auto s = Sample{t_data, _fun_it(it), 0.0};
+	  add_sample( s );
+	}
+  }
+  // ***************************************************** CurveDyn::attributs
+  /** Model is a Container */
+  const T& _model;
+  /** Functor from Container::iterator to double */
+  FunIt _fun_it;
 };

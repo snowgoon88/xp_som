@@ -4,6 +4,9 @@
 
 /** 
  * Trace un axe (selon Ox "relatif").
+ *
+ * TODO : _font should be linked to figure. Shared amongst all
+ * components of the figure (and the GLFW window).
  */
 
 
@@ -95,8 +98,9 @@ public:
   /** Init Fonts */
   void init_font()
   {
-    //Axis::_font = new FTGLTextureFont( FONT_PATH );
-    if (! Axis::_font) {
+    //Axis::
+	_font = new FTGLTextureFont( FONT_PATH );
+    if (! _font) {
       std::cerr << "ERROR: Unable to open file " << FONT_PATH << std::endl;
     }
     else {
@@ -186,8 +190,8 @@ private:
   /** Range pour l'axe */
   Range _range;
   /** Des Fontes pour écrire */
-  static FTFont* _font;
+  /*static*/ FTFont* _font;
 };
 // ******************************************************************** STATIC
-FTFont* Axis::_font = new FTGLTextureFont( FONT_PATH );
+//FTFont* Axis::_font = new FTGLTextureFont( FONT_PATH );
 // ***************************************************************************

@@ -514,3 +514,8 @@ http://www.astrostatistics.psu.edu/su07/R/html/MASS/html/lm.ridge.html
 * [1/2] REC_DSOM
 ** DONE recurrent neuron [dsom/r_neuron.hpp]
 ** TODO recurrent network [dsom/r_network.hpp]
+* [1/2] Visualisation
+** TODO Classe[Container] avec 2 membres "one", "two"
+*** itérer sur la Classe et appliquer une fonction (ou une classe) pour récupérer l'un des deux membres
+*** A tester 
+** DONE Class avec un membre qui est un Container[double] => OK
