@@ -144,7 +144,7 @@ public:
       
       _max_dist_neurone = v_neur[0]->computeDistancePos( *(v_neur[nb_neur-1]) );
     }
-	std::cout << "max_dist_neurone=" << _max_dist_neurone << std::endl;
+	//std::cout << "max_dist_neurone=" << _max_dist_neurone << std::endl;
   }
   /** Creation from JSON file */
   RNetwork( std::istream& is )

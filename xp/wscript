@@ -19,4 +19,8 @@ def build( bld ):
     		 target='xp-003-hmm',
 		 includes=['.', '../include', '../src','../src/supelec'],
 		 use=['JSON', 'GSL', 'BOOST', 'FTGL', 'GL', 'GLFW3'] )
+    bld.program( source=['xp-004-rdsom.cpp'],
+    		 target='xp-004-rdsom',
+		 includes=['.', '../include', '../src','../src/supelec'],
+		 use=['JSON', 'GSL', 'BOOST', 'FTGL', 'GL', 'GLFW3','EIGEN3'] )
     
