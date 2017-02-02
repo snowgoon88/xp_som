@@ -6,7 +6,8 @@
  *  - load Traj
  *  - create and save DSOM
  *  - load DSOM
- *  - TODO run XP
+ *  - run XP
+ *  - TODO what must be saved ??
  *  - TODO graphic
  */
 
@@ -47,7 +48,8 @@ std::unique_ptr<Traj>    _data = nullptr;
 // RDSOM
 using RDSOM = Model::DSOM::RNetwork;
 std::unique_ptr<RDSOM>     _rdsom;
-
+using TInput = Model::DSOM::RNeuron::TWeight;
+using TParam = Model::DSOM::RNeuron::TNumber;
 // ******************************************************************* Options
 // Options
 std::unique_ptr<std::string> _opt_fileload_hmm       = nullptr;
@@ -55,6 +57,12 @@ std::unique_ptr<std::string> _opt_fileload_traj      = nullptr;
 int                          _opt_rdsom_size           = 10;
 std::unique_ptr<std::string> _opt_filesave_rdsom     = nullptr;
 std::unique_ptr<std::string> _opt_fileload_rdsom     = nullptr;
+TParam                       _opt_beta               = 0.5;
+TParam                       _opt_sig_input          = 0.1;
+TParam                       _opt_sig_recur          = 0.1;
+TParam                       _opt_sig_convo          = 0.1;
+TParam                       _opt_eps                = 0.1;
+TParam                       _opt_ela                = 0.2;
 bool                         _opt_verb               = false;
 
 // ***************************************************************************
@@ -70,6 +78,12 @@ void setup_options(int argc, char **argv)
 	("rdsom_size", po::value<int>(&_opt_rdsom_size)->default_value(_opt_rdsom_size),"rdsom size")
 	("save_rdsom", po::value<std::string>(), "save RDSOM in filename")
     ("load_rdsom,d", po::value<std::string>(), "load RDSOM from filename")
+	("dsom_beta", po::value<TParam>(&_opt_beta)->default_value(_opt_beta), "dsom beta")
+	("dsom_sig_i", po::value<TParam>(&_opt_sig_input)->default_value(_opt_sig_input), "dsom sigma input")
+	("dsom_sig_r", po::value<TParam>(&_opt_sig_recur)->default_value(_opt_sig_recur), "dsom sigma recurrent")
+	("dsom_sig_c", po::value<TParam>(&_opt_sig_convo)->default_value(_opt_sig_convo), "dsom sigma convolution")
+	("dsom_eps", po::value<TParam>(&_opt_eps)->default_value(_opt_eps), "dsom epsilon")
+	("dsom_ela", po::value<TParam>(&_opt_ela)->default_value(_opt_ela), "dsom elasticity")
 	("verb,v", "verbose" )
 	;
 
@@ -189,7 +203,23 @@ RDSOM load_rdsom( const std::string& filename )
 // ***************************************************************************
 // ********************************************************************* learn
 // ***************************************************************************
-
+void learn( RDSOM& rdsom,
+			const Traj::iterator& input_begin,
+			const Traj::iterator& input_end)
+{
+  for( auto it = input_begin; it != input_end; ++it ) {
+	// Forward new input and update network
+	Eigen::VectorXd input(1);
+	input << (double) it->id_o;
+	if( _opt_verb ) {
+	  std::cout << "  in=" << input << std::endl;
+	}
+	rdsom.forward( input, _opt_beta,
+				   _opt_sig_input, _opt_sig_recur, _opt_sig_convo,
+				   _opt_verb);
+	rdsom.deltaW( input, _opt_eps, _opt_ela, _opt_verb);
+  }
+}
 // ***************************************************************************
 // ********************************************************************** main
 // ***************************************************************************
@@ -228,8 +258,17 @@ int main(int argc, char *argv[])
      _rdsom = make_unique<RDSOM>( load_rdsom( *_opt_fileload_rdsom ));
 
 	 // test
-	 std::cout << _rdsom->str_dump() << std::endl;
+	 //std::cout << _rdsom->str_dump() << std::endl;
    }
-   
+   // Learn_________________________
+  if( _opt_fileload_traj and _opt_fileload_rdsom ) {
+    if( _opt_verb )
+      std::cout << "__LEARN" << std::endl;
+	learn( *_rdsom, _data->begin(), _data->end() );
+
+	// Save learned RDSOM
+	// Some kind of criteria
+  }
    return 0;
 }
+

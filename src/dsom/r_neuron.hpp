@@ -164,7 +164,13 @@ public:
     // rj::Object qui contient les données
     rj::Value rj_node = Neuron::serialize( doc );
 
-	// TODO r_pos
+	// r_pos
+	rj::Value rj_rpos;
+    rj_rpos.SetArray();
+    for( unsigned int i = 0; i < this->r_pos.size(); ++i) {
+      rj_rpos.PushBack( this->r_pos(i), doc.GetAllocator());
+    }
+    rj_node.AddMember( "r_pos", rj_rpos, doc.GetAllocator() );
 	
     // rj::Array with RWeights
     rj::Value rj_rw;
@@ -180,8 +186,13 @@ public:
   {
     Neuron::unserialize( obj );
 	
-	// TODO r_pos
-
+	// r_pos
+	const rj::Value& rpos = obj["r_pos"];
+    assert( rpos.IsArray() );
+    this->r_pos.resize( rpos.Size() );
+    for( unsigned int i = 0; i < rpos.Size(); ++i) {
+      this->r_pos(i) = rpos[i].GetDouble();
+    }
 	
     // RWeights
     const rj::Value& rw = obj["r_weights"];

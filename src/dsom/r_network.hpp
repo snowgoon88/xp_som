@@ -275,8 +275,6 @@ public:
 	  _sim_w.push_back( v_neur[i]->similaritiesInput( input, sig_input ) );
 	  _sim_rec.push_back( v_neur[i]->similaritiesRecurrent( v_neur[_old_winner_neur]->r_pos, sig_recur ));
 	  _sim_merged.push_back( sqrt( _sim_w[i] * (beta+(1-beta) * _sim_rec[i] )) );
-
-	  std::cout << "  Merged[" << i << "]= " << _sim_w[i] << "; " << _sim_rec[i] << " -> " << _sim_merged[i] << std::endl;
 	}
 	// // Convolution with gaussian
 	// integral of a.exp(-x^2/(2c^2)) = ac.sqrt(2.PI)
@@ -296,7 +294,7 @@ public:
 		val += _sim_merged[k] * exp( - (dist*dist) / (2.0 * sig_conv * sig_conv));
 		// std::cout << " --> " << val << " (" << (val / (sig_conv * sqrt(2*M_PI))) << ")" << std::endl;
 	  }
-	  std::cout << "convol[" << i << "]=" << val << std::endl;
+	  //std::cout << "convol[" << i << "]=" << val << std::endl;
 	  _sim_convol.push_back( val / (double) v_neur.size() ); /// (sig_conv * sqrt(2*M_PI)) );
 	}
 	// TODO : normalize convolution ??
@@ -313,13 +311,17 @@ public:
 				const RNeuron::TNumber& beta=1.0,
 				const TNumber& sig_input = 1.0,
 				const RNeuron::TNumber& sig_recur = 1.0,
-				const RNeuron::TNumber& sig_conv  = 1.0 )
+				const RNeuron::TNumber& sig_conv  = 1.0,
+				bool verb = false)
   {
     // Compute the winner, this will update similarities
-	std::cout << "__FORWARD" << std::endl;
+	if( verb )
+	  std::cout << "__FORWARD" << std::endl;
     computeWinner( input, beta, sig_input, sig_recur, sig_conv );
-	std::cout << "  win is " << _winner_neur << std::endl;
-
+	if( verb ) {
+	  std::cout << " in=" << input << ", win is " << _winner_neur;
+	  std::cout << "  " << v_neur[_winner_neur]->str_display() << std::endl;
+	}
     // and then, compute distances and update max_distances
     for( unsigned int i = 0; i < v_neur.size(); ++i) {
       // input
@@ -328,14 +330,14 @@ public:
       // rec
       auto dist_rec = v_neur[i]->computeDistanceRPos( v_neur[_old_winner_neur]->r_pos );
       _max_dist_rec = std::max( _max_dist_rec, dist_rec);
-	  std::cout << "  n[" << i << "] din=" << dist_input << "; dr=" << dist_rec << std::endl;
+	  //std::cout << "  n[" << i << "] din=" << dist_input << "; dr=" << dist_rec << std::endl;
     }
-	std::cout << "  MAX din=" << _max_dist_input << "; dr=" << _max_dist_rec << std::endl;
+	//std::cout << "  MAX din=" << _max_dist_input << "; dr=" << _max_dist_rec << std::endl;
   }
   // ******************************************************* Network::backward
   double hnDistance( double dist_neur_win, double win_dist, double ela)
   {
-	std::cout << "HN: dnw=" << dist_neur_win << "; wd=" << win_dist << "; ela=" << ela << std::endl;
+	//std::cout << "HN: dnw=" << dist_neur_win << "; wd=" << win_dist << "; ela=" << ela << std::endl;
 	
 	if( win_dist < 0.000001 ) win_dist = 0.000001;
   
@@ -343,18 +345,19 @@ public:
   }
   void deltaW( Eigen::VectorXd &input, double eps, double ela, double verb=false)
   {
-	std::cout << "__DeltaW" << std::endl;
+	if( verb ) 
+	  std::cout << "__DeltaW" << std::endl;
     // TODO NON-Regular GRID
     if( _nb_link > 0 ) {
       // All neigbors of the winner will be adapted
       Neuron *win = v_neur[_winner_neur];
       if( verb ) {
-	std::cout << "Network::deltaW for Winner Neurone\n";
-	std::cout << win->str_dump() << "\n";
-	std::cout << "At winning distance of " << _winner_dist;
-	std::cout << " from input " << utils::eigen::str_vec(input) << "\n";
+		std::cout << "Network::deltaW for Winner Neurone\n";
+		std::cout << win->str_dump() << "\n";
+		std::cout << "At winning distance of " << _winner_dist;
+		std::cout << " from input " << utils::eigen::str_vec(input) << "\n";
 	
-	std::cout << "N[#]\t dp\t dw\t k\t (ratio)\t delta\t dW\n";
+		std::cout << "N[#]\t dp\t dw\t k\t (ratio)\t delta\t dW\n";
       }
       std::list<Neur_Dist>::iterator i_neigh;
       for( i_neigh= win->l_neighbors.begin();
@@ -381,7 +384,7 @@ public:
 	  _sim_hn_dist.clear();
 	  _sim_hn_rec.clear();
       auto old_win_rpos = v_neur[_old_winner_neur]->r_pos;
-	  std::cout <<  "  old_win is " << _old_winner_neur << " at " << old_win_rpos << std::endl;
+	  //std::cout <<  "  old_win is " << _old_winner_neur << " at " << old_win_rpos << std::endl;
       
       // All neurones will be adapted, difference betwenn weights and r_weights
       for( unsigned int indn = 0; indn < v_neur.size(); indn++ ) {
