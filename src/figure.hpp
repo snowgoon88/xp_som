@@ -36,8 +36,9 @@ public:
 		  const Range& y_range = {-1.0, 1.0, 10, 2} ) :
     _title( title ), _width(width), _height(height),
     _window(nullptr), _curves(),
-	_axis_x( "X", x_range),
-	_axis_y( "Y", y_range)
+    _draw_axes( true ),
+    _axis_x( "X", x_range),
+    _axis_y( "Y", y_range)
   {
 	// Create window _________________________________________________
     glfwSetErrorCallback(error_callback);
@@ -68,6 +69,11 @@ public:
 	_curves.push_back( curve );
 
 	return curve;
+  }
+  // *************************************************** Figure::set_draw_axes
+  void set_draw_axes( bool draw_axes )
+  {
+    _draw_axes = draw_axes;
   }
   // ********************************************************** Figure::render
   void render( bool update_axes=false )
@@ -120,12 +126,13 @@ public:
 	glLoadIdentity();
 
 	// Basic axes
-	_axis_x.render( ratio_x, ratio_y );
-	glPushMatrix(); // AXE_Y
-	glRotated( 90.0, 0.0, 0.0, 1.0 );
-	_axis_y.render( ratio_y, ratio_x);
-	glPopMatrix(); // AXE_Y
-
+	if( _draw_axes ) {
+	  _axis_x.render( ratio_x, ratio_y );
+	  glPushMatrix(); // AXE_Y
+	  glRotated( 90.0, 0.0, 0.0, 1.0 );
+	  _axis_y.render( ratio_y, ratio_x);
+	  glPopMatrix(); // AXE_Y
+	}
 	// All other objects
 	for( const auto& curve: _curves) {
 	  curve->render();
@@ -142,6 +149,7 @@ public:
   /** All the curves */
   CurveList _curves;
   /** X and Y axes*/
+  bool _draw_axes;
   Axis _axis_x, _axis_y;
 };
 

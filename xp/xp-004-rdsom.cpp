@@ -24,6 +24,10 @@
 #include <hmm_trajectory.hpp>
 #include <dsom/r_network.hpp>
 
+#include <figure.hpp>
+#include <fixedqueue.hpp>
+#include <dsom/rdsom1D_viewer.hpp>
+
 // Parsing command line options
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
@@ -50,6 +54,12 @@ using RDSOM = Model::DSOM::RNetwork;
 std::unique_ptr<RDSOM>     _rdsom;
 using TInput = Model::DSOM::RNeuron::TWeight;
 using TParam = Model::DSOM::RNeuron::TNumber;
+
+// Graphic
+Figure*                    _fig_rdsom = nullptr;
+FixedQueue<unsigned int>*  _winner_queue = nullptr;
+RDSOMViewer*               _rdsom_viewer = nullptr;
+bool _end_render = false;
 // ******************************************************************* Options
 // Options
 std::unique_ptr<std::string> _opt_fileload_hmm       = nullptr;
@@ -63,7 +73,14 @@ TParam                       _opt_sig_recur          = 0.1;
 TParam                       _opt_sig_convo          = 0.1;
 TParam                       _opt_eps                = 0.1;
 TParam                       _opt_ela                = 0.2;
+bool                         _opt_graph              = false;
+unsigned int                 _opt_queue_size         = 5;
 bool                         _opt_verb               = false;
+
+// ******************************************************** forward references
+void learn( RDSOM& rdsom,
+	    const Traj::iterator& input_begin,
+	    const Traj::iterator& input_end);
 
 // ***************************************************************************
 // ******************************************************************* options
@@ -84,6 +101,8 @@ void setup_options(int argc, char **argv)
 	("dsom_sig_c", po::value<TParam>(&_opt_sig_convo)->default_value(_opt_sig_convo), "dsom sigma convolution")
 	("dsom_eps", po::value<TParam>(&_opt_eps)->default_value(_opt_eps), "dsom epsilon")
 	("dsom_ela", po::value<TParam>(&_opt_ela)->default_value(_opt_ela), "dsom elasticity")
+        ("graph,g", "graphics" )
+        ("queue_size", po::value<unsigned int>(&_opt_queue_size)->default_value(_opt_queue_size), "Length of Queue for Graph")
 	("verb,v", "verbose" )
 	;
 
@@ -132,8 +151,39 @@ void setup_options(int argc, char **argv)
   }
 
   // Options
+  if( vm.count("graph") ) {
+    _opt_graph = true;
+  }
   if( vm.count("verb") ) {
     _opt_verb = true;
+  }
+}
+// ***************************************************************************
+// ********************************************************* Graphic Callbacks
+// ***************************************************************************
+/**
+ * Callback pour gérer les messages d'erreur de GLFW
+ */
+static void error_callback(int error, const char* description)
+{
+  std::cerr <<  description << std::endl;
+  //fputs(description, stderr);
+}
+/**
+ * Callback qui gère les événements 'key'
+ */
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+	_end_render = true;
+  }
+  else if (key == GLFW_KEY_N && action == GLFW_PRESS) {
+    if( _opt_fileload_traj and _opt_fileload_rdsom ) {
+      if( _opt_verb ) {
+	std::cout << "__LEARN" << std::endl;
+      }
+      learn( *_rdsom, _data->begin(), _data->end() );
+    }
   }
 }
 
@@ -218,6 +268,10 @@ void learn( RDSOM& rdsom,
 				   _opt_sig_input, _opt_sig_recur, _opt_sig_convo,
 				   _opt_verb);
 	rdsom.deltaW( input, _opt_eps, _opt_ela, _opt_verb);
+
+	if( _winner_queue ) {
+	  _winner_queue->push_front( rdsom.get_winner() );
+	}
   }
 }
 // ***************************************************************************
@@ -241,6 +295,8 @@ int main(int argc, char *argv[])
      if( _opt_verb )
        std::cout << "__LOAD Traj from " << *_opt_fileload_traj << std::endl;
      _data = make_unique<Traj>( load_traj( *_opt_fileload_traj ) );
+     if( _opt_verb )
+       std::cout << "  data read" << std::endl;
    }
    // RDSOM _____________________
    if( _opt_filesave_rdsom ) {
@@ -256,15 +312,34 @@ int main(int argc, char *argv[])
      if( _opt_verb )
        std::cout << "__LOAD RDSOM from " << *_opt_fileload_rdsom << std::endl;
      _rdsom = make_unique<RDSOM>( load_rdsom( *_opt_fileload_rdsom ));
+     
+     // test
+     if( _opt_verb )
+       std::cout << _rdsom->str_dump() << std::endl;
+   }
+   // Graphic before Learning (as Learn will depend on it)
+   if( _opt_graph ) {
+     if( _opt_verb) {
+       std::cout << "__INIT GRAPHIC" << std::endl;
+     }
+     _fig_rdsom = new Figure( "RDSOM: r-network" );
+     _winner_queue = new FixedQueue<unsigned int>( _opt_queue_size);
+     _rdsom_viewer = new RDSOMViewer( *_rdsom, *_winner_queue );
+     _fig_rdsom->add_curve( _rdsom_viewer );
+     _fig_rdsom->set_draw_axes( false );
+   
+     _fig_rdsom->render( true );
 
-	 // test
-	 //std::cout << _rdsom->str_dump() << std::endl;
+     while( not _end_render ) {
+       _fig_rdsom->render();
+     }
    }
    // Learn_________________________
   if( _opt_fileload_traj and _opt_fileload_rdsom ) {
-    if( _opt_verb )
+    if( _opt_verb ) {
       std::cout << "__LEARN" << std::endl;
-	learn( *_rdsom, _data->begin(), _data->end() );
+    }
+    learn( *_rdsom, _data->begin(), _data->end() );
 
 	// Save learned RDSOM
 	// Some kind of criteria

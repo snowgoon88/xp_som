@@ -47,7 +47,7 @@ public:
   /** Creation */
   Curve() : _fg_col{1,0,0}, _line_width(1.f) // red,thin
   {}
-  ~Curve() {std::cout << "Curve destroyed" << std::endl;};
+  virtual ~Curve() {std::cout << "Curve destroyed" << std::endl;};
 
   // ************************************************************ Curve::clear
   void clear()
@@ -117,8 +117,9 @@ public:
   }
   // *********************************************************** Curve::render
   /** Draw curve with OpenGL */
-  void render()
+  virtual void render()
   {
+    //std::cout << "  Curve::render" << std::endl;
     // for( auto& pt : _data) {
     //   std::cout << "[ " << pt.x << "; " << pt.y << "; " << pt.z << "]" << std::endl;
     // }
@@ -143,7 +144,7 @@ public:
   /** get BoundingBox */
   const BoundingBox& get_bbox() const {return _bbox;}
   std::list<Sample> get_samples() const { return _data; }
-private:
+protected:
   /** Data are a list of Samples*/
   std::list<Sample> _data;
   /** Bounding box around Data */

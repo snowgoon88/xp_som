@@ -5,3 +5,9 @@
 /build
 /wbuild
 /data*
+
+*.data
+*.json
+/inspiration
+/Pic
+/Pic_examples

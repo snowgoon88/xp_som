@@ -5,9 +5,11 @@
 
 /** 
  * Graphical display on a RDSOM network.
+ * Derives from Curve.
  *
  * Warning : only on 1D-grid RNetwork.
  */
+#include <curve.hpp>
 
 #include <dsom/r_network.hpp>
 using RDSOM = Model::DSOM::RNetwork;
@@ -15,7 +17,7 @@ using RNeuron = Model::DSOM::RNeuron;
 // ***************************************************************************
 // *************************************************************** RDSOMViewer
 // ***************************************************************************
-class RDSOMViewer
+class RDSOMViewer : public Curve
 {
 public:
   // ******************************************************* RDSOMViewer::type
@@ -28,6 +30,7 @@ public:
 public:
   // *************************************************** RDSOMViewer::creation
   RDSOMViewer( RDSOM& rdsom, std::list<unsigned int>& win_buffer) :
+    Curve(),
     _rdsom(rdsom), _win_buffer(win_buffer),
     _ang_min( 0.1 * M_PI ), _ang_max( 2.0 * M_PI ),
     _radius( 1.0), _radius_inner(0.05)
@@ -37,6 +40,10 @@ public:
       std::cerr << "RDSOMViewer only created with 1D-grid RNetwork" << std::endl;
       exit(1);
     }
+
+    // Define the Bounding Box
+    _bbox = { -1.5 * _radius, 1.5 * _radius,
+	      -1.5 * _radius, 1.5 * _radius };
   }
   // ************************************************ RDSomviewer::plot_neuron
   void plot_neuron( RNeuron& neur )
@@ -61,6 +68,7 @@ public:
   // ***************************************************** RDSomviewer::render
   void render()
   {
+    //std::cout << "  RDSOMViewer::draw_back()" << std::endl;
     draw_back( _radius );
     for( auto& idx: _win_buffer) {
       plot_neuron( *(_rdsom.v_neur[idx]) );
