@@ -59,7 +59,18 @@ using TParam = Model::DSOM::RNeuron::TNumber;
 Figure*                    _fig_rdsom = nullptr;
 FixedQueue<unsigned int>*  _winner_queue = nullptr;
 RDSOMViewer*               _rdsom_viewer = nullptr;
+Figure*                    _fig_weight = nullptr;
+Figure*                    _fig_rweight = nullptr;
+Curve* _c_weight;
+CurveDyn<RDSOM::Similarities> *_c_sim_input;
+Curve* _c_rweight;
+CurveDyn<RDSOM::Similarities> *_c_sim_rec;
+CurveDyn<RDSOM::Similarities> *_c_sim_merged;
+CurveDyn<RDSOM::Similarities> *_c_sim_convol;
+CurveDyn<RDSOM::Similarities> *_c_sim_hh_dist;
+CurveDyn<RDSOM::Similarities> *_c_sim_hh_rec;
 bool _end_render = false;
+unsigned int _nb_iter = 0;
 // ******************************************************************* Options
 // Options
 std::unique_ptr<std::string> _opt_fileload_hmm       = nullptr;
@@ -183,6 +194,26 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 	std::cout << "__LEARN" << std::endl;
       }
       learn( *_rdsom, _data->begin(), _data->end() );
+      _nb_iter ++;
+
+      // update data
+      _c_weight->clear();
+      _c_rweight->clear();
+      for( unsigned int i = 0; i < _rdsom->v_neur.size(); ++i) {
+	_c_weight->add_sample( {(double)i, _rdsom->v_neur[i]->weights(0), 0.0} );
+	_c_rweight->add_sample( {(double)i, _rdsom->v_neur[i]->r_weights(0), 0.0} ); 
+      }
+      _c_sim_input->update();
+      _c_sim_rec->update();
+      _c_sim_merged->update();
+      _c_sim_convol->update();
+      _c_sim_hh_dist->update();
+      _c_sim_hh_rec->update();
+
+      _fig_rdsom->clear_text();
+      std::stringstream str;
+      str << "Ite=" << _nb_iter;
+      _fig_rdsom->add_text( str.str(), 0.9, 0.1);
     }
   }
 }
@@ -327,11 +358,57 @@ int main(int argc, char *argv[])
      _rdsom_viewer = new RDSOMViewer( *_rdsom, *_winner_queue );
      _fig_rdsom->add_curve( _rdsom_viewer );
      _fig_rdsom->set_draw_axes( false );
+
+     _fig_weight = new Figure( "Input/Weights", 800, 600,
+			       {0.0,100.0,10,2}, {0.0, 1.0, 10, 2} );
+     // Weights
+     _c_weight = new Curve();
+     _c_weight->set_color( {0.0, 0.0, 0.0} );
+     _c_weight->set_width( 3 );
+     _fig_weight->add_curve( _c_weight );
+     // Input Similarities
+     _c_sim_input = new CurveDyn<RDSOM::Similarities>( _rdsom->_sim_w );
+     _c_sim_input->set_color( {1.0, 0.0, 0.0} );
+     _fig_weight->add_curve( _c_sim_input );
+     // Merged Similarities
+     _c_sim_merged = new CurveDyn<RDSOM::Similarities>( _rdsom->_sim_merged );
+     _c_sim_merged->set_color( {0.0, 0.0, 1.0} );
+     _c_sim_convol = new CurveDyn<RDSOM::Similarities>( _rdsom->_sim_convol );
+     _c_sim_convol->set_color( {0.0, 0.0, 1.0} );
+     _c_sim_convol->set_width( 2 );
+     _fig_weight->add_curve( _c_sim_merged );
+     _fig_weight->add_curve( _c_sim_convol );
+     _c_sim_hh_dist = new CurveDyn<RDSOM::Similarities>( _rdsom->_sim_hn_dist );
+     _c_sim_hh_dist->set_color( {0.0, 1.0, 0.0} );
+     _c_sim_hh_dist->set_width( 3 );
+     _fig_weight->add_curve( _c_sim_hh_dist );
+  
+     _fig_rweight = new Figure( "Recurrent/RWeights", 800, 600,
+				{0.0,100.0,10,2}, {0.0, 1.0, 10, 2} );
+     _c_rweight = new Curve();
+     _c_rweight->set_color( {0.0, 0.0, 0.0} );
+     _c_rweight->set_width( 3 );
+     // Rec Similarities
+     _c_sim_rec = new CurveDyn<RDSOM::Similarities>( _rdsom->_sim_rec );
+     _c_sim_rec->set_color( {1.0, 0.0, 0.0} );
+     _fig_rweight->add_curve( _c_sim_rec );
+     _fig_rweight->add_curve( _c_sim_merged );
+     _fig_rweight->add_curve( _c_sim_convol );
+     _c_sim_hh_rec = new CurveDyn<RDSOM::Similarities>( _rdsom->_sim_hn_rec );
+     _c_sim_hh_rec->set_color( {0.0, 1.0, 0.0} );
+     _c_sim_hh_rec->set_width( 3 );
+     _fig_rweight->add_curve( _c_sim_hh_rec );
+
+     _fig_rweight->add_curve( _c_rweight );
    
      _fig_rdsom->render( true );
+     _fig_weight->render();
+     _fig_rweight->render();
 
      while( not _end_render ) {
        _fig_rdsom->render();
+       _fig_weight->render();
+       _fig_rweight->render();
      }
    }
    // Learn_________________________

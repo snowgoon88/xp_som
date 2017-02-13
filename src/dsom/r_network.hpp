@@ -147,7 +147,16 @@ public:
 	//std::cout << "max_dist_neurone=" << _max_dist_neurone << std::endl;
   }
   /** Creation from JSON file */
-  RNetwork( std::istream& is )
+  RNetwork( std::istream& is ) : 
+    _winner_neur(0), _old_winner_neur(0),
+    _winner_dist(std::numeric_limits<double>::max()),
+    _winner_dist_input(std::numeric_limits<double>::max()),
+    _winner_dist_rec(std::numeric_limits<double>::max()),
+    _max_dist_neurone(0.0), _max_dist_input(0.0), _max_dist_rec(0.0),
+    _sim_w(0,0.0), _sim_rec(0,0.0), _sim_merged(0,0.0),
+    _sim_convol(0,0.0),
+    _sim_hn_dist(0,0.0), _sim_hn_rec(0,0.0),
+    _winner_similarity(0.0)
   {
     // Wrapper pour lire document
     JSON::IStreamWrapper instream(is);
@@ -266,16 +275,26 @@ public:
 						 const RNeuron::TNumber& sig_recur = 1.0,
 						 const RNeuron::TNumber& sig_conv  = 1.0 )
   {
+    //std::cout << "    _computeWinner " << std::endl;
 	// compute both similarities ==> merged
 	RNeuron::TWeight sim( v_neur.size() );
 	_sim_w.clear();
 	_sim_rec.clear();
 	_sim_merged.clear();
 	for( unsigned int i=0; i<v_neur.size(); ++i) {
-	  _sim_w.push_back( v_neur[i]->similaritiesInput( input, sig_input ) );
-	  _sim_rec.push_back( v_neur[i]->similaritiesRecurrent( v_neur[_old_winner_neur]->r_pos, sig_recur ));
+	  // std::cout << "      with i=" << i;
+	  // std::cout << " in=" << input << " sig_in=" << sig_input << std::endl;
+	  auto simw = v_neur[i]->similaritiesInput( input, sig_input );
+	  _sim_w.push_back( simw );
+
+	  // std::cout << "      with i=" << i;
+	  // std::cout << " in=" << input << " old=" << _old_winner_neur << " sig_rec=" << sig_recur << std::endl;
+	  auto simrec = v_neur[i]->similaritiesRecurrent( v_neur[_old_winner_neur]->r_pos, sig_recur );
+	  _sim_rec.push_back( simrec );
+	  // std::cout << "      merging simw=" << simw << " simrec=" << simrec << std::endl;
 	  _sim_merged.push_back( sqrt( _sim_w[i] * (beta+(1-beta) * _sim_rec[i] )) );
 	}
+	std::cout << "     _convolution" << std::endl;
 	// // Convolution with gaussian
 	// integral of a.exp(-x^2/(2c^2)) = ac.sqrt(2.PI)
 	_sim_convol.clear();
@@ -315,13 +334,13 @@ public:
 				bool verb = false)
   {
     // Compute the winner, this will update similarities
-	if( verb )
-	  std::cout << "__FORWARD" << std::endl;
+    if( verb )
+      std::cout << "__FORWARD" << std::endl;
     computeWinner( input, beta, sig_input, sig_recur, sig_conv );
-	if( verb ) {
-	  std::cout << " in=" << input << ", win is " << _winner_neur;
-	  std::cout << "  " << v_neur[_winner_neur]->str_display() << std::endl;
-	}
+    if( verb ) {
+      std::cout << " in=" << input << ", win is " << _winner_neur;
+      std::cout << "  " << v_neur[_winner_neur]->str_display() << std::endl;
+    }
     // and then, compute distances and update max_distances
     for( unsigned int i = 0; i < v_neur.size(); ++i) {
       // input
@@ -330,9 +349,9 @@ public:
       // rec
       auto dist_rec = v_neur[i]->computeDistanceRPos( v_neur[_old_winner_neur]->r_pos );
       _max_dist_rec = std::max( _max_dist_rec, dist_rec);
-	  //std::cout << "  n[" << i << "] din=" << dist_input << "; dr=" << dist_rec << std::endl;
+      //std::cout << "  n[" << i << "] din=" << dist_input << "; dr=" << dist_rec << std::endl;
     }
-	//std::cout << "  MAX din=" << _max_dist_input << "; dr=" << _max_dist_rec << std::endl;
+    //std::cout << "  MAX din=" << _max_dist_input << "; dr=" << _max_dist_rec << std::endl;
   }
   // ******************************************************* Network::backward
   double hnDistance( double dist_neur_win, double win_dist, double ela)
@@ -481,6 +500,7 @@ public:
 
 	  _max_dist_neurone = v_neur[0]->computeDistancePos( *(v_neur[nb_neur-1]) );
 	}
+
   }
   // ****************************************************** Network::attributs
 public:

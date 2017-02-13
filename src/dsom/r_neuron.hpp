@@ -210,6 +210,7 @@ public:
   }
   TNumber similaritiesRecurrent( const TRWeight& pos, const TNumber& sigma )
   {
+    // std::cout << "r_weigts=" << r_weights << std::endl;
 	auto dist = (r_weights - pos).cwiseProduct( r_weights - pos).sum();
 	return exp( - dist / (2.0 * sigma * sigma) );
   }

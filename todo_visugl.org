@@ -511,14 +511,16 @@ http://www.astrostatistics.psu.edu/su07/R/html/MASS/html/lm.ridge.html
 ** TODO Copy operator/assignment => copie de l_link et l_neighbors
 ** DONE quelles fonctions utiles ?
 ** DONE need regularly put pos neurons
-* [3/5] REC_DSOM
+* [4/5] REC_DSOM
 ** DONE recurrent neuron [dsom/r_neuron.hpp]
 ** DONE recurrent network [dsom/r_network.hpp]
 ** DONE Visualization de la récurrence
-** TODO Ajouter d'autres graphes
+** DONE Ajouter d'autres graphes
 ** TODO Info sur ce qui est appris
-* [1/2] Visualisation
+* [2/3] Visualisation
+** DONE Ecrire du texte n'importe où 
 ** TODO Classe[Container] avec 2 membres "one", "two"
 *** itérer sur la Classe et appliquer une fonction (ou une classe) pour récupérer l'un des deux membres
 *** A tester 
 ** DONE Class avec un membre qui est un Container[double] => OK
+   

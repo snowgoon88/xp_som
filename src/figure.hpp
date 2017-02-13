@@ -5,10 +5,19 @@
 
 /** 
  * A Window with a Figure inside to plot several curves.
+ * Has its own font.
  */
 #include <GLFW/glfw3.h>
 #include <iostream>                  // std::cout
 #include <string>                    // std::string
+
+#include <GL/gl.h>                   // OpenGL
+#include <FTGL/ftgl.h>               // Fonts in OpenGL
+#define FONT_PATH "ressources/Consolas.ttf"
+#define FONT_SIZE 12
+#define DIM_MAJOR 6
+// Default scale for fonts : screen width=800, axe from -1 to 1.
+#define FONT_SCALE ((1.0 - -1.0) / 800.0)
 
 #include <curve.hpp>
 #include <axis.hpp>
@@ -25,6 +34,14 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 class Figure
 {
 public:
+  // *************************************************************************
+  // ***************************************************** Figure::Graphictext
+  // *************************************************************************
+  using GraphicText = struct {
+    double x, y;
+    const std::string msg;
+  };
+public:
   // *********************************************************** Figure::Types
   using CurvePtr = Curve* ;
   using CurveList = std::list<CurvePtr>;
@@ -38,7 +55,8 @@ public:
     _window(nullptr), _curves(),
     _draw_axes( true ),
     _axis_x( "X", x_range),
-    _axis_y( "Y", y_range)
+    _axis_y( "Y", y_range),
+    _text_list()
   {
 	// Create window _________________________________________________
     glfwSetErrorCallback(error_callback);
@@ -55,6 +73,17 @@ public:
 	// TODO can also be set to another DataStructure
 	glfwSetWindowUserPointer( _window, this);
     glfwSetKeyCallback( _window, key_callback);
+
+    /** Init Fonts */
+    _font = new FTGLTextureFont( FONT_PATH );
+    if (! _font) {
+      std::cerr << "ERROR: Unable to open file " << FONT_PATH << std::endl;
+    }
+    else {
+      if (!_font->FaceSize(FONT_SIZE)) {
+	std::cerr << "ERROR: Unable to set font face size " << FONT_SIZE << std::endl;
+      }
+    }
   }
   // ***************************************************** Figure::destruction
   ~Figure()
@@ -74,6 +103,15 @@ public:
   void set_draw_axes( bool draw_axes )
   {
     _draw_axes = draw_axes;
+  }
+  // ***************************************************** Figure::GraphicText
+  void clear_text()
+  {
+    _text_list.clear();
+  }
+  void add_text( const std::string msg, double x=0.0, double y=0.0 )
+  {
+    _text_list.push_back( GraphicText{ x, y, msg } );
   }
   // ********************************************************** Figure::render
   void render( bool update_axes=false )
@@ -137,6 +175,16 @@ public:
 	for( const auto& curve: _curves) {
 	  curve->render();
 	}
+
+	// GraphicText
+	for( auto& txt: _text_list) {
+	  glPushMatrix(); {
+	    glTranslated( txt.x, txt.y, 0.0);
+	    glScaled( ratio_x, ratio_y, 1.0 );
+	    _font->Render( txt.msg.c_str() );
+	  } glPopMatrix();
+	}
+	
 	glfwSwapBuffers( _window );
 	glfwPollEvents();	
   }
@@ -151,6 +199,10 @@ public:
   /** X and Y axes*/
   bool _draw_axes;
   Axis _axis_x, _axis_y;
+  /** List of Graphictext */
+  std::list<GraphicText> _text_list;
+  /** Fonts to write text */
+  /*static*/ FTFont* _font;
 };
 
 
