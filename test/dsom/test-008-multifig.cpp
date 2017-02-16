@@ -68,7 +68,7 @@ void init_data()
   _rdsom = new RNetwork( 1, 100, -1 );
   std::cout << "__CREATION" << std::endl << _rdsom->str_dump() << std::endl;
 
-  _f_weight = new Figure( "Input/Weights", 800, 600,
+  _f_weight = new Figure( "Input/Weights", 800, 600, -1, -1,
 						  {0.0,100.0,10,2}, {0.0, 1.0, 10, 2} );
   // Weights
   _c_weight = new Curve();
@@ -92,7 +92,7 @@ void init_data()
   _c_sim_hh_dist->set_width( 3 );
   _f_weight->add_curve( _c_sim_hh_dist );
   
-  _f_rweight = new Figure( "Recurrent/RWeights", 800, 600,
+  _f_rweight = new Figure( "Recurrent/RWeights", 800, 600, -1, -1,
 						   {0.0,100.0,10,2}, {0.0, 1.0, 10, 2} );
   _c_rweight = new Curve();
   _c_rweight->set_color( {0.0, 0.0, 0.0} );

@@ -294,7 +294,7 @@ public:
 	  // std::cout << "      merging simw=" << simw << " simrec=" << simrec << std::endl;
 	  _sim_merged.push_back( sqrt( _sim_w[i] * (beta+(1-beta) * _sim_rec[i] )) );
 	}
-	std::cout << "     _convolution" << std::endl;
+	//std::cout << "     _convolution" << std::endl;
 	// // Convolution with gaussian
 	// integral of a.exp(-x^2/(2c^2)) = ac.sqrt(2.PI)
 	_sim_convol.clear();
@@ -338,7 +338,9 @@ public:
       std::cout << "__FORWARD" << std::endl;
     computeWinner( input, beta, sig_input, sig_recur, sig_conv );
     if( verb ) {
-      std::cout << " in=" << input << ", win is " << _winner_neur;
+      std::cout << "  in=" << input;
+      std::cout << " old_win=" << _old_winner_neur << " at(" << v_neur[_old_winner_neur]->r_pos(0) << ")" << std::endl; 
+      std::cout << "  => win is " << _winner_neur;
       std::cout << "  " << v_neur[_winner_neur]->str_display() << std::endl;
     }
     // and then, compute distances and update max_distances
@@ -402,6 +404,16 @@ public:
     else if (_nb_link < 0 ) {
 	  _sim_hn_dist.clear();
 	  _sim_hn_rec.clear();
+	  if( verb ) {
+	    std::cout << "  ** max_dist_neur= " << _max_dist_neurone;
+	    std::cout << " max_dist_input= " << _max_dist_input;
+	    std::cout << " max_dist_rec= " << _max_dist_rec;
+	    std::cout << std::endl;
+	    std::cout << "  ** d_win_input=" << _winner_dist_input / _max_dist_input;
+	    std::cout << " d_win_rec= " << _winner_dist_rec / _max_dist_rec;
+	    std::cout << std::endl;
+	  }
+	  
       auto old_win_rpos = v_neur[_old_winner_neur]->r_pos;
 	  //std::cout <<  "  old_win is " << _old_winner_neur << " at " << old_win_rpos << std::endl;
       
@@ -423,10 +435,10 @@ public:
 	auto delta_w = eps * dnorm_in * hn_input * (input - v_neur[indn]->weights);
 	auto delta_rw = eps * dnorm_rec * hn_rec * (old_win_rpos - v_neur[indn]->r_weights);
 	
-	if( verb ) {
-	  std::cout << "RNeurone " << indn << "\n";
-	  std::cout << "INPUT: dnorm= " << dnorm_in << "; hn=" << hn_input << " => delta=" << delta_w << std::endl;
-	  std::cout << "REC  : dnorm= " << dnorm_rec << "; hn=" << hn_rec << " =>  delta=" << delta_rw << std::endl;
+	if( verb and (abs((int)indn - (int)_winner_neur) < 3) ) {
+	    std::cout << "  " << v_neur[indn]->str_display() << "\n";
+	  std::cout << "    INPUT: dnorm= " << dnorm_in << "; hn=" << hn_input << " => delta=" << delta_w << std::endl;
+	  std::cout << "    REC  : dnorm= " << dnorm_rec << "; hn=" << hn_rec << " =>  delta=" << delta_rw << std::endl;
 	}      
 	v_neur[indn]->add_to_weights( delta_w );
 	v_neur[indn]->add_to_r_weights( delta_rw );

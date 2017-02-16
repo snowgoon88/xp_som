@@ -49,6 +49,7 @@ public:
   // ******************************************************** Figure::creation
   Figure( std::string title = "Figure",
 		  const int width=640, const int height=400,
+	  const int posx=-1, const int posy = -1,
 		  const Range& x_range = {-1.0, 1.0, 10, 2},
 		  const Range& y_range = {-1.0, 1.0, 10, 2} ) :
     _title( title ), _width(width), _height(height),
@@ -69,6 +70,7 @@ public:
       glfwTerminate();
       exit(EXIT_FAILURE);
     }
+    glfwSetWindowPos( _window, posx, posy );
     glfwMakeContextCurrent( _window );
 	// TODO can also be set to another DataStructure
 	glfwSetWindowUserPointer( _window, this);

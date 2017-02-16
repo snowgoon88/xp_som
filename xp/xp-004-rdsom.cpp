@@ -54,6 +54,7 @@ using RDSOM = Model::DSOM::RNetwork;
 std::unique_ptr<RDSOM>     _rdsom;
 using TInput = Model::DSOM::RNeuron::TWeight;
 using TParam = Model::DSOM::RNeuron::TNumber;
+Traj::iterator _ite_step;
 
 // Graphic
 Figure*                    _fig_rdsom = nullptr;
@@ -70,7 +71,9 @@ CurveDyn<RDSOM::Similarities> *_c_sim_convol;
 CurveDyn<RDSOM::Similarities> *_c_sim_hh_dist;
 CurveDyn<RDSOM::Similarities> *_c_sim_hh_rec;
 bool _end_render = false;
-unsigned int _nb_iter = 0;
+bool _run_update = false;
+unsigned int _nb_step = 0;
+unsigned int _learn_length_multiplier = 1;
 // ******************************************************************* Options
 // Options
 std::unique_ptr<std::string> _opt_fileload_hmm       = nullptr;
@@ -89,10 +92,15 @@ unsigned int                 _opt_queue_size         = 5;
 bool                         _opt_verb               = false;
 
 // ******************************************************** forward references
+void update_graphic();
 void learn( RDSOM& rdsom,
 	    const Traj::iterator& input_begin,
 	    const Traj::iterator& input_end);
-
+void step_learn( RDSOM& rdsom,
+		 const Traj::iterator::difference_type& length,
+		 const Traj::iterator& input_begin,
+		 const Traj::iterator& input_end);
+std::string str_queue();
 // ***************************************************************************
 // ******************************************************************* options
 // ***************************************************************************
@@ -188,36 +196,82 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
 	_end_render = true;
   }
-  else if (key == GLFW_KEY_N && action == GLFW_PRESS) {
+  // else if (key == GLFW_KEY_N && action == GLFW_PRESS) {
+  //   if( _opt_fileload_traj and _opt_fileload_rdsom ) {
+  //     if( _opt_verb ) {
+  // 	std::cout << "__LEARN" << std::endl;
+  //     }
+  //     learn( *_rdsom, _data->begin(), _data->end() );
+  //     _nb_step += _data->size();
+
+  //     update_graphic();
+  //   }
+  // }
+  // Run 'n' learning steps
+  else if (key == GLFW_KEY_S && action == GLFW_PRESS) {
     if( _opt_fileload_traj and _opt_fileload_rdsom ) {
-      if( _opt_verb ) {
-	std::cout << "__LEARN" << std::endl;
-      }
-      learn( *_rdsom, _data->begin(), _data->end() );
-      _nb_iter ++;
-
-      // update data
-      _c_weight->clear();
-      _c_rweight->clear();
-      for( unsigned int i = 0; i < _rdsom->v_neur.size(); ++i) {
-	_c_weight->add_sample( {(double)i, _rdsom->v_neur[i]->weights(0), 0.0} );
-	_c_rweight->add_sample( {(double)i, _rdsom->v_neur[i]->r_weights(0), 0.0} ); 
-      }
-      _c_sim_input->update();
-      _c_sim_rec->update();
-      _c_sim_merged->update();
-      _c_sim_convol->update();
-      _c_sim_hh_dist->update();
-      _c_sim_hh_rec->update();
-
-      _fig_rdsom->clear_text();
-      std::stringstream str;
-      str << "Ite=" << _nb_iter;
-      _fig_rdsom->add_text( str.str(), 0.9, 0.1);
+      // if( _opt_verb ) {
+      // 	std::cout << "__STEP" << std::endl;
+      // }
+      auto learn_length = _opt_queue_size * _learn_length_multiplier;
+      if( learn_length == 0 ) learn_length = 1;
+      step_learn( *_rdsom, learn_length,
+		  _data->begin(), _data->end() );
+      
+      update_graphic();
     }
   }
+  // increase / decrease learning length P/M
+  else if( key == GLFW_KEY_P && action == GLFW_PRESS) {
+    if( _learn_length_multiplier == 0 ) _learn_length_multiplier = 1;
+    _learn_length_multiplier = _learn_length_multiplier * 10;
+  }
+  else if( key == GLFW_KEY_SEMICOLON && action == GLFW_PRESS) {
+    _learn_length_multiplier = _learn_length_multiplier / 10;
+  }
+  // On/off continuous learning SPACE
+  else if( key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+    _run_update = !_run_update;
+  }
+  // On/Off verbose V
+    else if( key == GLFW_KEY_V && action == GLFW_PRESS) {
+    _opt_verb = !_opt_verb;
+  }
 }
-
+// ************************************************************ update_graphic
+void update_graphic()
+{
+  // update data
+  _c_weight->clear();
+  _c_rweight->clear();
+  for( unsigned int i = 0; i < _rdsom->v_neur.size(); ++i) {
+    _c_weight->add_sample( {(double)i, _rdsom->v_neur[i]->weights(0), 0.0} );
+    _c_rweight->add_sample( {(double)i, _rdsom->v_neur[i]->r_weights(0), 0.0} ); 
+  }
+  _c_sim_input->update();
+  _c_sim_rec->update();
+  _c_sim_merged->update();
+  _c_sim_convol->update();
+  _c_sim_hh_dist->update();
+  _c_sim_hh_rec->update();
+  
+  _fig_rdsom->clear_text();
+  std::stringstream str;
+  auto learn_length = _opt_queue_size * _learn_length_multiplier;
+  if( learn_length == 0 ) learn_length = 1;
+  str << "Step=" << _nb_step << " (x" << learn_length << ")";
+  _fig_rdsom->add_text( str.str(), 0.7, 0.1);
+}
+// ***************************************************************** str_queue
+std::string str_queue()
+{
+  std::stringstream ss;
+  ss << "__QUEUE" << std::endl;
+  for (auto it = _winner_queue->begin(); it != _winner_queue->end(); ++it) {
+    ss << "  " << _rdsom->v_neur[*it]->str_display() << std::endl;
+  }
+  return ss.str();
+}
 // ****************************************************************** load_hmm
 Problem create_hmm( const std::string& expr = "ABCD" )
 {
@@ -305,6 +359,40 @@ void learn( RDSOM& rdsom,
 	}
   }
 }
+void step_learn( RDSOM& rdsom,
+		 const Traj::iterator::difference_type& length,
+		 const Traj::iterator& input_start,
+		 const Traj::iterator& input_end)
+{
+  for( unsigned int i = 0; i < length; ++i) {
+    // Forward new input and update network
+    Eigen::VectorXd input(1);
+    input << (double) _ite_step->id_o;
+    // if( _opt_verb ) {
+    //   std::cout << "  in=" << input << std::endl;g
+    // }
+    rdsom.forward( input, _opt_beta,
+		   _opt_sig_input, _opt_sig_recur, _opt_sig_convo,
+		   _opt_verb);
+    rdsom.deltaW( input, _opt_eps, _opt_ela, _opt_verb);
+    
+    if( _winner_queue ) {
+      _winner_queue->push_front( rdsom.get_winner() );
+    }
+
+    // update iterator
+    ++ _ite_step;
+    if( _ite_step == input_end ) {
+      _ite_step = input_start;
+    }
+    // update nb step
+    ++ _nb_step;
+
+    if( _opt_verb ) {
+      std::cout << str_queue() << std::endl;
+    }
+  }
+}
 // ***************************************************************************
 // ********************************************************************** main
 // ***************************************************************************
@@ -326,6 +414,8 @@ int main(int argc, char *argv[])
      if( _opt_verb )
        std::cout << "__LOAD Traj from " << *_opt_fileload_traj << std::endl;
      _data = make_unique<Traj>( load_traj( *_opt_fileload_traj ) );
+     _ite_step = _data->begin();
+     _nb_step = 0;
      if( _opt_verb )
        std::cout << "  data read" << std::endl;
    }
@@ -353,13 +443,13 @@ int main(int argc, char *argv[])
      if( _opt_verb) {
        std::cout << "__INIT GRAPHIC" << std::endl;
      }
-     _fig_rdsom = new Figure( "RDSOM: r-network" );
+     _fig_rdsom = new Figure( "RDSOM: r-network", 450, 450, 340, 0 );
      _winner_queue = new FixedQueue<unsigned int>( _opt_queue_size);
      _rdsom_viewer = new RDSOMViewer( *_rdsom, *_winner_queue );
      _fig_rdsom->add_curve( _rdsom_viewer );
      _fig_rdsom->set_draw_axes( false );
 
-     _fig_weight = new Figure( "Input/Weights", 800, 600,
+     _fig_weight = new Figure( "Input/Weights", 800, 350, 800, 50,
 			       {0.0,100.0,10,2}, {0.0, 1.0, 10, 2} );
      // Weights
      _c_weight = new Curve();
@@ -383,7 +473,7 @@ int main(int argc, char *argv[])
      _c_sim_hh_dist->set_width( 3 );
      _fig_weight->add_curve( _c_sim_hh_dist );
   
-     _fig_rweight = new Figure( "Recurrent/RWeights", 800, 600,
+     _fig_rweight = new Figure( "Recurrent/RWeights", 800, 350, 800, 430,
 				{0.0,100.0,10,2}, {0.0, 1.0, 10, 2} );
      _c_rweight = new Curve();
      _c_rweight->set_color( {0.0, 0.0, 0.0} );
@@ -406,6 +496,15 @@ int main(int argc, char *argv[])
      _fig_rweight->render();
 
      while( not _end_render ) {
+       // update if _run_updata
+       if( _run_update ) {
+	 auto learn_length = _opt_queue_size * _learn_length_multiplier;
+	 if( learn_length == 0 ) learn_length = 1;
+	 step_learn( *_rdsom, learn_length,
+		     _data->begin(), _data->end() );
+
+	 update_graphic();
+       }       
        _fig_rdsom->render();
        _fig_weight->render();
        _fig_rweight->render();

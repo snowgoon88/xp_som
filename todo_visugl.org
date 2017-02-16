@@ -511,11 +511,12 @@ http://www.astrostatistics.psu.edu/su07/R/html/MASS/html/lm.ridge.html
 ** TODO Copy operator/assignment => copie de l_link et l_neighbors
 ** DONE quelles fonctions utiles ?
 ** DONE need regularly put pos neurons
-* [4/5] REC_DSOM
+* [4/6] REC_DSOM
 ** DONE recurrent neuron [dsom/r_neuron.hpp]
 ** DONE recurrent network [dsom/r_network.hpp]
 ** DONE Visualization de la récurrence
 ** DONE Ajouter d'autres graphes
+** TODO Générer traj qui soit multiples de cycles. Et apprendre par cycle.
 ** TODO Info sur ce qui est appris
 * [2/3] Visualisation
 ** DONE Ecrire du texte n'importe où 
