@@ -450,7 +450,8 @@ int main(int argc, char *argv[])
      _fig_rdsom->set_draw_axes( false );
 
      _fig_weight = new Figure( "Input/Weights", 800, 350, 800, 50,
-			       {0.0,100.0,10,2}, {0.0, 1.0, 10, 2} );
+			       {0.0, (double) _rdsom->v_neur.size(),10,2},
+			       {0.0, 1.0, 10, 2} );
      // Weights
      _c_weight = new Curve();
      _c_weight->set_color( {0.0, 0.0, 0.0} );
@@ -474,7 +475,8 @@ int main(int argc, char *argv[])
      _fig_weight->add_curve( _c_sim_hh_dist );
   
      _fig_rweight = new Figure( "Recurrent/RWeights", 800, 350, 800, 430,
-				{0.0,100.0,10,2}, {0.0, 1.0, 10, 2} );
+				{0.0, (double) _rdsom->v_neur.size(),10,2},
+				{0.0, 1.0, 10, 2} );
      _c_rweight = new Curve();
      _c_rweight->set_color( {0.0, 0.0, 0.0} );
      _c_rweight->set_width( 3 );

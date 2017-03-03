@@ -437,6 +437,7 @@ public:
 	
 	if( verb and (abs((int)indn - (int)_winner_neur) < 3) ) {
 	    std::cout << "  " << v_neur[indn]->str_display() << "\n";
+	    std::cout << "    dist_pos_win=" <<  v_neur[indn]->computeDistancePos( *(v_neur[_winner_neur])) << std::endl;
 	  std::cout << "    INPUT: dnorm= " << dnorm_in << "; hn=" << hn_input << " => delta=" << delta_w << std::endl;
 	  std::cout << "    REC  : dnorm= " << dnorm_rec << "; hn=" << hn_rec << " =>  delta=" << delta_rw << std::endl;
 	}      

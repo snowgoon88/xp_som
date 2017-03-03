@@ -511,13 +511,49 @@ http://www.astrostatistics.psu.edu/su07/R/html/MASS/html/lm.ridge.html
 ** TODO Copy operator/assignment => copie de l_link et l_neighbors
 ** DONE quelles fonctions utiles ?
 ** DONE need regularly put pos neurons
-* [4/6] REC_DSOM
+* [5/7] REC_DSOM
 ** DONE recurrent neuron [dsom/r_neuron.hpp]
 ** DONE recurrent network [dsom/r_network.hpp]
 ** DONE Visualization de la récurrence
 ** DONE Ajouter d'autres graphes
-** TODO Générer traj qui soit multiples de cycles. Et apprendre par cycle.
+** DONE Générer traj qui soit multiples de cycles. Et apprendre par cycle.
+*** P/M : augmenter/diminuer le step
+*** SPACE : run ON/OFF
+*** S : step
+*** V : verbose ON/OFF
 ** TODO Info sur ce qui est appris
+** TODO Expé pour bons paramètres
+*** Génération de traj
+build/xp/xp-003-hmm -m data_rdsom/hmm_p05AAAAAF.json --length_traj 600 --save_traj data_rdsom/traj_p05AAAAAF_600_n000.data
+*** XP
+**** <2017-03-03 Fri>
+wbuild/xp/xp-004-rdsom -t data_rdsom/traj_p05AAAAAF_600_n000.data -d data_rdsom/rdsom_50.json -g --queue_size 6
+| beta | sig_i | sig_r | sig_c | eps | ela |
+|------+-------+-------+-------+-----+-----|
+| 0.5  | 0.1   | 0.1   | 0.1   | 0.1 | 0.2 |  que quelques neur->weigts apprennent... Plus large pour neur-r_weight
+15470 itérations
+RNeuron Neuron [9] at (9, ) w=0.11336 =(0.18, ) rw=0.485828 
+    INPUT: dnorm= 0.162916; hn=2.31854e-12 => delta=-7.18282e-15
+    REC  : dnorm= 0.273268; hn=0.486059 =>  delta=-0.00353083
+  RNeuron Neuron [10] at (10, ) w=-0.0213353 =(0.2, ) rw=0.459814 
+    INPUT: dnorm= 0.0475172; hn=0.00123397 => delta=-3.25206e-07
+    REC  : dnorm= 0.246526; hn=0.834972 =>  delta=-0.00493639
+  RNeuron Neuron [11] at (11, ) w=-0.0307759 =(0.22, ) rw=0.453733 
+    INPUT: dnorm= 0.0394291; hn=1 => delta=-0.000181462
+    REC  : dnorm= 0.240275; hn=1 =>  delta=-0.00561602
+  RNeuron Neuron [12] at (12, ) w=-0.0196312 =(0.24, ) rw=0.459884 
+    INPUT: dnorm= 0.0489772; hn=0.00123397 => delta=-3.45497e-07
+    REC  : dnorm= 0.246598; hn=0.834972 =>  delta=-0.00493927
+  RNeuron Neuron [13] at (13, ) w=0.105328 =(0.26, ) rw=0.486057 
+    INPUT: dnorm= 0.156035; hn=2.31854e-12 => delta=-6.58884e-15
+    REC  : dnorm= 0.273503; hn=0.486059 =>  delta=-0.00353693
+
+ela est vachement important pour gérer la portée de Hn. En gros, si on veut qu'au moins 5 neurones aient un Hn>0.1 pour une différence de poids de 0.05, il faut ela>1.3
+
+
+
+
+
 * [2/3] Visualisation
 ** DONE Ecrire du texte n'importe où 
 ** TODO Classe[Container] avec 2 membres "one", "two"
