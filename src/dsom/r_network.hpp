@@ -293,6 +293,7 @@ public:
 	  _sim_rec.push_back( simrec );
 	  // std::cout << "      merging simw=" << simw << " simrec=" << simrec << std::endl;
 	  _sim_merged.push_back( sqrt( _sim_w[i] * (beta+(1-beta) * _sim_rec[i] )) );
+	  //LINEAR _sim_merged.push_back( _sim_w[i] * beta + (1.0 - beta) * _sim_rec[i] );
 	}
 	//std::cout << "     _convolution" << std::endl;
 	// // Convolution with gaussian
@@ -364,7 +365,8 @@ public:
   
 	return exp( -1.0 * (dist_neur_win*dist_neur_win)/( ela * ela * win_dist * win_dist ) );
   }
-  void deltaW( Eigen::VectorXd &input, double eps, double ela, double verb=false)
+  void deltaW( Eigen::VectorXd &input, double eps, double ela,
+	       double ela_rec = 1.0, double verb=false)
   {
 	if( verb ) 
 	  std::cout << "__DeltaW" << std::endl;
@@ -428,7 +430,7 @@ public:
 	auto hn_input = hnDistance( v_neur[indn]->computeDistancePos( *(v_neur[_winner_neur]) ) /_max_dist_neurone, _winner_dist_input / _max_dist_input, ela );
 	_sim_hn_dist.push_back( hn_input );
 	
-	auto hn_rec = hnDistance( v_neur[indn]->computeDistancePos( *(v_neur[_winner_neur]) ) /_max_dist_neurone, _winner_dist_rec / _max_dist_rec, ela );
+	auto hn_rec = hnDistance( v_neur[indn]->computeDistancePos( *(v_neur[_winner_neur]) ) /_max_dist_neurone, _winner_dist_rec / _max_dist_rec, ela_rec );
 	_sim_hn_rec.push_back( hn_rec );
 	
 	// Delta W / RecWeights

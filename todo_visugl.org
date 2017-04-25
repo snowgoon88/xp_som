@@ -549,6 +549,37 @@ RNeuron Neuron [9] at (9, ) w=0.11336 =(0.18, ) rw=0.485828
     REC  : dnorm= 0.273503; hn=0.486059 =>  delta=-0.00353693
 
 ela est vachement important pour gérer la portée de Hn. En gros, si on veut qu'au moins 5 neurones aient un Hn>0.1 pour une différence de poids de 0.05, il faut ela>1.3
+*** <2017-03-06 Mon>
+Avec ela=1.3, la couche récurrent converge dans son entier vers 0.4. Tous les neurones apprennent trop vite.
+[Q] le winner global semble plus influencé par les wieghts que les r_weigts
+=> peut-être que le sigma_r doit être moins sélectif ?
+=> les similitudes convoluées affichées sont normalisées A L'AFFICHAGE. Mais en vrai ?
+*** <2017-03-09 Thu>
+Divers essais avec Yann
+
+A marché pour ABCDEF
+wbuild/xp/xp-003-hmm -m data_hmm/hmm_ABCDEF.json --length_traj 9000 --save_traj data_rdsom/traj_ABCDEF_9000.data_
+
+wbuild/xp/xp-004-rdsom -t data_rdsom/traj_p05AAAAAF_600_n000.data -d data_rdsom/rdsom_50.json -g --queue_size 10 --dsom_ela 1.0 --dsom_sig_r 0.01 --dsom_sig_i 0.01 --dsom_beta 0.4
+
+wbuild/xp/xp-004-rdsom -t data_rdsom/traj_p05AAAAAF_600_n000.data -d data_rdsom/rdsom_50.json -g --queue_size 10 --dsom_ela 1.0 --dsom_sig_r 0.01 --dsom_sig_i 0.01 --dsom_beta 0.9
+
+build/xp/xp-004-rdsom -t data_rdsom/traj_p05AAAAAF_600_n000.data -d data_rdsom/rdsom_50.json -g --queue_size 10 --dsom_ela 1.3 --dsom_sig_r 0.01 --dsom_sig_i 0.01 --dsom_beta 0.6
+*** <2017-03-21 Tue>
+Modifier le rôle de beta
+**** DONE Essayer en linéaire ? => *BAD*
+merged = mu * beta + (1-beta) * nu 
+pas bien car rapidement, la similarité récurrent est plus grande que la similarité des entrées. (à cause de l'exponentielle qui écrase). Du coup, on termine assez souvent sur un seul neurone en boucle. Même avec beta=0.95
+**** Retour non linéaire
+wbuild/xp/xp-004-rdsom -t data_rdsom/traj_p05AAAAAF_600_n000.data -d data_rdsom/rdsom_50.json -g --queue_size 10 --dsom_ela 1.2 --dsom_sig_r 0.01 --dsom_sig_i 0.01 --dsom_beta 0.1 --dsom_ela_rec 0.005 --dsom_eps 0.25
+=> pas assez de distance entre les neurones actifs sur le A ?
+=> cycles pas stabilisés
+**** Augmenter le sigma_weight
+pour avoir plus de choix dans le neurone d'entrée, que chacun puisse se spécialiser dans un rec différent ?
+**** SUCCESS (à partir de 20.000)
+wbuild/xp/xp-004-rdsom -t data_rdsom/traj_p05AAAAAF_6000.data -d data_rdsom/rdsom_50.json -g --queue_size 10 --dsom_ela 1.0 --dsom_sig_r 0.1 --dsom_sig_i 0.1 --dsom_beta 0.05 --dsom_ela_rec 0.01 --dsom_eps 0.25
+=> après 95620
+**** TODO essayer sur autres
 
 
 

@@ -87,6 +87,7 @@ TParam                       _opt_sig_recur          = 0.1;
 TParam                       _opt_sig_convo          = 0.1;
 TParam                       _opt_eps                = 0.1;
 TParam                       _opt_ela                = 0.2;
+TParam                       _opt_ela_rec            = 0.2;
 bool                         _opt_graph              = false;
 unsigned int                 _opt_queue_size         = 5;
 bool                         _opt_verb               = false;
@@ -120,6 +121,7 @@ void setup_options(int argc, char **argv)
 	("dsom_sig_c", po::value<TParam>(&_opt_sig_convo)->default_value(_opt_sig_convo), "dsom sigma convolution")
 	("dsom_eps", po::value<TParam>(&_opt_eps)->default_value(_opt_eps), "dsom epsilon")
 	("dsom_ela", po::value<TParam>(&_opt_ela)->default_value(_opt_ela), "dsom elasticity")
+        ("dsom_ela_rec", po::value<TParam>(&_opt_ela_rec)->default_value(_opt_ela_rec), "dsom elasticity recurrent")
         ("graph,g", "graphics" )
         ("queue_size", po::value<unsigned int>(&_opt_queue_size)->default_value(_opt_queue_size), "Length of Queue for Graph")
 	("verb,v", "verbose" )
@@ -352,7 +354,7 @@ void learn( RDSOM& rdsom,
 	rdsom.forward( input, _opt_beta,
 				   _opt_sig_input, _opt_sig_recur, _opt_sig_convo,
 				   _opt_verb);
-	rdsom.deltaW( input, _opt_eps, _opt_ela, _opt_verb);
+	rdsom.deltaW( input, _opt_eps, _opt_ela, _opt_ela_rec, _opt_verb);
 
 	if( _winner_queue ) {
 	  _winner_queue->push_front( rdsom.get_winner() );
@@ -374,7 +376,7 @@ void step_learn( RDSOM& rdsom,
     rdsom.forward( input, _opt_beta,
 		   _opt_sig_input, _opt_sig_recur, _opt_sig_convo,
 		   _opt_verb);
-    rdsom.deltaW( input, _opt_eps, _opt_ela, _opt_verb);
+    rdsom.deltaW( input, _opt_eps, _opt_ela, _opt_ela_rec, _opt_verb);
     
     if( _winner_queue ) {
       _winner_queue->push_front( rdsom.get_winner() );
