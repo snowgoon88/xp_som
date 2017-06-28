@@ -62,6 +62,7 @@ FixedQueue<unsigned int>*  _winner_queue = nullptr;
 RDSOMViewer*               _rdsom_viewer = nullptr;
 Figure*                    _fig_weight = nullptr;
 Figure*                    _fig_rweight = nullptr;
+Figure*                    _fig_error = nullptr;
 Curve* _c_weight;
 CurveDyn<RDSOM::Similarities> *_c_sim_input;
 Curve* _c_rweight;
@@ -70,6 +71,8 @@ CurveDyn<RDSOM::Similarities> *_c_sim_merged;
 CurveDyn<RDSOM::Similarities> *_c_sim_convol;
 CurveDyn<RDSOM::Similarities> *_c_sim_hh_dist;
 CurveDyn<RDSOM::Similarities> *_c_sim_hh_rec;
+Curve* _c_error_input;
+Curve* _c_error_rec;
 bool _end_render = false;
 bool _run_update = false;
 unsigned int _nb_step = 0;
@@ -284,7 +287,8 @@ Problem create_hmm( const std::string& expr = "ABCD" )
   pb.nb_states = hmm.second;
 
   return pb;
-}Problem load_hmm( const std::string& filename )
+}
+Problem load_hmm( const std::string& filename )
 {
   auto pfile = std::ifstream( filename );
 
@@ -361,6 +365,13 @@ void learn( RDSOM& rdsom,
 	}
   }
 }
+/**
+ * step_learn: (usually called before graphic update)
+ * learns with 'length' learning data considered as a circular array,
+ * begin at '_ite_step' and come back to 'input_start' after 'input_end'. 
+ *
+ * :Global: : _ite_step, iterator on the learning data.
+ */
 void step_learn( RDSOM& rdsom,
 		 const Traj::iterator::difference_type& length,
 		 const Traj::iterator& input_start,
@@ -382,6 +393,12 @@ void step_learn( RDSOM& rdsom,
       _winner_queue->push_front( rdsom.get_winner() );
     }
 
+    // Add error to figure
+    if( _opt_graph ) {
+      _c_error_input->add_sample( {(double)_nb_step, rdsom.get_winner_dist_input(), 0.0 } );
+      _c_error_rec->add_sample( {(double)_nb_step, rdsom.get_winner_dist_rec(), 0.0 } );
+    }
+    
     // update iterator
     ++ _ite_step;
     if( _ite_step == input_end ) {
@@ -499,6 +516,18 @@ int main(int argc, char *argv[])
      _fig_weight->render();
      _fig_rweight->render();
 
+     // Errors
+     _fig_error = new Figure( "Error", 800, 350, 400, 430,
+				{0.0, 100 ,10,2},
+				{0.0, 1.2, 10, 2});
+     _c_error_input = new Curve();
+     _c_error_input->set_color( {0.0, 0.0, 0.0} );
+     _fig_error->add_curve( _c_error_input );
+     _c_error_rec = new Curve();
+     _c_error_rec->set_color( {0.0, 0.0, 1.0} );
+     _fig_error->add_curve( _c_error_rec );
+     
+
      while( not _end_render ) {
        // update if _run_updata
        if( _run_update ) {
@@ -512,18 +541,19 @@ int main(int argc, char *argv[])
        _fig_rdsom->render();
        _fig_weight->render();
        _fig_rweight->render();
+       _fig_error->render( true, false ); // Update axes x, y
      }
    }
-   // Learn_________________________
-  if( _opt_fileload_traj and _opt_fileload_rdsom ) {
-    if( _opt_verb ) {
-      std::cout << "__LEARN" << std::endl;
-    }
-    learn( *_rdsom, _data->begin(), _data->end() );
+  //  // Learn_________________________
+  // if( _opt_fileload_traj and _opt_fileload_rdsom ) {
+  //   if( _opt_verb ) {
+  //     std::cout << "__LEARN" << std::endl;
+  //   }
+  //   learn( *_rdsom, _data->begin(), _data->end() );
 
-	// Save learned RDSOM
-	// Some kind of criteria
-  }
+  // 	// Save learned RDSOM
+  // 	// Some kind of criteria
+  // }
    return 0;
 }
 

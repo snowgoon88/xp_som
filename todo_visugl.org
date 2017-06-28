@@ -526,7 +526,7 @@ http://www.astrostatistics.psu.edu/su07/R/html/MASS/html/lm.ridge.html
 *** Génération de traj
 build/xp/xp-003-hmm -m data_rdsom/hmm_p05AAAAAF.json --length_traj 600 --save_traj data_rdsom/traj_p05AAAAAF_600_n000.data
 *** XP
-**** <2017-03-03 Fri>
+*** <2017-03-03 Fri>
 wbuild/xp/xp-004-rdsom -t data_rdsom/traj_p05AAAAAF_600_n000.data -d data_rdsom/rdsom_50.json -g --queue_size 6
 | beta | sig_i | sig_r | sig_c | eps | ela |
 |------+-------+-------+-------+-----+-----|
@@ -580,7 +580,16 @@ pour avoir plus de choix dans le neurone d'entrée, que chacun puisse se spécia
 wbuild/xp/xp-004-rdsom -t data_rdsom/traj_p05AAAAAF_6000.data -d data_rdsom/rdsom_50.json -g --queue_size 10 --dsom_ela 1.0 --dsom_sig_r 0.1 --dsom_sig_i 0.1 --dsom_beta 0.05 --dsom_ela_rec 0.01 --dsom_eps 0.25
 => après 95620
 **** TODO essayer sur autres
-
+**** TODO Critère de performance (diff de prédiction)
+***** Erreur entre winner et input -> mais c'est pas suffisant
+***** Erreur de prédiction => prochain et prochain input
+**** TODO sauvegarder les films
+**** DONE algorithme déterministe => OUI !
+***** Création de Traj
+***** Création de RDSOM
+***** Pas de bruit dans l'apprentissage.
+**** TODO Légende des courbres ??
+**** TODO refaire les courbes de séquences / prédition de ESN
 
 
 

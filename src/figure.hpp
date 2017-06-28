@@ -116,13 +116,13 @@ public:
     _text_list.push_back( GraphicText{ x, y, msg } );
   }
   // ********************************************************** Figure::render
-  void render( bool update_axes=false )
+  void render( bool update_axes_x=false, bool update_axes_y=false )
   {
 	glfwMakeContextCurrent( _window );
 	// TODO can also be set to another DataStructure
 	glfwSetWindowUserPointer( _window, this);
 
-	if( update_axes ) {
+	if( update_axes_x || update_axes_y ) {
 	  // Build proper axis by finding min/max on each axe
 	  Curve::BoundingBox bbox{ std::numeric_limits<double>::max(),
 		  (-std::numeric_limits<double>::max()),
@@ -136,9 +136,10 @@ public:
 		if( b.y_min < bbox.y_min ) bbox.y_min = b.y_min;
 		if( b.y_max > bbox.y_max ) bbox.y_max = b.y_max;
 	  }
-
-	  _axis_x = Axis( "X", {bbox.x_min,bbox.x_max, 10, 2});
-	  _axis_y = Axis( "Y", {bbox.y_min,bbox.y_max, 10, 2});
+	  if( update_axes_x) 
+	    _axis_x = Axis( "X", {bbox.x_min,bbox.x_max, 10, 2});
+	  if( update_axes_y )
+	    _axis_y = Axis( "Y", {bbox.y_min,bbox.y_max, 10, 2});
 	}
 	
 	// get window size

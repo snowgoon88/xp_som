@@ -49,6 +49,7 @@ public:
     _winner_dist(std::numeric_limits<double>::max()),
     _winner_dist_input(std::numeric_limits<double>::max()),
     _winner_dist_rec(std::numeric_limits<double>::max()),
+    _winner_dist_pred(std::numeric_limits<double>::max()),
     _max_dist_neurone(0.0), _max_dist_input(0.0), _max_dist_rec(0.0),
     _sim_w(nb_neur,0.0), _sim_rec(nb_neur,0.0), _sim_merged(nb_neur,0.0),
     _sim_convol(nb_neur,0.0),
@@ -325,6 +326,10 @@ public:
 	_winner_neur = std::distance( _sim_convol.begin(), it_max );
 	_winner_dist_input = v_neur[_winner_neur]->computeDistanceInput( input );
 	_winner_dist_rec = v_neur[_winner_neur]->computeDistanceRPos( v_neur[_old_winner_neur]->r_pos );
+	// best prediction was the one with maximum _sim_rec
+	auto it_pred = std:max_element( _sim_rec.begin(), _sim_rec.end());
+	_winner_dist_pred = it_pred->computeDistanceInput( input );
+	
 	return _winner_similarity;
   }
   void forward( Eigen::VectorXd &input,
@@ -521,6 +526,9 @@ public:
 public:
   unsigned int get_winner() const { return _winner_neur; }
   double get_winner_dist() const { return _winner_dist; }
+  double get_winner_dist_input() const { return _winner_dist_input; }
+  double get_winner_dist_rec() const { return _winner_dist_rec; }
+  double get_winner_dist_pred() const { return _winner_dist_pred; }
   double get_max_dist_neurone() { return _max_dist_neurone; }
 private:
   /** Random engine */
