@@ -327,8 +327,9 @@ public:
 	_winner_dist_input = v_neur[_winner_neur]->computeDistanceInput( input );
 	_winner_dist_rec = v_neur[_winner_neur]->computeDistanceRPos( v_neur[_old_winner_neur]->r_pos );
 	// best prediction was the one with maximum _sim_rec
-	auto it_pred = std:max_element( _sim_rec.begin(), _sim_rec.end());
-	_winner_dist_pred = it_pred->computeDistanceInput( input );
+	auto it_pred = std::max_element( _sim_rec.begin(), _sim_rec.end());
+	auto pred_neuron_idx = std::distance( _sim_rec.begin(), it_pred );
+	_winner_dist_pred = v_neur[pred_neuron_idx]->computeDistanceInput( input );
 	
 	return _winner_similarity;
   }
@@ -547,7 +548,7 @@ public:
   unsigned int _old_winner_neur;
   /** The current winner distance */
   double _winner_dist;
-  double _winner_dist_input, _winner_dist_rec;
+  double _winner_dist_input, _winner_dist_rec, _winner_dist_pred;
   /** The maximum distance between neurones */
   double _max_dist_neurone;
   /** The maximum distance between inputs */
