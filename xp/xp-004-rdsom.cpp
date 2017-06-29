@@ -73,6 +73,7 @@ CurveDyn<RDSOM::Similarities> *_c_sim_hh_dist;
 CurveDyn<RDSOM::Similarities> *_c_sim_hh_rec;
 Curve* _c_error_input;
 Curve* _c_error_rec;
+Curve* _c_error_pred;
 bool _end_render = false;
 bool _run_update = false;
 unsigned int _nb_step = 0;
@@ -397,6 +398,7 @@ void step_learn( RDSOM& rdsom,
     if( _opt_graph ) {
       _c_error_input->add_sample( {(double)_nb_step, rdsom.get_winner_dist_input(), 0.0 } );
       _c_error_rec->add_sample( {(double)_nb_step, rdsom.get_winner_dist_rec(), 0.0 } );
+      _c_error_pred->add_sample( {(double)_nb_step, rdsom.get_winner_dist_pred(), 0.0} );
     }
     
     // update iterator
@@ -526,6 +528,9 @@ int main(int argc, char *argv[])
      _c_error_rec = new Curve();
      _c_error_rec->set_color( {0.0, 0.0, 1.0} );
      _fig_error->add_curve( _c_error_rec );
+     _c_error_pred = new Curve();
+     _c_error_pred->set_color( {1.0, 0.0, 0.0} );
+     _fig_error->add_curve( _c_error_pred );
      
 
      while( not _end_render ) {

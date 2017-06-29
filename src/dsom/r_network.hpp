@@ -45,7 +45,7 @@ public:
    */
   RNetwork( int dim_input, int nb_neur, int nb_link=5,
 	    float w_min=0.0, float w_max=1.0 ) :
-    _winner_neur(0), _old_winner_neur(0),
+    _winner_neur(0), _old_winner_neur(0), _pred_winner(0),
     _winner_dist(std::numeric_limits<double>::max()),
     _winner_dist_input(std::numeric_limits<double>::max()),
     _winner_dist_rec(std::numeric_limits<double>::max()),
@@ -328,8 +328,8 @@ public:
 	_winner_dist_rec = v_neur[_winner_neur]->computeDistanceRPos( v_neur[_old_winner_neur]->r_pos );
 	// best prediction was the one with maximum _sim_rec
 	auto it_pred = std::max_element( _sim_rec.begin(), _sim_rec.end());
-	auto pred_neuron_idx = std::distance( _sim_rec.begin(), it_pred );
-	_winner_dist_pred = v_neur[pred_neuron_idx]->computeDistanceInput( input );
+	_pred_winner = std::distance( _sim_rec.begin(), it_pred );
+	_winner_dist_pred = v_neur[_pred_winner]->computeDistanceInput( input );
 	
 	return _winner_similarity;
   }
@@ -349,6 +349,8 @@ public:
       std::cout << " old_win=" << _old_winner_neur << " at(" << v_neur[_old_winner_neur]->r_pos(0) << ")" << std::endl; 
       std::cout << "  => win is " << _winner_neur;
       std::cout << "  " << v_neur[_winner_neur]->str_display() << std::endl;
+      std::cout << "  => next is " << _pred_winner;
+      std::cout << "  " << v_neur[_pred_winner]->str_display() << std::endl;
     }
     // and then, compute distances and update max_distances
     for( unsigned int i = 0; i < v_neur.size(); ++i) {
@@ -543,9 +545,10 @@ public:
   /** Size of the regular grid */
   int _size_grid;
 
-  /** The current winner neurone. */
+  /** The current, old and predicted winner neurone. */
   unsigned int _winner_neur;
   unsigned int _old_winner_neur;
+  unsigned int _pred_winner;
   /** The current winner distance */
   double _winner_dist;
   double _winner_dist_input, _winner_dist_rec, _winner_dist_pred;
