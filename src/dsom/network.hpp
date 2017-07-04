@@ -117,6 +117,17 @@ public:
 	  _max_dist_neurone = v_neur[0]->computeDistancePos( *(v_neur[nb_neur-1]) );
 	}
   }
+  /** Creation from copy */
+  Network( const Network& n ) :
+    _rnd(n._rnd), _nb_link(n._nb_link), _size_grid(n._size_grid),
+    _winner_neur(n._winner_neur), _winner_dist(n._winner_dist),
+    _max_dist_neurone(n._max_dist_neurone), _max_dist_input(n._max_dist_input)
+  {
+    for (auto it = n.v_neur.begin(); it != n.v_neur.end(); ++it) {
+      Neuron *neur = new Neuron( **it );
+      v_neur.push_back(neur);
+    }
+  }
   /** Creation from JSON file */
   Network( std::istream& is )
   {
@@ -127,6 +138,13 @@ public:
     doc.ParseStream( instream );
 
     unserialize( doc );
+  }
+  // **************************************************** Network::destruction
+  virtual ~Network()
+  {
+    for (auto it = v_neur.begin(); it != v_neur.end(); ++it) {
+      delete *it;
+    }
   }
   // ************************************************************ Network::str
   std::string str_dump()

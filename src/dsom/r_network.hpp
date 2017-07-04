@@ -147,6 +147,27 @@ public:
     }
 	//std::cout << "max_dist_neurone=" << _max_dist_neurone << std::endl;
   }
+  /** Creation from Copy */
+  RNetwork( const RNetwork& rn ) :
+    _rnd(rn._rnd), _nb_link(rn._nb_link), _size_grid(rn._size_grid),
+    _winner_neur(rn._winner_neur), 
+    _old_winner_neur(rn. _old_winner_neur), _pred_winner(rn._pred_winner),
+    _winner_dist(rn._winner_dist), _winner_dist_input(rn._winner_dist_input),
+    _winner_dist_rec(rn._winner_dist_rec), _winner_dist_pred(rn._winner_dist_pred),
+    _max_dist_neurone(rn._max_dist_neurone), _max_dist_input(rn._max_dist_input),
+    _max_dist_rec(rn._max_dist_rec),
+    _sim_w(rn._sim_w), _sim_rec(rn._sim_rec), _sim_merged(rn._sim_merged),
+    _sim_convol(rn._sim_convol), _sim_hn_dist(rn._sim_hn_dist),
+    _sim_hn_rec(rn._sim_hn_rec),
+    _winner_similarity(rn._winner_similarity)
+  {
+    for (auto it = rn.v_neur.begin(); it != rn.v_neur.end(); ++it) {
+      RNeuron *neur = new RNeuron( **it );
+      v_neur.push_back(neur);
+    }
+    
+  }
+    
   /** Creation from JSON file */
   RNetwork( std::istream& is ) : 
     _winner_neur(0), _old_winner_neur(0), _pred_winner(0),
@@ -167,6 +188,13 @@ public:
 
     unserialize( doc );
   }
+  // **************************************************** RNetwork::destructor
+  virtual ~RNetwork()
+  {
+    for (auto it = v_neur.begin(); it != v_neur.end(); ++it) {
+      delete *it;
+    }
+  }
   // *********************************************************** RNetwork::str
   std::string str_dump()
   {
@@ -178,6 +206,21 @@ public:
 	  ss << (*v_neur[i]).str_dump() << "\n";
 	}
 	return ss.str();
+  }
+  // ********************************************************* RNetwork::reset
+  void reset()
+  {
+    _winner_neur = 0;
+    _old_winner_neur = 0;
+    _pred_winner = 0;
+    _winner_dist = std::numeric_limits<double>::max();
+    _winner_dist_input = std::numeric_limits<double>::max();
+    _winner_dist_rec = std::numeric_limits<double>::max();
+    _winner_dist_pred = std::numeric_limits<double>::max();
+    _max_dist_neurone = 0.0;
+    _max_dist_input = 0.0;
+    _max_dist_rec = 0.0;
+    _winner_similarity = 0.0;
   }
   // *********************************************************** Network::DIST
   /** 

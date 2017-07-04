@@ -56,6 +56,9 @@ using TInput = Model::DSOM::RNeuron::TWeight;
 using TParam = Model::DSOM::RNeuron::TNumber;
 Traj::iterator _ite_step;
 
+// Log some errors
+std::vector<double> _v_err_input, _v_err_rec, _v_err_pred;     
+
 // Graphic
 Figure*                    _fig_rdsom = nullptr;
 FixedQueue<unsigned int>*  _winner_queue = nullptr;
@@ -451,6 +454,42 @@ void step_learn( RDSOM& rdsom,
     }
   }
 }
+/**
+ * step_test:
+ * compute mean error_input, rec and pred on all given data
+ */
+void step_test( RDSOM& rdsom,
+		const Traj::iterator& input_start,
+		const Traj::iterator& input_end)
+{
+  Model::DSOM::RNetwork::TNumber err_input = 0;
+  Model::DSOM::RNetwork::TNumber err_rec = 0;
+  Model::DSOM::RNetwork::TNumber err_pred = 0;
+
+  rdsom.reset();
+  
+  for (auto it = input_start; it != input_end; ++it) {
+    // Forward new input BUT do not update network
+    Eigen::VectorXd input(1);
+    input << (double) it->id_o;
+    // if( _opt_verb ) {
+    //   std::cout << "  in=" << input << std::endl;g
+    // }
+    rdsom.forward( input, _opt_beta,
+		   _opt_sig_input, _opt_sig_recur, _opt_sig_convo,
+		   _opt_verb);
+
+    err_input += rdsom.get_winner_dist_input();
+    err_rec += rdsom.get_winner_dist_rec();
+    err_pred += rdsom.get_winner_dist_pred();
+  }
+
+  // mean
+  Model::DSOM::RNetwork::TNumber length = input_end - input_start;
+  _v_err_input.push_back(err_input / length );
+  _v_err_rec.push_back(err_rec / length );
+  _v_err_pred.push_back(err_pred / length );
+}
 // ***************************************************************************
 // ********************************************************************** main
 // ***************************************************************************
@@ -589,7 +628,7 @@ int main(int argc, char *argv[])
    else {
      // Learn_________________________
      std::cout << "__LEARN" << std::endl;
-     
+
      unsigned int ite_cur = 0;
      while( ite_cur < _opt_learn_length ) {
        step_learn( *_rdsom, _opt_period_save,
@@ -608,6 +647,8 @@ int main(int argc, char *argv[])
        }
        // 	// Some kind of criteria
      }
+     // At the end, save errors
+     
    }
    return 0;
 }
