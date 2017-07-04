@@ -45,6 +45,7 @@ public:
       exit(EXIT_FAILURE);
     }
     glfwMakeContextCurrent( _window );
+	glfwSetWindowUserPointer( _window, this);
     glfwSetKeyCallback( _window, key_callback);
 
     
@@ -58,7 +59,7 @@ public:
       // Add point to curve
       Curve::Sample pt;
       pt.x = 10.0 * M_PI * i / nb_data;
-      pt.y = sin( pt.x ) * std::max( 1.0, i / (double)(nb_data*100) );
+      pt.y = sin( pt.x ) * std::max( 1.0, i / (double)(nb_data*100) ) + std::max( 1.0, i / (double)(nb_data*100) );
       pt.z = 0.0;
       ++i;
       _axis_x.get_range().update( pt.x );
@@ -123,7 +124,7 @@ private:
   /** Des Axes */
   Axis _axis_x, _axis_y;
   /** Une Courbe */
-  Curve _curve;
+  CurveMean _curve;
   //******************************************************************************
   /**
    * Callback qui gère les événements 'key'
@@ -132,6 +133,28 @@ private:
   {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
       glfwSetWindowShouldClose(window, GL_TRUE);
+	// otherwise callback from classe
+    else if( action == GLFW_PRESS ) {
+      //std::cout << "key_callback = " << key << std::endl;
+      ((Window *)glfwGetWindowUserPointer(window))->on_key_pressed( key );
+    }
+  }
+  // ********************************************************* public_callback
+  void on_key_pressed( int key ) 
+  {
+	//std::cout << "GLWindow::key_pressed key=" << key << std::endl;
+    if( key == GLFW_KEY_Z) {
+      // toggle _mean
+	  if( _curve.get_mean_mode() ) {
+		std::cout << "  Normal mode" << std::endl;
+		_curve.set_mean_mode( false );
+	  }
+	  else {
+		std::cout << "  MEAN mode" << std::endl;
+		_curve.set_mean_mode( true );
+		_curve.recompute_means();
+	  }
+    }
   }
   // ***************************************************************************
   /**

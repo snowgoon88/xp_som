@@ -71,9 +71,9 @@ CurveDyn<RDSOM::Similarities> *_c_sim_merged;
 CurveDyn<RDSOM::Similarities> *_c_sim_convol;
 CurveDyn<RDSOM::Similarities> *_c_sim_hh_dist;
 CurveDyn<RDSOM::Similarities> *_c_sim_hh_rec;
-Curve* _c_error_input;
-Curve* _c_error_rec;
-Curve* _c_error_pred;
+CurveMean* _c_error_input;
+CurveMean* _c_error_rec;
+CurveMean* _c_error_pred;
 bool _end_render = false;
 bool _run_update = false;
 unsigned int _nb_step = 0;
@@ -240,8 +240,35 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     _run_update = !_run_update;
   }
   // On/Off verbose V
-    else if( key == GLFW_KEY_V && action == GLFW_PRESS) {
+  else if( key == GLFW_KEY_V && action == GLFW_PRESS) {
     _opt_verb = !_opt_verb;
+  }
+  // On/Off Mean mode for error
+  else if( key == GLFW_KEY_W && action == GLFW_PRESS) {
+    // toggle _mean
+	if( _c_error_input->get_mean_mode() ) {
+		std::cout << "  Normal mode" << std::endl;
+		_c_error_input->set_mean_mode( false );
+		_c_error_rec->set_mean_mode( false );
+		_c_error_pred->set_mean_mode( false );
+	}
+	else {
+	  std::cout << "  MEAN mode" << std::endl;
+	  _c_error_input->set_mean_mode( true );
+	  _c_error_input->recompute_means();
+	  _c_error_rec->set_mean_mode( true );
+	  _c_error_rec->recompute_means();
+	  _c_error_pred->set_mean_mode( true );
+	  _c_error_pred->recompute_means();
+	}
+  }
+  // Force mean update if in mean_mode
+  else if( key == GLFW_KEY_W && action == GLFW_PRESS) {
+	if( _c_error_input->get_mean_mode() ) {
+	  _c_error_input->recompute_means();
+	  _c_error_rec->recompute_means();
+	  _c_error_pred->recompute_means();
+	}
   }
 }
 // ************************************************************ update_graphic
@@ -522,13 +549,13 @@ int main(int argc, char *argv[])
      _fig_error = new Figure( "Error", 800, 350, 400, 430,
 				{0.0, 100 ,10,2},
 				{0.0, 1.2, 10, 2});
-     _c_error_input = new Curve();
+     _c_error_input = new CurveMean();
      _c_error_input->set_color( {0.0, 0.0, 0.0} );
      _fig_error->add_curve( _c_error_input );
-     _c_error_rec = new Curve();
+     _c_error_rec = new CurveMean();
      _c_error_rec->set_color( {0.0, 0.0, 1.0} );
      _fig_error->add_curve( _c_error_rec );
-     _c_error_pred = new Curve();
+     _c_error_pred = new CurveMean();
      _c_error_pred->set_color( {1.0, 0.0, 0.0} );
      _fig_error->add_curve( _c_error_pred );
      

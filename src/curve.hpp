@@ -63,14 +63,14 @@ public:
     //std::cout << "Curve::add_sample_with_Itr" << std::endl;
     auto it_x = x_data_begin;
     auto it_y = y_data_begin;
-    
-    for (; it_x != x_data_end and it_y != y_data_end; ++it_x, ++it_y) {
-      //std::cout << "add " << *it_x << ", " << *it_y << std::endl;
-      add_sample( {*it_x, *it_y, 0.0} );
-    }
+
+	for (; it_x != x_data_end and it_y != y_data_end; ++it_x, ++it_y) {
+	  //std::cout << "add " << *it_x << ", " << *it_y << std::endl;
+	  add_sample( {*it_x, *it_y, 0.0} );
+	}
   }
   /** Add a point to the Curve and adjust _bbox */
-  void add_sample( const Sample sample)
+  virtual void add_sample( const Sample sample)
   {
     //std::cout << "Curve::add_sample" << std::endl;
     // First sample ?
@@ -175,6 +175,115 @@ public:
   }
 };
 // ***************************************************************************
+
+// ***************************************************************** CurveMean
+/**
+ * CurveMean : 
+ * in mean_mode, temporal means are computed online to get a "mouth" line.
+ * The _mean_length is computed dynamically. When new Samples are added, 
+ * _mean_nb_current is incremented and a new mean point is added when
+ * it equals _mean_length.
+ */
+class CurveMean : public Curve
+{
+public:
+  // *******************************************************CuveMean::creation
+  CurveMean() : Curve (), _mean_mode(false),
+				_mean_length(0), _mean_nb_point(0), _mean_x(0.0), _mean_y(0.0)
+  {
+  }
+  // ************************************************** CurveMean::switch_mode
+  void set_mean_mode( bool mode )
+  {
+	_mean_mode = mode;
+  }
+  bool get_mean_mode() { return _mean_mode; }
+  // ********************************************** CurveMean::recompute_means
+  void recompute_means()
+  {
+	_mean_data.clear();
+	// _mean_length so as to have around 100 pts on curve
+	_mean_length = _data.size() / 100;
+
+	// then recompute means
+	_mean_x = 0.0;
+	_mean_y = 0.0;
+	_mean_nb_point = 0;
+	for( auto data_it = _data.begin(); data_it != _data.end(); ++data_it) {
+	  _mean_x += data_it->x;
+	  _mean_y += data_it->y;
+	  ++_mean_nb_point;
+	  if( _mean_nb_point == _mean_length ) {
+		_mean_data.push_back( {_mean_x/(double)_mean_length,
+			  _mean_y/(double) _mean_length,
+			  0.0 } );
+		_mean_x = 0.0;
+		_mean_y = 0.0;
+		_mean_nb_point = 0; 
+	  }	
+	}
+  }
+  // *************************************************** CurveMean::add_sample
+  /** Add a point to the CurveMean */
+  void add_sample( const Sample sample)
+  {
+	Curve::add_sample( sample );
+
+	if( _mean_mode ) {
+	  ++_mean_nb_point;
+	  _mean_x += sample.x;
+	  _mean_y += sample.y;
+	  if( _mean_nb_point == _mean_length ) {
+		_mean_data.push_back( {_mean_x/(double)_mean_length,
+			  _mean_y/(double) _mean_length,
+			  0.0 } );
+		_mean_x = 0.0;
+		_mean_y = 0.0;
+		_mean_nb_point = 0; 
+	  }
+	}
+  }
+  // ******************************************************* CurveMean::render
+  /** Draw curve with OpenGL */
+  virtual void render()
+  {
+    //std::cout << "  Curve::render" << std::endl;
+    // for( auto& pt : _data) {
+    //   std::cout << "[ " << pt.x << "; " << pt.y << "; " << pt.z << "]" << std::endl;
+    // }
+
+    // Color
+    glColor4d( _fg_col.r, _fg_col.g, _fg_col.b, 1.0);
+    // -------------------------------------------------------------------------
+    //  Rendering using GL_LINE_STRIP
+    // -------------------------------------------------------------------------
+    glEnable (GL_BLEND);
+    glEnable (GL_LINE_SMOOTH);
+    glLineWidth( _line_width );
+
+    glBegin(GL_LINE_STRIP);
+	if( _mean_mode ) {
+	  for( auto& pt: _mean_data) {
+		glVertex3d( pt.x, pt.y, pt.z );
+	  }
+	}
+	else {
+	  for( auto& pt: _data) {
+		glVertex3d( pt.x, pt.y, pt.z );
+	  }
+	}
+    glEnd();
+  }
+  
+  // **************************************************** CurveMean::attributs
+protected:
+  bool _mean_mode;
+  /** Mean Data are a list of Samples*/
+  std::list<Sample> _mean_data;
+  /** Mean parameters and variables */
+  int _mean_length, _mean_nb_point;
+  double _mean_x, _mean_y;
+};
 
 // ***************************************************************************
 // ****************************************************************** CurveDyn
