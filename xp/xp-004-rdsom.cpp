@@ -94,6 +94,9 @@ TParam                       _opt_ela                = 0.2;
 TParam                       _opt_ela_rec            = 0.2;
 bool                         _opt_graph              = false;
 unsigned int                 _opt_queue_size         = 5;
+std::unique_ptr<std::string> _opt_filesave_result    = nullptr;
+unsigned int                 _opt_learn_length       = 100;
+unsigned int                 _opt_period_save        = 50;
 bool                         _opt_verb               = false;
 
 // ******************************************************** forward references
@@ -128,6 +131,9 @@ void setup_options(int argc, char **argv)
         ("dsom_ela_rec", po::value<TParam>(&_opt_ela_rec)->default_value(_opt_ela_rec), "dsom elasticity recurrent")
         ("graph,g", "graphics" )
         ("queue_size", po::value<unsigned int>(&_opt_queue_size)->default_value(_opt_queue_size), "Length of Queue for Graph")
+    ("save_result", po::value<std::string>(), "save RESULTS in filename")
+    ("learn_length", po::value<unsigned int>(&_opt_learn_length)->default_value(_opt_learn_length), "Learning Length")
+    ("period_save", po::value<unsigned int>(&_opt_period_save)->default_value(_opt_period_save), "Saving Period")
 	("verb,v", "verbose" )
 	;
 
@@ -173,6 +179,10 @@ void setup_options(int argc, char **argv)
   }
   if (vm.count("load_rdsom")) {
     _opt_fileload_rdsom = make_unique<std::string>(vm["load_rdsom"].as< std::string>());
+  }
+  // RESULTS
+  if (vm.count("save_result")) {
+    _opt_filesave_result = make_unique<std::string>(vm["save_result"].as< std::string>());
   }
 
   // Options
@@ -576,16 +586,29 @@ int main(int argc, char *argv[])
        _fig_error->render( true, false ); // Update axes x, y
      }
    }
-  //  // Learn_________________________
-  // if( _opt_fileload_traj and _opt_fileload_rdsom ) {
-  //   if( _opt_verb ) {
-  //     std::cout << "__LEARN" << std::endl;
-  //   }
-  //   learn( *_rdsom, _data->begin(), _data->end() );
+   else {
+     // Learn_________________________
+     std::cout << "__LEARN" << std::endl;
+     
+     unsigned int ite_cur = 0;
+     while( ite_cur < _opt_learn_length ) {
+       step_learn( *_rdsom, _opt_period_save,
+		     _data->begin(), _data->end() );
 
-  // 	// Save learned RDSOM
-  // 	// Some kind of criteria
-  // }
+       ite_cur += _opt_period_save;
+
+       std::cout << "  IT=" << ite_cur << ", saving..." << std::endl;
+
+       // Save rdsom
+       if( _opt_filesave_result ) {
+	 std::stringstream f_rdsomsave;
+	 f_rdsomsave << *_opt_filesave_result;
+	 f_rdsomsave << "_rdsom_" << ite_cur;
+	 save_rdsom( f_rdsomsave.str(), *_rdsom );
+       }
+       // 	// Some kind of criteria
+     }
+   }
    return 0;
 }
 
