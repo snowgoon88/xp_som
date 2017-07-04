@@ -149,7 +149,7 @@ public:
   }
   /** Creation from JSON file */
   RNetwork( std::istream& is ) : 
-    _winner_neur(0), _old_winner_neur(0),
+    _winner_neur(0), _old_winner_neur(0), _pred_winner(0),
     _winner_dist(std::numeric_limits<double>::max()),
     _winner_dist_input(std::numeric_limits<double>::max()),
     _winner_dist_rec(std::numeric_limits<double>::max()),
@@ -345,7 +345,7 @@ public:
     // Compute the winner, this will update similarities
     if( verb ) {
       std::cout << "__FORWARD" << std::endl;
-	  std::cout << "  => pred is " << _pred_winner;
+      std::cout << "  => pred is " << _pred_winner;
       std::cout << "  " << v_neur[_pred_winner]->str_display() << std::endl;
 	}
     computeWinner( input, beta, sig_input, sig_recur, sig_conv );
