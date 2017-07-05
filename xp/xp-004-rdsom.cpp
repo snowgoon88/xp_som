@@ -7,8 +7,10 @@
  *  - create and save DSOM
  *  - load DSOM
  *  - run XP
- *  - TODO what must be saved ??
- *  - TODO graphic
+ *  - what must be saved ??
+ *  - graphic
+ *  - batch learning
+ *  - batch testing with rdsom and traj
  */
 
 #include <iostream>                // std::cout
@@ -100,6 +102,8 @@ unsigned int                 _opt_queue_size         = 5;
 std::unique_ptr<std::string> _opt_filesave_result    = nullptr;
 unsigned int                 _opt_learn_length       = 100;
 unsigned int                 _opt_period_save        = 50;
+bool                         _opt_test               = false;
+unsigned int                 _opt_nb_test            = 2;
 bool                         _opt_verb               = false;
 
 // ******************************************************** forward references
@@ -137,6 +141,8 @@ void setup_options(int argc, char **argv)
     ("save_result", po::value<std::string>(), "save RESULTS in filename")
     ("learn_length", po::value<unsigned int>(&_opt_learn_length)->default_value(_opt_learn_length), "Learning Length")
     ("period_save", po::value<unsigned int>(&_opt_period_save)->default_value(_opt_period_save), "Saving Period")
+	("testing", "Testing Mode")
+	("nb_test", po::value<unsigned int>(&_opt_nb_test)->default_value(_opt_nb_test), "Nomber of test-run")
 	("verb,v", "verbose" )
 	;
 
@@ -191,6 +197,9 @@ void setup_options(int argc, char **argv)
   // Options
   if( vm.count("graph") ) {
     _opt_graph = true;
+  }
+  if( vm.count("testing") ) {
+    _opt_test = true;
   }
   if( vm.count("verb") ) {
     _opt_verb = true;
@@ -466,8 +475,6 @@ void step_test( RDSOM& rdsom,
   Model::DSOM::RNetwork::TNumber err_rec = 0;
   Model::DSOM::RNetwork::TNumber err_pred = 0;
 
-  rdsom.reset();
-  
   for (auto it = input_start; it != input_end; ++it) {
     // Forward new input BUT do not update network
     Eigen::VectorXd input(1);
@@ -536,7 +543,7 @@ int main(int argc, char *argv[])
        std::cout << _rdsom->str_dump() << std::endl;
    }
    // Graphic before Learning (as Learn will depend on it)
-   if( _opt_graph ) {
+   if( _opt_graph and !_opt_test ) {
      if( _opt_verb) {
        std::cout << "__INIT GRAPHIC" << std::endl;
      }
@@ -625,33 +632,35 @@ int main(int argc, char *argv[])
        _fig_error->render( true, false ); // Update axes x, y
      }
    }
-   else {
-     // Learn_________________________
-     std::cout << "__LEARN" << std::endl;
-
+   else if( !_opt_test ) {
+	 // Learn_________________________
+	 std::cout << "__LEARN" << std::endl;
+	   
      unsigned int ite_cur = 0;
-     while( ite_cur < _opt_learn_length ) {
-       step_learn( *_rdsom, _opt_period_save,
-		     _data->begin(), _data->end() );
-
-       ite_cur += _opt_period_save;
-
+	 while( ite_cur < _opt_learn_length ) {
+	   step_learn( *_rdsom, _opt_period_save,
+				   _data->begin(), _data->end() );
+	   
+	   ite_cur += _opt_period_save;
+	   
 	   // Test a copy of rdsom on all data
 	   RDSOM tmp_rdsom{ *_rdsom };
-	   step_test( tmp_rdsom, _data->begin(), _data->end() );
+	   tmp_rdsom.reset();
+ 	   step_test( tmp_rdsom, _data->begin(), _data->end() );
 	   
-       std::cout << "  IT=" << ite_cur << ", saving..." << std::endl;
+	   std::cout << "  IT=" << ite_cur << ", saving..." << std::endl;
 	   // std::cout << "  err_in=" << _v_err_input.back() << std::endl;
 	   
-       // Save rdsom
-       if( _opt_filesave_result ) {
-	 std::stringstream f_rdsomsave;
-	 f_rdsomsave << *_opt_filesave_result;
-	 f_rdsomsave << "_rdsom_" << ite_cur;
-	 save_rdsom( f_rdsomsave.str(), *_rdsom );
-       }
-       // 	// Some kind of criteria
-     }
+	   // Save rdsom
+	   if( _opt_filesave_result ) {
+		 std::stringstream f_rdsomsave;
+		 f_rdsomsave << *_opt_filesave_result;
+		 f_rdsomsave << "_rdsom_" << ite_cur;
+		 save_rdsom( f_rdsomsave.str(), *_rdsom );
+	   }
+	   // 	// Some kind of criteria
+	 }
+
      // At the end, save errors
 	 std::stringstream filename_error;
 	 filename_error << *_opt_filesave_result;
@@ -687,6 +696,48 @@ int main(int argc, char *argv[])
 	 }
 	 ofile.close();
    }
+   else {
+	 // Test____________________________
+	 std::cout << "__TEST"  << std::endl;
+
+	 for( unsigned int i = 0; i < _opt_nb_test; ++i) {
+	   step_test( *_rdsom, _data->begin(), _data->end() );
+	   std::cout << "  IT=" << i << std::endl;
+	 }
+
+	 // At the end, save errors
+	 std::stringstream filename_error;
+	 filename_error << *_opt_filesave_result;
+	 filename_error << "_test";
+	 auto ofile = std::ofstream( filename_error.str() );
+	 
+	 // Header comments
+	 ofile << "## \"traj_name\" : \"" << *_opt_fileload_traj << "\"," << std::endl;
+	 ofile << "## \"rdsom_name\": \"" << *_opt_fileload_rdsom << "\"," << std::endl;
+	 // @todo: parameters
+	 ofile << "## \"beta\"; \"" << _opt_beta << "\"," << std::endl;
+	 ofile << "## \"sigma_input\"; \"" << _opt_sig_input << "\"," << std::endl;
+	 ofile << "## \"sigma_recur\"; \"" << _opt_sig_recur << "\"," << std::endl;
+	 ofile << "## \"sigma_convo\"; \"" << _opt_sig_convo << "\"," << std::endl;
+	 ofile << "## \"epsilon\"; \"" << _opt_eps << "\"," << std::endl;
+	 ofile << "## \"ela_input\"; \"" << _opt_ela << "\"," << std::endl;
+	 ofile << "## \"ela_rec\"; \"" << _opt_ela_rec << "\"," << std::endl;
+	 // Header col names
+	 ofile << "ite\terr_in\terr_rec\terr_pred" << std::endl;
+	 // Data
+	 for( unsigned int idx = 0; idx < _opt_nb_test; ++idx) {
+	   ofile << idx << "\t";
+	   ofile << _v_err_input[idx] << "\t";
+	   ofile << _v_err_rec[idx] << "\t";
+	   ofile << _v_err_pred[idx];
+	   ofile << std::endl;
+
+	   ++idx;
+	 }
+	 ofile.close();
+	 
+   }
    return 0;
 }
 
+	 unsigned int ite_test = 0;
