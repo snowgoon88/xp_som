@@ -636,8 +636,13 @@ int main(int argc, char *argv[])
 
        ite_cur += _opt_period_save;
 
+	   // Test a copy of rdsom on all data
+	   RDSOM tmp_rdsom{ *_rdsom };
+	   step_test( tmp_rdsom, _data->begin(), _data->end() );
+	   
        std::cout << "  IT=" << ite_cur << ", saving..." << std::endl;
-
+	   // std::cout << "  err_in=" << _v_err_input.back() << std::endl;
+	   
        // Save rdsom
        if( _opt_filesave_result ) {
 	 std::stringstream f_rdsomsave;
@@ -648,7 +653,39 @@ int main(int argc, char *argv[])
        // 	// Some kind of criteria
      }
      // At the end, save errors
-     
+	 std::stringstream filename_error;
+	 filename_error << *_opt_filesave_result;
+	 filename_error << "_errors";
+	 auto ofile = std::ofstream( filename_error.str() );
+	 
+	 // Header comments
+	 ofile << "## \"traj_name\" : \"" << *_opt_fileload_traj << "\"," << std::endl;
+	 ofile << "## \"rdsom_name\": \"" << *_opt_fileload_rdsom << "\"," << std::endl;
+	 // @todo: parameters
+	 ofile << "## \"beta\"; \"" << _opt_beta << "\"," << std::endl;
+	 ofile << "## \"sigma_input\"; \"" << _opt_sig_input << "\"," << std::endl;
+	 ofile << "## \"sigma_recur\"; \"" << _opt_sig_recur << "\"," << std::endl;
+	 ofile << "## \"sigma_convo\"; \"" << _opt_sig_convo << "\"," << std::endl;
+	 ofile << "## \"epsilon\"; \"" << _opt_eps << "\"," << std::endl;
+	 ofile << "## \"ela_input\"; \"" << _opt_ela << "\"," << std::endl;
+	 ofile << "## \"ela_rec\"; \"" << _opt_ela_rec << "\"," << std::endl;
+	 // Header col names
+	 ofile << "ite\terr_in\terr_rec\terr_pred" << std::endl;
+	 // Data
+	 ite_cur = 0;
+	 unsigned int idx = 0;
+     while( ite_cur < _opt_learn_length ) {
+	   ite_cur += _opt_period_save;
+	   std::cout << "__SAVING for ite="<< ite_cur << " idx=" << idx << std::endl;
+	   ofile << ite_cur << "\t";
+	   ofile << _v_err_input[idx] << "\t";
+	   ofile << _v_err_rec[idx] << "\t";
+	   ofile << _v_err_pred[idx];
+	   ofile << std::endl;
+
+	   ++idx;
+	 }
+	 ofile.close();
    }
    return 0;
 }
