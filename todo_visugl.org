@@ -565,7 +565,7 @@ wbuild/xp/xp-004-rdsom -t data_rdsom/traj_p05AAAAAF_600_n000.data -d data_rdsom/
 wbuild/xp/xp-004-rdsom -t data_rdsom/traj_p05AAAAAF_600_n000.data -d data_rdsom/rdsom_50.json -g --queue_size 10 --dsom_ela 1.0 --dsom_sig_r 0.01 --dsom_sig_i 0.01 --dsom_beta 0.9
 
 build/xp/xp-004-rdsom -t data_rdsom/traj_p05AAAAAF_600_n000.data -d data_rdsom/rdsom_50.json -g --queue_size 10 --dsom_ela 1.3 --dsom_sig_r 0.01 --dsom_sig_i 0.01 --dsom_beta 0.6
-*** <2017-03-21 Tue>
+*** TODO <2017-03-21 Tue>
 Modifier le rôle de beta
 **** DONE Essayer en linéaire ? => *BAD*
 merged = mu * beta + (1-beta) * nu 
@@ -590,16 +590,13 @@ wbuild/xp/xp-004-rdsom -t data_rdsom/traj_p05AAAAAF_6000.data -d data_rdsom/rdso
 ***** DONE _end_, errors
 ***** DONE _end_, erros on last N points, or on window, or length, or all data
 ***** DONE _end_, result file hmm_exp, traj_name, dsom, param, test leng, etc...
-**** TODO Testing mode avec autres traj
+**** DONE Testing mode avec autres traj
 **** DONE algorithme déterministe => OUI !
 ***** Création de Traj
 ***** Création de RDSOM
 ***** Pas de bruit dans l'apprentissage.
 **** TODO Légende des courbres ??
 **** TODO refaire les courbes de séquences / prédition de ESN
-
-
-
 
 * [2/3] Visualisation
 ** DONE Ecrire du texte n'importe où 

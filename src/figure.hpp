@@ -21,6 +21,7 @@
 
 #include <curve.hpp>
 #include <axis.hpp>
+#include <gl_utils.hpp>              // utils::gl::to_png
 
 #include <list>
 #include <memory>
@@ -114,6 +115,16 @@ public:
   void add_text( const std::string msg, double x=0.0, double y=0.0 )
   {
     _text_list.push_back( GraphicText{ x, y, msg } );
+  }
+  // ************************************************************ Figure::save
+  void save( const std::string& filename )
+  {
+    // Make sure using current window
+    glfwMakeContextCurrent( _window );
+    // TODO can also be set to another DataStructure
+    glfwSetWindowUserPointer( _window, this);
+
+    utils::gl::to_png( filename );
   }
   // ********************************************************** Figure::render
   void render( bool update_axes_x=false, bool update_axes_y=false )

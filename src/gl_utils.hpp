@@ -8,7 +8,7 @@
  * - save screen as PNG
  */
 #include <iostream>              // std::cout
-#include <png++/png.hpp>         // lipbg++
+#include <pngwriter.h>
 #include <GL/gl.h>               // OpenGL
 #include <utils.hpp>              // make_unique
 
@@ -18,9 +18,9 @@
 namespace utils {
 namespace gl {
 // ******************************************************************** to_png
-  void to_png( const std::string& filename )
+void to_png( const std::string& filename )
 {
-  std::cout << "__ SAVE to_png in " << filename << std::endl;
+  // std::cout << "__ SAVE to_png in " << filename << std::endl;
   // Window dimension, through VIEWPORT
   GLint screen_dim[4];
   glGetIntegerv( GL_VIEWPORT, screen_dim);
@@ -28,29 +28,41 @@ namespace gl {
   // std::cout << "  dim = " << "+" << screen_dim[0] << ", " << screen_dim[1];
   // std::cout << " " << screen_dim[2] << " x " << screen_dim[3] << std::endl;
 
-  png::image<png::rgb_pixel> image(screen_dim[2], screen_dim[3]);
-
+  pngwriter image( screen_dim[2], screen_dim[3],
+		   0, // background color
+		   filename.c_str() );
   // get image pixels
-  //unsigned char *pixels = (unsigned char*) malloc( 3 * screen_dim[2] * screen_dim[3] );
   // new buffer, access raw with .get()
-  std::unique_ptr<unsigned char[]> pixels( new unsigned char [3 * screen_dim[2] * screen_dim[3]]);
+  std::unique_ptr<GLfloat[]> pixels( new GLfloat [3 * screen_dim[2] * screen_dim[3]]);
 
+  // check OpenGL error
+  GLenum err;
+  // std::cout << "__ READ buffer start" << std::endl;
+  while ((err = glGetError()) != GL_NO_ERROR) {
+    std::cerr << "OpenGL error: " << err << std::endl;
+  }
   glReadPixels( screen_dim[0], screen_dim[1], screen_dim[2], screen_dim[3],
-		GL_RGB, GL_UNSIGNED_BYTE, pixels.get() );
+		GL_RGB, GL_FLOAT, pixels.get() );
   // std::cout << "__ READ buffer end" << std::endl;
-
+  while ((err = glGetError()) != GL_NO_ERROR) {
+    std::cerr << "OpenGL error: " << err << std::endl;
+  }
   // copy image
+  // std::cout << "__ SET image start" << std::endl;
   for( auto y = screen_dim[1]; y <screen_dim[3]; ++y ) {
     for( auto x = screen_dim[0]; x < screen_dim[2]; ++x ) {
-      image[screen_dim[3]-y-1][x] = png::rgb_pixel( pixels[3*x + y*3*screen_dim[2] + 0],
-						    pixels[3*x + y*3*screen_dim[2] + 1],
-						    pixels[3*x + y*3*screen_dim[2] + 2] );
+      image.plot( x, y,
+		  pixels[3*x + y*3*screen_dim[2] + 0],
+		  pixels[3*x + y*3*screen_dim[2] + 1],
+		  pixels[3*x + y*3*screen_dim[2] + 2] );
     }
   }
+  // std::cout << "__ SET image end" << std::endl;
   // save image
-  image.write( filename.c_str() );
+  // std::cout << "__ SAVE to "<< filename << std::endl;
+  image.close();
 }
-
+  
 }; // namespace gl
 }; // namespace utils
 

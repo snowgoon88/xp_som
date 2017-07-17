@@ -22,5 +22,5 @@ def build( bld ):
     bld.program( source=['xp-004-rdsom.cpp'],
     		 target='xp-004-rdsom',
 		 includes=['.', '../include', '../src','../src/supelec'],
-		 use=['JSON', 'GSL', 'BOOST', 'FTGL', 'GL', 'GLFW3','EIGEN3'] )
+		 use=['JSON', 'GSL', 'BOOST', 'FTGL', 'GL', 'GLFW3','EIGEN3', 'PNG','PNGWRITER'] )
     

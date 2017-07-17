@@ -20,6 +20,8 @@
 #include <sstream>                 // std::stringdtream
 #include <rapidjson/document.h>    // rapidjson's DOM-style API
 #include <json_wrapper.hpp>        // JSON::IStreamWrapper
+#include <chrono>
+#include <thread>
 
 #include <hmm-json.hpp>
 #include <input.hpp>
@@ -486,6 +488,10 @@ void step_test( RDSOM& rdsom,
 		   _opt_sig_input, _opt_sig_recur, _opt_sig_convo,
 		   _opt_verb);
 
+    if( _winner_queue ) {
+      _winner_queue->push_front( rdsom.get_winner() );
+    }
+
     err_input += rdsom.get_winner_dist_input();
     err_rec += rdsom.get_winner_dist_rec();
     err_pred += rdsom.get_winner_dist_pred();
@@ -542,13 +548,15 @@ int main(int argc, char *argv[])
      if( _opt_verb )
        std::cout << _rdsom->str_dump() << std::endl;
    }
+   // GRAPHIC or LEARN or TEST will use _winner_queue
+   _winner_queue = new FixedQueue<unsigned int>( _opt_queue_size);
+
    // Graphic before Learning (as Learn will depend on it)
    if( _opt_graph and !_opt_test ) {
      if( _opt_verb) {
        std::cout << "__INIT GRAPHIC" << std::endl;
      }
      _fig_rdsom = new Figure( "RDSOM: r-network", 450, 450, 340, 0 );
-     _winner_queue = new FixedQueue<unsigned int>( _opt_queue_size);
      _rdsom_viewer = new RDSOMViewer( *_rdsom, *_winner_queue );
      _fig_rdsom->add_curve( _rdsom_viewer );
      _fig_rdsom->set_draw_axes( false );
@@ -684,17 +692,33 @@ int main(int argc, char *argv[])
 	 ite_cur = 0;
 	 unsigned int idx = 0;
      while( ite_cur < _opt_learn_length ) {
-	   ite_cur += _opt_period_save;
-	   std::cout << "__SAVING for ite="<< ite_cur << " idx=" << idx << std::endl;
-	   ofile << ite_cur << "\t";
-	   ofile << _v_err_input[idx] << "\t";
-	   ofile << _v_err_rec[idx] << "\t";
-	   ofile << _v_err_pred[idx];
-	   ofile << std::endl;
-
-	   ++idx;
-	 }
-	 ofile.close();
+       ite_cur += _opt_period_save;
+       std::cout << "__SAVING for ite="<< ite_cur << " idx=" << idx << std::endl;
+       ofile << ite_cur << "\t";
+       ofile << _v_err_input[idx] << "\t";
+       ofile << _v_err_rec[idx] << "\t";
+       ofile << _v_err_pred[idx];
+       ofile << std::endl;
+       
+       ++idx;
+     }
+     ofile.close();
+     
+     // And save a PNG image of the last _opt_queue_size neurons
+     std::stringstream filename_png;
+     filename_png << *_opt_filesave_result;
+     filename_png << "_rdsom.png";
+     
+     _fig_rdsom = new Figure( "RDSOM: r-network", 450, 450, 340, 0 );
+     _rdsom_viewer = new RDSOMViewer( *_rdsom, *_winner_queue );
+     _fig_rdsom->add_curve( _rdsom_viewer );
+     _fig_rdsom->set_draw_axes( false );
+     _fig_rdsom->render( true );
+     // std::this_thread::sleep_for(std::chrono::seconds(1));
+     _fig_rdsom->save( filename_png.str() );
+     // std::this_thread::sleep_for(std::chrono::seconds(5));
+     delete _fig_rdsom;
+     
    }
    else {
 	 // Test____________________________
@@ -735,6 +759,21 @@ int main(int argc, char *argv[])
 	   ++idx;
 	 }
 	 ofile.close();
+
+	 // And save a PNG image of the last _opt_queue_size neurons
+	 std::stringstream filename_png;
+	 filename_png << *_opt_filesave_result;
+	 filename_png << "_rdsom.png";
+
+	 _fig_rdsom = new Figure( "RDSOM: r-network", 450, 450, 340, 0 );
+	 _rdsom_viewer = new RDSOMViewer( *_rdsom, *_winner_queue );
+	 _fig_rdsom->add_curve( _rdsom_viewer );
+	 _fig_rdsom->set_draw_axes( false );
+	 _fig_rdsom->render( true );
+	 // std::this_thread::sleep_for(std::chrono::seconds(1));
+	 _fig_rdsom->save( filename_png.str() );
+	 // std::this_thread::sleep_for(std::chrono::seconds(5));
+	 delete _fig_rdsom;
 	 
    }
    return 0;

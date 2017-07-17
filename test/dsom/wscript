@@ -14,5 +14,5 @@ def build(bld):
                 source=[file],
                 target = file[:-4],
                 includes=['.', '../../include', '../../src'],
-                use = ['GSL','FTGL','GAML','GL','GLFW3','EIGEN3']
+                use = ['GSL','FTGL','GAML','GL','GLFW3','EIGEN3', 'PNG','PNGWRITER']
             )

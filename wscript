@@ -60,7 +60,16 @@ def configure( conf ):
     conf.env.LIBPATH_BOOST = ['/usr/lib/x86_64-linux-gnu','/usr/lib/i386-linux-gnu']
     print "Checking for 'BOOST::program_options'"
     conf.find_file( 'lib'+conf.env.LIB_BOOST[0]+'.so', conf.env.LIBPATH_BOOST )
-
+    ## Require/Check pngwriter
+    pngwriter_path = '/home/dutech/Projets/pngwriter'
+    conf.env.LIB_PNGWRITER = ['pngwriter']
+    conf.env.INCLUDES_PNGWRITER  = [pngwriter_path+'/include']
+    conf.env.LIBPATH_PNGWRITER = [pngwriter_path+'/lib']
+    print "Checking for 'pngwriter'"
+    conf.find_file( conf.env.LIB_PNGWRITER[0]+'.h', conf.env.INCLUDES_PNGWRITER )
+    conf.find_file( 'lib'+conf.env.LIB_PNGWRITER[0]+'.so', conf.env.LIBPATH_PNGWRITER )
+    
+    
 # ******************************************************************** CMD build
 def build( bld ):
     print('→ build from ' + bld.path.abspath())
