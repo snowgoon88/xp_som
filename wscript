@@ -50,6 +50,11 @@ def configure( conf ):
                    uselib_store='EIGEN3',
                    args=['--cflags', '--libs']
     )
+    ## Require libpng++, using wrapper around pkg-config
+    conf.check_cfg(package='libpng',
+                   uselib_store='PNG',
+                   args=['--cflags', '--libs']
+    )
     ## Require/Check libboost
     conf.env.LIB_BOOST = ['boost_program_options']
     conf.env.LIBPATH_BOOST = ['/usr/lib/x86_64-linux-gnu','/usr/lib/i386-linux-gnu']
