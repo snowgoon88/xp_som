@@ -598,6 +598,41 @@ wbuild/xp/xp-004-rdsom -t data_rdsom/traj_p05AAAAAF_6000.data -d data_rdsom/rdso
 **** TODO Légende des courbres ??
 **** TODO refaire les courbes de séquences / prédition de ESN
 
+*** TODO [1/2] <2017-08-29 Tue>
+**** TODO XP
+l_hmm = ['! .05 AAAAAF']
+    l_hmm_names = ['p05AAAAAF']
+    l_traj_size = [6000]
+    l_hmm_names_test = ['p05AAAAAF']
+    l_traj_size_test = [6000]
+    s_nb_test = 2
+    l_rdsom_size = [100]
+    l_ela = [1.0]
+    l_ela_rec = [0.01]
+    l_eps = [0.25]
+    l_sig_r = [0.1]
+    l_sig_i = [0.1]
+    l_beta = [0.05]
+    l_learn_length = [100000]
+    s_period = 1000
+    s_queue_size = 10
+    
+    nb_traj    = 10       ## how many instances of each traj config
+    nb_traj_test = 2
+    nb_rdsom     = 10       ## how many instances of each esn config
+    nb_repeat  = 1       ## no need to repeat : deterministic learning
+    nb_start   = 0       ## start numbering files with
+    generate_hmm  = False     ## need to generate hmm
+    generate_traj = False     ## need to generate traj
+    generate_rdsom  = False     ## need to generate esn
+    learn         = True    ## learn
+    fg_test       = False    ## testing
+**** DONE Meilleure sauvegarde des images
+***** Pb : pas de fenêtre si screen saver => off line rendering
+- https://stackoverflow.com/questions/12157646/how-to-render-offscreen-on-opengl
+- https://www.khronos.org/opengl/wiki/Framebuffer_Object
+***** DONE essai de off-screen avec programme simple (triangle)
+***** DONE cmp off et on screen rendering => proper tool
 * [2/3] Visualisation
 ** DONE Ecrire du texte n'importe où 
 ** TODO Classe[Container] avec 2 membres "one", "two"

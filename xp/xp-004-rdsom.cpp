@@ -267,7 +267,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
   else if( key == GLFW_KEY_V && action == GLFW_PRESS) {
     _opt_verb = !_opt_verb;
   }
-  // On/Off Mean mode for error
+  // On/Off Mean mode for error Z
   else if( key == GLFW_KEY_W && action == GLFW_PRESS) {
     // toggle _mean
 	if( _c_error_input->get_mean_mode() ) {
@@ -556,12 +556,12 @@ int main(int argc, char *argv[])
      if( _opt_verb) {
        std::cout << "__INIT GRAPHIC" << std::endl;
      }
-     _fig_rdsom = new Figure( "RDSOM: r-network", 450, 450, 340, 0 );
+     _fig_rdsom = new Figure( "RDSOM: r-network", 450, 450, false, 340, 0 );
      _rdsom_viewer = new RDSOMViewer( *_rdsom, *_winner_queue );
      _fig_rdsom->add_curve( _rdsom_viewer );
      _fig_rdsom->set_draw_axes( false );
 
-     _fig_weight = new Figure( "Input/Weights", 800, 350, 800, 50,
+     _fig_weight = new Figure( "Input/Weights", 800, 350, false, 800, 50,
 			       {0.0, (double) _rdsom->v_neur.size(),10,2},
 			       {0.0, 1.0, 10, 2} );
      // Weights
@@ -586,7 +586,7 @@ int main(int argc, char *argv[])
      _c_sim_hh_dist->set_width( 3 );
      _fig_weight->add_curve( _c_sim_hh_dist );
   
-     _fig_rweight = new Figure( "Recurrent/RWeights", 800, 350, 800, 430,
+     _fig_rweight = new Figure( "Recurrent/RWeights", 800, 350, false, 800, 430,
 				{0.0, (double) _rdsom->v_neur.size(),10,2},
 				{0.0, 1.0, 10, 2} );
      _c_rweight = new Curve();
@@ -610,7 +610,7 @@ int main(int argc, char *argv[])
      _fig_rweight->render();
 
      // Errors
-     _fig_error = new Figure( "Error", 800, 350, 400, 430,
+     _fig_error = new Figure( "Error", 800, 350, false, 400, 430,
 				{0.0, 100 ,10,2},
 				{0.0, 1.2, 10, 2});
      _c_error_input = new CurveMean();
@@ -703,13 +703,14 @@ int main(int argc, char *argv[])
        ++idx;
      }
      ofile.close();
-     
+
+     // OFFSCREEN saving.
      // And save a PNG image of the last _opt_queue_size neurons
      std::stringstream filename_png;
      filename_png << *_opt_filesave_result;
      filename_png << "_rdsom.png";
      
-     _fig_rdsom = new Figure( "RDSOM: r-network", 450, 450, 340, 0 );
+     _fig_rdsom = new Figure( "RDSOM: r-network", 450, 450, true /*offscreen */ );
      _rdsom_viewer = new RDSOMViewer( *_rdsom, *_winner_queue );
      _fig_rdsom->add_curve( _rdsom_viewer );
      _fig_rdsom->set_draw_axes( false );
@@ -760,12 +761,13 @@ int main(int argc, char *argv[])
 	 }
 	 ofile.close();
 
+	 // OFFSCREEN saving
 	 // And save a PNG image of the last _opt_queue_size neurons
 	 std::stringstream filename_png;
 	 filename_png << *_opt_filesave_result;
 	 filename_png << "_rdsom.png";
 
-	 _fig_rdsom = new Figure( "RDSOM: r-network", 450, 450, 340, 0 );
+	 _fig_rdsom = new Figure( "RDSOM: r-network", 450, 450, true /* offscreen */ );
 	 _rdsom_viewer = new RDSOMViewer( *_rdsom, *_winner_queue );
 	 _fig_rdsom->add_curve( _rdsom_viewer );
 	 _fig_rdsom->set_draw_axes( false );

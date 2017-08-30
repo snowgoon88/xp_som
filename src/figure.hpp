@@ -6,12 +6,17 @@
 /** 
  * A Window with a Figure inside to plot several curves.
  * Has its own font.
+ * Can be rendered and saved OFFSCREEN.
  */
+
+// include OpenGL > 1.1
+#include <GL/glew.h>
+
 #include <GLFW/glfw3.h>
 #include <iostream>                  // std::cout
 #include <string>                    // std::string
 
-#include <GL/gl.h>                   // OpenGL
+//#include <GL/gl.h>                   // OpenGL
 #include <FTGL/ftgl.h>               // Fonts in OpenGL
 #define FONT_PATH "ressources/Consolas.ttf"
 #define FONT_SIZE 12
@@ -49,11 +54,13 @@ public:
 public:
   // ******************************************************** Figure::creation
   Figure( std::string title = "Figure",
-		  const int width=640, const int height=400,
+	  const int width=640, const int height=400,
+	  const bool offscreen=false,
 	  const int posx=-1, const int posy = -1,
-		  const Range& x_range = {-1.0, 1.0, 10, 2},
-		  const Range& y_range = {-1.0, 1.0, 10, 2} ) :
+	  const Range& x_range = {-1.0, 1.0, 10, 2},
+	  const Range& y_range = {-1.0, 1.0, 10, 2} ) :
     _title( title ), _width(width), _height(height),
+    _offscreen(offscreen),
     _window(nullptr), _curves(),
     _draw_axes( true ),
     _axis_x( "X", x_range),
@@ -65,7 +72,10 @@ public:
 
     if (!glfwInit())
         exit(EXIT_FAILURE);
-    
+
+    if( _offscreen) {
+      glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    }
     _window = glfwCreateWindow(_width, _height, _title.c_str(), NULL, NULL);
     if (! _window ) {
       glfwTerminate();
@@ -73,8 +83,8 @@ public:
     }
     glfwSetWindowPos( _window, posx, posy );
     glfwMakeContextCurrent( _window );
-	// TODO can also be set to another DataStructure
-	glfwSetWindowUserPointer( _window, this);
+    // TODO can also be set to another DataStructure
+    glfwSetWindowUserPointer( _window, this);
     glfwSetKeyCallback( _window, key_callback);
 
     /** Init Fonts */
@@ -87,13 +97,51 @@ public:
 	std::cerr << "ERROR: Unable to set font face size " << FONT_SIZE << std::endl;
       }
     }
+
+    /** offscreen => need RenderBuffer in FrameBufferObject */
+    if( _offscreen ) {
+      GLenum error = glewInit();
+      if (error != GLEW_OK) {
+	std::cout << "error with glew init() : " << glewGetErrorString(error) << std::endl;
+      } else {
+        std::cout << "glew is ok\n\n";
+      }
+      // std::cout << "__CREATE RenderBuffer" << std::endl;
+      glGenRenderbuffers( 1 /* nb buffer */, &_render_buf);
+      utils::gl::check_error();
+      glBindRenderbuffer( GL_RENDERBUFFER, _render_buf );
+      utils::gl::check_error();
+      glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB32F, width, height);
+      utils::gl::check_error();
+      glBindRenderbuffer( GL_RENDERBUFFER, 0 );
+      utils::gl::check_error();
+
+      // std::cout << "__CREATE FrameBufferObject"  << std::endl;
+      glGenFramebuffers(1 /* nb objects*/, &_fbo);
+      utils::gl::check_error();
+      glBindFramebuffer( GL_FRAMEBUFFER, _fbo );
+      utils::gl::check_error();
+      glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, /* attach point */
+				 GL_RENDERBUFFER, _render_buf );
+      utils::gl::check_error();
+      
+      // switch back to window-system-provided framebuffer
+      glBindFramebuffer(GL_FRAMEBUFFER, 0);
+      utils::gl::check_error();
+    }
   }
   // ***************************************************** Figure::destruction
   ~Figure()
   {
-	glfwSetWindowShouldClose(_window, GL_TRUE);
+    glfwSetWindowShouldClose(_window, GL_TRUE);
     if(_window)
       glfwDestroyWindow( _window);
+    if( _offscreen ) {
+      glDeleteRenderbuffers( 1, &_render_buf );
+      utils::gl::check_error();
+      glDeleteFramebuffers( 1, &_fbo );
+      utils::gl::check_error();
+    }
   }
   // ******************************************************* Figure::add_curve
   CurvePtr add_curve( CurvePtr curve )
@@ -124,38 +172,61 @@ public:
     // TODO can also be set to another DataStructure
     glfwSetWindowUserPointer( _window, this);
 
+    if( _offscreen ) {
+      // set rendering destination to FBO
+      glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+      utils::gl::check_error();
+    }
     utils::gl::to_png( filename );
+
   }
   // ********************************************************** Figure::render
   void render( bool update_axes_x=false, bool update_axes_y=false )
   {
-	glfwMakeContextCurrent( _window );
-	// TODO can also be set to another DataStructure
-	glfwSetWindowUserPointer( _window, this);
+    glfwMakeContextCurrent( _window );
+    // TODO can also be set to another DataStructure
+    glfwSetWindowUserPointer( _window, this);
 
-	if( update_axes_x || update_axes_y ) {
-	  // Build proper axis by finding min/max on each axe
-	  Curve::BoundingBox bbox{ std::numeric_limits<double>::max(),
-		  (-std::numeric_limits<double>::max()),
-		  std::numeric_limits<double>::max(),
-		  -std::numeric_limits<double>::max() };
-	  
-	  for( const auto& curve: _curves ) {
-		auto b = curve->get_bbox();
-		if( b.x_min < bbox.x_min ) bbox.x_min = b.x_min;
-		if( b.x_max > bbox.x_max ) bbox.x_max = b.x_max;
-		if( b.y_min < bbox.y_min ) bbox.y_min = b.y_min;
-		if( b.y_max > bbox.y_max ) bbox.y_max = b.y_max;
-	  }
-	  if( update_axes_x) 
-	    _axis_x = Axis( "X", {bbox.x_min,bbox.x_max, 10, 2});
-	  if( update_axes_y )
-	    _axis_y = Axis( "Y", {bbox.y_min,bbox.y_max, 10, 2});
-	}
-	
-	// get window size
-	glfwGetFramebufferSize( _window, &_width, &_height);
-	// Info for scaling View and axes
+    if( _offscreen ) {
+      // set rendering destination to FBO
+      glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+      utils::gl::check_error();
+    }
+    
+    if( update_axes_x || update_axes_y ) {
+      // Build proper axis by finding min/max on each axe
+      Curve::BoundingBox bbox{ std::numeric_limits<double>::max(),
+	  (-std::numeric_limits<double>::max()),
+	  std::numeric_limits<double>::max(),
+	  -std::numeric_limits<double>::max() };
+      
+      for( const auto& curve: _curves ) {
+	auto b = curve->get_bbox();
+	if( b.x_min < bbox.x_min ) bbox.x_min = b.x_min;
+	if( b.x_max > bbox.x_max ) bbox.x_max = b.x_max;
+	if( b.y_min < bbox.y_min ) bbox.y_min = b.y_min;
+	if( b.y_max > bbox.y_max ) bbox.y_max = b.y_max;
+      }
+      if( update_axes_x) 
+	_axis_x = Axis( "X", {bbox.x_min,bbox.x_max, 10, 2});
+      if( update_axes_y )
+	_axis_y = Axis( "Y", {bbox.y_min,bbox.y_max, 10, 2});
+    }
+    
+    // get window size
+    if( _offscreen ) {
+      glBindRenderbuffer( GL_RENDERBUFFER, _render_buf );
+      utils::gl::check_error();
+      glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &_width);
+      glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &_height);
+      utils::gl::check_error();
+      glBindRenderbuffer( GL_RENDERBUFFER, 0 );
+      utils::gl::check_error();
+    }
+    else {
+      glfwGetFramebufferSize( _window, &_width, &_height);
+    }
+    // Info for scaling View and axes
     auto x_min_win = _axis_x.get_range()._min
       - 0.08 * (_axis_x.get_range()._max - _axis_x.get_range()._min);
     auto x_max_win = _axis_x.get_range()._max
@@ -198,15 +269,18 @@ public:
 	    _font->Render( txt.msg.c_str() );
 	  } glPopMatrix();
 	}
-	
-	glfwSwapBuffers( _window );
-	glfwPollEvents();	
+
+	if( not _offscreen ) {
+	  glfwSwapBuffers( _window );
+	  glfwPollEvents();
+	}
   }
 
 public:
   // ******************************************************* Figure::attributs
   std::string _title;
   int _width, _height;
+  bool _offscreen;
   GLFWwindow* _window;
   /** All the curves */
   CurveList _curves;
@@ -217,6 +291,8 @@ public:
   std::list<GraphicText> _text_list;
   /** Fonts to write text */
   /*static*/ FTFont* _font;
+  /** GLew variables for FrameBufferObject, RenderBuffer */
+  GLuint _fbo, _render_buf;
 };
 
 

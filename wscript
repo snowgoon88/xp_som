@@ -40,6 +40,11 @@ def configure( conf ):
                    uselib_store='GL',
                    args=['--cflags', '--libs']
     )
+    ## Require OpenGL >1.1 (glew), using wraper around pkg-onfig
+    conf.check_cfg(package='glew',
+                   uselib_store='GLEW',
+                   args=['--cflags', '--libs']
+    )
     ## Require GLFW3, using wraper around pkg-config
     conf.check_cfg(package='glfw3',
                    uselib_store='GLFW3',
