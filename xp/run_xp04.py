@@ -69,7 +69,7 @@ def repeat( name_hmm, name_traj, name_rdsom,
         if testing:
             tmp_args.extend( ['--testing'])
             tmp_args.extend( ['--nb_test', str(nb_test)] )
-        print "  →",tmp_args
+        print "  → "+" ".join(tmp_args)
         sp.Popen( tmp_args ).wait()
 # ************************************************************************* xp
 def xp():
@@ -93,13 +93,13 @@ def xp():
     l_sig_r = [0.1]
     l_sig_i = [0.1]
     l_beta = [0.05]
-    l_learn_length = [12000]
-    s_period = 1000
+    l_learn_length = [100000]
+    s_period = 10000
     s_queue_size = 10
     
-    nb_traj    = 3       ## how many instances of each traj config
+    nb_traj    = 10       ## how many instances of each traj config
     nb_traj_test = 2
-    nb_rdsom     = 3       ## how many instances of each esn config
+    nb_rdsom     = 10       ## how many instances of each esn config
     nb_repeat  = 1       ## no need to repeat : deterministic learning
     nb_start   = 0       ## start numbering files with
     generate_hmm  = False     ## need to generate hmm
@@ -191,7 +191,7 @@ def xp():
                 output_name = hmm_expr+"_"+str(traj_size)+"_"+str(rdsom_size)+"_"+str(ela)+"_"+str(ela_rec)+"_"+str(eps)+"_"+str(sig_i)+"_"+str(sig_r)+"_"+str(beta)+"_"+str(learn_length)
                 output_name += "_rdsom{0:03d}".format(id_rdsom)+"_t{0:03d}".format(id_traj)
 
-                output_name = "data_rdsom/New/result_"+output_name+".data"
+                output_name = "data_rdsom/Test/result_"+output_name+".data"
                 ## Run XP
                 repeat( name_hmm = hmm_name,
                         name_traj=    traj_name,

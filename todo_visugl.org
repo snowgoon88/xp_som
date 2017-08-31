@@ -598,7 +598,7 @@ wbuild/xp/xp-004-rdsom -t data_rdsom/traj_p05AAAAAF_6000.data -d data_rdsom/rdso
 **** TODO Légende des courbres ??
 **** TODO refaire les courbes de séquences / prédition de ESN
 
-*** TODO [1/2] <2017-08-29 Tue>
+*** TODO [3/7] <2017-08-29 Tue>
 **** TODO XP
 l_hmm = ['! .05 AAAAAF']
     l_hmm_names = ['p05AAAAAF']
@@ -633,6 +633,42 @@ l_hmm = ['! .05 AAAAAF']
 - https://www.khronos.org/opengl/wiki/Framebuffer_Object
 ***** DONE essai de off-screen avec programme simple (triangle)
 ***** DONE cmp off et on screen rendering => proper tool
+**** DONE PB : assurer expérience déterministe ==> OK
+**** DONE PB : assurer que batchXp == liveXP
+en lançant directement l'apprentissage en ligne de commande, je n'obtient pas les même figures
+=> les passage de step_test changeaient la queue qui sert à visualiser. Changed.
+***** BATCH
+'wbuild/xp/xp-004-rdsom', '-m', 'data_hmm/hmm_p05AAAAAF.json', '-t', 'data_hmm/traj_p05AAAAAF_6000_n000.data', '-d', 'data_rdsom/rdsom_100_n000.json', '--dsom_beta', '0.05', '--dsom_ela', '1.0', '--dsom_ela_rec', '0.01', '--dsom_eps', '0.25', '--dsom_sig_i', '0.1', '--dsom_sig_r', '0.1', '--learn_length', '10000', '--queue_size', '10',
+RNeuron Neuron [24] at (24, ) w=0.953109 =(0.24, ) rw=0.93511 
+  RNeuron Neuron [81] at (81, ) w=0.00127518 =(0.81, ) rw=0.150892 
+  RNeuron Neuron [82] at (82, ) w=0.00142452 =(0.82, ) rw=0.204328 
+  RNeuron Neuron [81] at (81, ) w=0.00127518 =(0.81, ) rw=0.150892 
+  RNeuron Neuron [81] at (81, ) w=0.00127518 =(0.81, ) rw=0.150892 
+  RNeuron Neuron [81] at (81, ) w=0.00127518 =(0.81, ) rw=0.150892 
+  RNeuron Neuron [18] at (18, ) w=0.988704 =(0.18, ) rw=0.899989 
+  RNeuron Neuron [81] at (81, ) w=0.00127518 =(0.81, ) rw=0.150892 
+  RNeuron Neuron [81] at (81, ) w=0.00127518 =(0.81, ) rw=0.150892 
+  RNeuron Neuron [81] at (81, ) w=0.00127518 =(0.81, ) rw=0.150892
+***** Live
+wbuild/xp/xp-004-rdsom -m data_hmm/hmm_p05AAAAAF.json -t data_hmm/traj_p05AAAAAF_6000_n000.data -d data_rdsom/rdsom_100_n000.json --dsom_beta 0.05 --dsom_ela 1.0 --dsom_ela_rec 0.01 --dsom_eps 0.25 --dsom_sig_i 0.1 --dsom_sig_r 0.1 --queue_size 10 -g
+_QUEUE
+  RNeuron Neuron [72] at (72, ) w=0.00397757 =(0.72, ) rw=0.739638 
+  RNeuron Neuron [72] at (72, ) w=0.00397757 =(0.72, ) rw=0.739638 
+  RNeuron Neuron [71] at (71, ) w=0.00426293 =(0.71, ) rw=0.773481 
+  RNeuron Neuron [80] at (80, ) w=0.00120886 =(0.8, ) rw=0.139694 
+  RNeuron Neuron [14] at (14, ) w=1.00281 =(0.14, ) rw=0.716672 
+  RNeuron Neuron [72] at (72, ) w=0.00397757 =(0.72, ) rw=0.739638 
+  RNeuron Neuron [72] at (72, ) w=0.00397757 =(0.72, ) rw=0.739638 
+  RNeuron Neuron [72] at (72, ) w=0.00397757 =(0.72, ) rw=0.739638 
+  RNeuron Neuron [72] at (72, ) w=0.00397757 =(0.72, ) rw=0.739638 
+  RNeuron Neuron [80] at (80, ) w=0.00120886 =(0.8, ) rw=0.139694 
+**** TODO visualiser la queue en iteration x idx_neurones
+**** TODO fréquences des séqueces
+- déclenceur (ex F dans AAAAAF)
+- trier par ordre de fréquence
+**** TODO essayer avec BBBBBE (moins près des extrêmes)
+**** Meilleure prédiction/erreurs
+**** Pourquoi, ds test intérmédiqires, le fait de repartide 0 est moins bon ?
 * [2/3] Visualisation
 ** DONE Ecrire du texte n'importe où 
 ** TODO Classe[Container] avec 2 membres "one", "two"

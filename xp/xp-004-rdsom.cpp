@@ -433,9 +433,9 @@ void step_learn( RDSOM& rdsom,
     // Forward new input and update network
     Eigen::VectorXd input(1);
     input << (double) _ite_step->id_o;
-    // if( _opt_verb ) {
-    //   std::cout << "  in=" << input << std::endl;g
-    // }
+    if( _opt_verb ) {
+      std::cout << "__STEP LEARN _nb_step=" << _nb_step << std::endl;
+    }
     rdsom.forward( input, _opt_beta,
 		   _opt_sig_input, _opt_sig_recur, _opt_sig_convo,
 		   _opt_verb);
@@ -477,6 +477,9 @@ void step_test( RDSOM& rdsom,
   Model::DSOM::RNetwork::TNumber err_rec = 0;
   Model::DSOM::RNetwork::TNumber err_pred = 0;
 
+  if( _opt_verb ) {
+    std::cout << "__STEP TEST " << std::endl;
+  }
   for (auto it = input_start; it != input_end; ++it) {
     // Forward new input BUT do not update network
     Eigen::VectorXd input(1);
@@ -486,11 +489,11 @@ void step_test( RDSOM& rdsom,
     // }
     rdsom.forward( input, _opt_beta,
 		   _opt_sig_input, _opt_sig_recur, _opt_sig_convo,
-		   _opt_verb);
+		   false/*_opt_verb*/);
 
-    if( _winner_queue ) {
-      _winner_queue->push_front( rdsom.get_winner() );
-    }
+    // if( _winner_queue ) {
+    //   _winner_queue->push_front( rdsom.get_winner() );
+    // }
 
     err_input += rdsom.get_winner_dist_input();
     err_rec += rdsom.get_winner_dist_rec();
@@ -670,6 +673,7 @@ int main(int argc, char *argv[])
 	 }
 
      // At the end, save errors
+	 std::cout << "  END IT=" << ite_cur << ", saving..." << std::endl;
 	 std::stringstream filename_error;
 	 filename_error << *_opt_filesave_result;
 	 filename_error << "_errors";
@@ -706,6 +710,7 @@ int main(int argc, char *argv[])
 
      // OFFSCREEN saving.
      // And save a PNG image of the last _opt_queue_size neurons
+     std::cout << "  PNG IT=" << ite_cur << ", saving ong..." << std::endl;
      std::stringstream filename_png;
      filename_png << *_opt_filesave_result;
      filename_png << "_rdsom.png";
@@ -719,6 +724,9 @@ int main(int argc, char *argv[])
      _fig_rdsom->save( filename_png.str() );
      // std::this_thread::sleep_for(std::chrono::seconds(5));
      delete _fig_rdsom;
+
+     // DEBUG write queue
+     std::cout << str_queue() << std::endl;
      
    }
    else {
