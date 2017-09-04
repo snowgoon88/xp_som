@@ -191,7 +191,7 @@ def xp():
                 output_name = hmm_expr+"_"+str(traj_size)+"_"+str(rdsom_size)+"_"+str(ela)+"_"+str(ela_rec)+"_"+str(eps)+"_"+str(sig_i)+"_"+str(sig_r)+"_"+str(beta)+"_"+str(learn_length)
                 output_name += "_rdsom{0:03d}".format(id_rdsom)+"_t{0:03d}".format(id_traj)
 
-                output_name = "data_rdsom/Test/result_"+output_name+".data"
+                output_name = "data_rdsom/New/result_"+output_name+".data"
                 ## Run XP
                 repeat( name_hmm = hmm_name,
                         name_traj=    traj_name,

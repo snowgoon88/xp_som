@@ -7,6 +7,8 @@
  * A Window with a Figure inside to plot several curves.
  * Has its own font.
  * Can be rendered and saved OFFSCREEN.
+ *
+ * MUST have error_callback and key_callback defined as static somewhere !!
  */
 
 // include OpenGL > 1.1

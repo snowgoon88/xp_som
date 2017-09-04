@@ -598,8 +598,8 @@ wbuild/xp/xp-004-rdsom -t data_rdsom/traj_p05AAAAAF_6000.data -d data_rdsom/rdso
 **** TODO Légende des courbres ??
 **** TODO refaire les courbes de séquences / prédition de ESN
 
-*** TODO [3/7] <2017-08-29 Tue>
-**** TODO XP
+*** TODO [4/7] <2017-08-29 Tue>
+**** DONE XP
 l_hmm = ['! .05 AAAAAF']
     l_hmm_names = ['p05AAAAAF']
     l_traj_size = [6000]

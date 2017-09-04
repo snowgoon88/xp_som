@@ -1,11 +1,12 @@
 /* -*- coding: utf-8 -*- */
 
-#ifndef RDSOM2D_VIEWER_HPP
-#define RDSOM2D_VIEWER_HPP
+#ifndef RDSOM1D_VIEWER_HPP
+#define RDSOM1D_VIEWER_HPP
 
 /** 
- * Graphical display on a RDSOM network.
- * Derives from Curve.
+ * Graphical display for a RDSOM network.
+ * Derives from Curve, draw small circles and arrow,
+ * for neuron weigts and r_weigts, according to a queue.
  *
  * Warning : only on 1D-grid RNetwork.
  */
@@ -193,4 +194,4 @@ private:
 };
 
 
-#endif // RDSOM2D_VIEWER_HPP
+#endif // RDSOM1D_VIEWER_HPP
