@@ -81,6 +81,13 @@ CurveDyn<RDSOM::Similarities> *_c_sim_hh_rec;
 CurveMean* _c_error_input;
 CurveMean* _c_error_rec;
 CurveMean* _c_error_pred;
+// Curve for history of activation
+FixedQueue<double>       *_act_queue;
+FixedQueue<double>       *_input_queue;
+Figure                    *_fig_hist;
+CurveDyn<FixedQueue<double>> *_c_hist_act;
+CurveDyn<FixedQueue<double>> *_c_hist_input;
+// flags
 bool _end_render = false;
 bool _run_update = false;
 unsigned int _nb_step = 0;
@@ -101,6 +108,7 @@ TParam                       _opt_ela                = 0.2;
 TParam                       _opt_ela_rec            = 0.2;
 bool                         _opt_graph              = false;
 unsigned int                 _opt_queue_size         = 5;
+unsigned int                 _opt_hist_size          = 50;
 std::unique_ptr<std::string> _opt_filesave_result    = nullptr;
 unsigned int                 _opt_learn_length       = 100;
 unsigned int                 _opt_period_save        = 50;
@@ -140,6 +148,7 @@ void setup_options(int argc, char **argv)
         ("dsom_ela_rec", po::value<TParam>(&_opt_ela_rec)->default_value(_opt_ela_rec), "dsom elasticity recurrent")
         ("graph,g", "graphics" )
         ("queue_size", po::value<unsigned int>(&_opt_queue_size)->default_value(_opt_queue_size), "Length of Queue for Graph")
+    ("history_size", po::value<unsigned int>(&_opt_hist_size)->default_value(_opt_hist_size), "Length of Queue for History")
     ("save_result", po::value<std::string>(), "save RESULTS in filename")
     ("learn_length", po::value<unsigned int>(&_opt_learn_length)->default_value(_opt_learn_length), "Learning Length")
     ("period_save", po::value<unsigned int>(&_opt_period_save)->default_value(_opt_period_save), "Saving Period")
@@ -311,6 +320,9 @@ void update_graphic()
   _c_sim_convol->update();
   _c_sim_hh_dist->update();
   _c_sim_hh_rec->update();
+
+  _c_hist_act->update();
+  _c_hist_input->update();
   
   _fig_rdsom->clear_text();
   std::stringstream str;
@@ -415,6 +427,11 @@ void learn( RDSOM& rdsom,
 	if( _winner_queue ) {
 	  _winner_queue->push_front( rdsom.get_winner() );
 	}
+	if( _act_queue ) {
+	  _act_queue->push_front( static_cast<double>( rdsom.get_winner() ));
+	  _input_queue->push_front( input[0] * rdsom.get_size_grid() );
+	}
+				 
   }
 }
 /**
@@ -443,6 +460,10 @@ void step_learn( RDSOM& rdsom,
     
     if( _winner_queue ) {
       _winner_queue->push_front( rdsom.get_winner() );
+    }
+    if( _act_queue ) {
+      _act_queue->push_front( static_cast<double>( rdsom.get_winner() ));
+      _input_queue->push_front( input[0] * rdsom.get_size_grid() );
     }
 
     // Add error to figure
@@ -553,6 +574,8 @@ int main(int argc, char *argv[])
    }
    // GRAPHIC or LEARN or TEST will use _winner_queue
    _winner_queue = new FixedQueue<unsigned int>( _opt_queue_size);
+   _act_queue = new FixedQueue<double>( _opt_hist_size);
+   _input_queue = new FixedQueue<double>( _opt_hist_size);
 
    // Graphic before Learning (as Learn will depend on it)
    if( _opt_graph and !_opt_test ) {
@@ -607,10 +630,21 @@ int main(int argc, char *argv[])
      _fig_rweight->add_curve( _c_sim_hh_rec );
 
      _fig_rweight->add_curve( _c_rweight );
-   
+
+     // History
+     _fig_hist = new Figure( "History", 800, 350, false, -1, -1,
+			     {0.0, (double) _opt_hist_size * 1.1, 10, 2},
+			     {0.0, (double) _rdsom->get_size_grid() * 1.1, 10, 2} );
+     _c_hist_act = new CurveDyn<FixedQueue<double>>( *_act_queue );
+     _c_hist_input = new CurveDyn<FixedQueue<double>>( *_input_queue );
+     _c_hist_input->set_color( {0.0, 1.0, 0.0} );
+     _fig_hist->add_curve( _c_hist_act );
+     _fig_hist->add_curve( _c_hist_input );
+     
      _fig_rdsom->render( true );
      _fig_weight->render();
      _fig_rweight->render();
+     _fig_hist->render(),
 
      // Errors
      _fig_error = new Figure( "Error", 800, 350, false, 400, 430,
@@ -641,6 +675,7 @@ int main(int argc, char *argv[])
        _fig_weight->render();
        _fig_rweight->render();
        _fig_error->render( true, false ); // Update axes x, y
+       _fig_hist->render();
      }
    }
    else if( !_opt_test ) {

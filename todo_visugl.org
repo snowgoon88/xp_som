@@ -598,7 +598,7 @@ wbuild/xp/xp-004-rdsom -t data_rdsom/traj_p05AAAAAF_6000.data -d data_rdsom/rdso
 **** TODO Légende des courbres ??
 **** TODO refaire les courbes de séquences / prédition de ESN
 
-*** TODO [4/7] <2017-08-29 Tue>
+*** TODO [5/7] <2017-08-29 Tue>
 **** DONE XP
 l_hmm = ['! .05 AAAAAF']
     l_hmm_names = ['p05AAAAAF']
@@ -662,7 +662,7 @@ _QUEUE
   RNeuron Neuron [72] at (72, ) w=0.00397757 =(0.72, ) rw=0.739638 
   RNeuron Neuron [72] at (72, ) w=0.00397757 =(0.72, ) rw=0.739638 
   RNeuron Neuron [80] at (80, ) w=0.00120886 =(0.8, ) rw=0.139694 
-**** TODO visualiser la queue en iteration x idx_neurones
+**** DONE visualiser la queue en iteration x idx_neurones
 **** TODO fréquences des séqueces
 - déclenceur (ex F dans AAAAAF)
 - trier par ordre de fréquence

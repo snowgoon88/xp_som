@@ -580,6 +580,7 @@ public:
   double get_winner_dist_rec() const { return _winner_dist_rec; }
   double get_winner_dist_pred() const { return _winner_dist_pred; }
   double get_max_dist_neurone() { return _max_dist_neurone; }
+  int get_size_grid() const { return _size_grid; }
 private:
   /** Random engine */
   std::default_random_engine _rnd;
