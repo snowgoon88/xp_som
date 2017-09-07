@@ -39,6 +39,14 @@ namespace po = boost::program_options;
 #include <utils.hpp>                  // various str_xxx
 using namespace utils::rj;
 
+// Analyse of sequence frequency
+using Sequence = std::vector<unsigned int>;
+using SequenceMap = std::map<Sequence, int>;
+using SequencePair = std::pair<Sequence, int>;
+using SequenceVec = std::vector<SequencePair>;
+SequenceMap _seqmap;
+SequenceMap _seqmap_learn;
+
 // ******************************************************************** Global
 // HMM
 using Problem = struct {
@@ -115,6 +123,9 @@ unsigned int                 _opt_period_save        = 50;
 bool                         _opt_test               = false;
 unsigned int                 _opt_nb_test            = 2;
 bool                         _opt_verb               = false;
+double                       _opt_seqlog_threshold   = 0.9;
+unsigned int                 _opt_seqlog_size        = 6;
+unsigned int                 _opt_seqlog_nb          = 10;
 
 // ******************************************************** forward references
 void update_graphic();
@@ -154,6 +165,9 @@ void setup_options(int argc, char **argv)
     ("period_save", po::value<unsigned int>(&_opt_period_save)->default_value(_opt_period_save), "Saving Period")
 	("testing", "Testing Mode")
 	("nb_test", po::value<unsigned int>(&_opt_nb_test)->default_value(_opt_nb_test), "Nomber of test-run")
+    ("seqlog_threshold", po::value<double>(&_opt_seqlog_threshold)->default_value(_opt_seqlog_threshold), "Seqlog, input threshold for activation")
+    ("seqlog_size", po::value<unsigned int>(&_opt_seqlog_size)->default_value(_opt_seqlog_size), "Seqlog, size of pattern")
+    ("seqlog_nb", po::value<unsigned>(&_opt_seqlog_nb)->default_value(_opt_seqlog_nb), "Seqlog, display nb mist frequent")
 	("verb,v", "verbose" )
 	;
 
@@ -404,6 +418,33 @@ RDSOM load_rdsom( const std::string& filename )
 
   return net_read;
 }
+// ***************************************************************************
+// ******************************************************************** SeqLog
+// ***************************************************************************
+void save_seqlog( const std::string& filename, const SequenceMap& smap )
+{
+  auto ofile = std::ofstream( filename );
+  std::cout << "__SEQLOG save" << filename << std::endl;
+
+  // sort SequencePair and print most frequent
+  SequenceVec seqvec;
+  // Build from SequencePairs of seqencemap
+  for (auto it = smap.begin(); it != smap.end(); ++it) {
+    seqvec.push_back(*it);
+  }
+  // sort using pairs->second (lambda function)
+  std::sort( seqvec.begin(), seqvec.end(),
+	     [] (SequencePair& a, SequencePair& b) {
+	       return a.second > b.second;
+	     }
+	     );
+  for (auto it = seqvec.begin();
+	 it != std::min(seqvec.end(), seqvec.begin()+_opt_seqlog_nb);
+	 ++it) {
+      ofile << utils::str_vec(it->first) << " -> " << it->second << std::endl;
+    }
+  ofile.close();
+}
 
 // ***************************************************************************
 // ********************************************************************* learn
@@ -446,6 +487,11 @@ void step_learn( RDSOM& rdsom,
 		 const Traj::iterator& input_start,
 		 const Traj::iterator& input_end)
 {
+  // DEBUG
+  FixedQueue<unsigned int>  winqueue(_opt_seqlog_size);
+  _seqmap_learn.clear();
+  // DEBUG
+  
   for( unsigned int i = 0; i < length; ++i) {
     // Forward new input and update network
     Eigen::VectorXd input(1);
@@ -457,6 +503,15 @@ void step_learn( RDSOM& rdsom,
 		   _opt_sig_input, _opt_sig_recur, _opt_sig_convo,
 		   _opt_verb);
     rdsom.deltaW( input, _opt_eps, _opt_ela, _opt_ela_rec, _opt_verb);
+
+    // store winner for SeqMAP
+    winqueue.push_front( rdsom.get_winner() );
+    // if "activated", retrieve sequence and add to _seqmap
+    if( input[0] > _opt_seqlog_threshold ) {
+      // sequence is reversed from winqueue
+      Sequence seq(winqueue.rbegin(), winqueue.rend());
+      _seqmap_learn[seq]++;
+    }
     
     if( _winner_queue ) {
       _winner_queue->push_front( rdsom.get_winner() );
@@ -465,6 +520,7 @@ void step_learn( RDSOM& rdsom,
       _act_queue->push_front( static_cast<double>( rdsom.get_winner() ));
       _input_queue->push_front( input[0] * rdsom.get_size_grid() );
     }
+    
 
     // Add error to figure
     if( _opt_graph ) {
@@ -489,6 +545,10 @@ void step_learn( RDSOM& rdsom,
 /**
  * step_test:
  * compute mean error_input, rec and pred on all given data
+ * when input "activates" (input > _opt_seqlog_threshold)
+ *      store last _opt_seqlog_size winners as sequence
+ *      increase sequence frequency in map
+ * output first _opt_seqlog_nb frequence sequences
  */
 void step_test( RDSOM& rdsom,
 		const Traj::iterator& input_start,
@@ -497,6 +557,9 @@ void step_test( RDSOM& rdsom,
   Model::DSOM::RNetwork::TNumber err_input = 0;
   Model::DSOM::RNetwork::TNumber err_rec = 0;
   Model::DSOM::RNetwork::TNumber err_pred = 0;
+
+  _seqmap.clear();
+  FixedQueue<unsigned int>  winqueue(_opt_seqlog_size);
 
   if( _opt_verb ) {
     std::cout << "__STEP TEST " << std::endl;
@@ -512,6 +575,9 @@ void step_test( RDSOM& rdsom,
 		   _opt_sig_input, _opt_sig_recur, _opt_sig_convo,
 		   false/*_opt_verb*/);
 
+    // store winner
+    winqueue.push_front( rdsom.get_winner() );
+    
     // if( _winner_queue ) {
     //   _winner_queue->push_front( rdsom.get_winner() );
     // }
@@ -519,6 +585,13 @@ void step_test( RDSOM& rdsom,
     err_input += rdsom.get_winner_dist_input();
     err_rec += rdsom.get_winner_dist_rec();
     err_pred += rdsom.get_winner_dist_pred();
+
+    // if "activated", retrieve sequence and add to _seqmap
+    if( input[0] > _opt_seqlog_threshold ) {
+      // sequence is reversed from winqueue
+      Sequence seq(winqueue.rbegin(), winqueue.rend());
+      _seqmap[seq]++;
+    }
   }
 
   // mean
@@ -526,6 +599,29 @@ void step_test( RDSOM& rdsom,
   _v_err_input.push_back(err_input / length );
   _v_err_rec.push_back(err_rec / length );
   _v_err_pred.push_back(err_pred / length );
+
+  if( _opt_verb ) {
+    // sort SequencePair and print most frequent
+    SequenceVec seqvec;
+    // Build from SequencePairs of _seqmap
+    for (auto it = _seqmap.begin(); it != _seqmap.end(); ++it) {
+      seqvec.push_back(*it);
+    }
+    // sort using pairs->second (lambda function)
+    std::sort( seqvec.begin(), seqvec.end(),
+	       [] (SequencePair& a, SequencePair& b) {
+		 return a.second > b.second;
+	       }
+	       );
+
+    std::cout << "__FREQ SEQUENCE" << std::endl;
+    for (auto it = seqvec.begin();
+	 it != std::min(seqvec.end(), seqvec.begin()+_opt_seqlog_nb);
+	 ++it) {
+      std::cout << utils::str_vec(it->first) << " -> " << it->second << std::endl;
+    }
+  }
+  
 }
 // ***************************************************************************
 // ********************************************************************** main
@@ -703,7 +799,20 @@ int main(int argc, char *argv[])
 		 f_rdsomsave << *_opt_filesave_result;
 		 f_rdsomsave << "_rdsom_" << ite_cur;
 		 save_rdsom( f_rdsomsave.str(), *_rdsom );
+
+		 // Save most frequent test patterns
+		 std::stringstream f_seqlogsave;
+		 f_seqlogsave << *_opt_filesave_result;
+		 f_seqlogsave << "_seqlog_" << ite_cur;
+		 save_seqlog( f_seqlogsave.str(), _seqmap );
+
+		 // Save most frequent learn patterns
+		 std::stringstream f_seqlogsave_learn;
+		 f_seqlogsave_learn << *_opt_filesave_result;
+		 f_seqlogsave_learn << "_seqlog_learn_" << ite_cur;
+		 save_seqlog( f_seqlogsave_learn.str(), _seqmap_learn );
 	   }
+	   
 	   // 	// Some kind of criteria
 	 }
 
@@ -742,6 +851,9 @@ int main(int argc, char *argv[])
        ++idx;
      }
      ofile.close();
+
+     // Seqlog most frequent
+     
 
      // OFFSCREEN saving.
      // And save a PNG image of the last _opt_queue_size neurons

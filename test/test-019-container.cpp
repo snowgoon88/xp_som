@@ -25,6 +25,12 @@ void test_fq_creation()
   fq.push_front( 7 );
   fq.push_front( 10 );
   std::cout << fq.str_display() << std::endl;
+
+  std::cout << "__REVERSED" << std::endl;
+  for (auto it = fq.rbegin(); it != fq.rend(); ++it) {
+    std::cout << *it << " ";
+  }
+  std::cout << std::endl;
 }  
 
 // ***************************************************************************

@@ -565,7 +565,7 @@ wbuild/xp/xp-004-rdsom -t data_rdsom/traj_p05AAAAAF_600_n000.data -d data_rdsom/
 wbuild/xp/xp-004-rdsom -t data_rdsom/traj_p05AAAAAF_600_n000.data -d data_rdsom/rdsom_50.json -g --queue_size 10 --dsom_ela 1.0 --dsom_sig_r 0.01 --dsom_sig_i 0.01 --dsom_beta 0.9
 
 build/xp/xp-004-rdsom -t data_rdsom/traj_p05AAAAAF_600_n000.data -d data_rdsom/rdsom_50.json -g --queue_size 10 --dsom_ela 1.3 --dsom_sig_r 0.01 --dsom_sig_i 0.01 --dsom_beta 0.6
-*** TODO <2017-03-21 Tue>
+*** DONE [4/8] <2017-03-21 Tue>
 Modifier le rôle de beta
 **** DONE Essayer en linéaire ? => *BAD*
 merged = mu * beta + (1-beta) * nu 
@@ -598,7 +598,7 @@ wbuild/xp/xp-004-rdsom -t data_rdsom/traj_p05AAAAAF_6000.data -d data_rdsom/rdso
 **** TODO Légende des courbres ??
 **** TODO refaire les courbes de séquences / prédition de ESN
 
-*** TODO [5/7] <2017-08-29 Tue>
+*** DONE [7/8] <2017-08-29 Tue>
 **** DONE XP
 l_hmm = ['! .05 AAAAAF']
     l_hmm_names = ['p05AAAAAF']
@@ -663,12 +663,22 @@ _QUEUE
   RNeuron Neuron [72] at (72, ) w=0.00397757 =(0.72, ) rw=0.739638 
   RNeuron Neuron [80] at (80, ) w=0.00120886 =(0.8, ) rw=0.139694 
 **** DONE visualiser la queue en iteration x idx_neurones
-**** TODO fréquences des séqueces
+**** DONE fréquences des séqueces
 - déclenceur (ex F dans AAAAAF)
 - trier par ordre de fréquence
+**** DONE Vérifier que seqlog test DIFFERENT de seqlog learn
+C'est effectivement différent !!! 
+Il faut donc un temps certain pour recréer le "bon" état interne latent.
 **** TODO essayer avec BBBBBE (moins près des extrêmes)
 **** Meilleure prédiction/erreurs
 **** Pourquoi, ds test intérmédiqires, le fait de repartide 0 est moins bon ?
+**** CONCLUSION
+même avec ce que je pensais être les bons paramètres, \oe{}n a du mal a "bien" apprendre p05AAAAAF. Pas assez de discrémination entre le différents 'A'
+les seqlog le montrent bien, avec en plus une différence quand on arrête l'apprentissage et qu'on repart d'une copie ou avec toutes les activités à 0.
+Importance de l'état latent
+[Q] comment mieux écarter les poids récurrents.
+*** TODO [0/1] <2017-09-07 Thu>
+**** TODO Essayer ABCD
 * [2/3] Visualisation
 ** DONE Ecrire du texte n'importe où 
 ** TODO Classe[Container] avec 2 membres "one", "two"
