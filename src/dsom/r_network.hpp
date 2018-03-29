@@ -369,12 +369,11 @@ public:
 	_winner_neur = std::distance( _sim_convol.begin(), it_max );
 	_winner_dist_input = v_neur[_winner_neur]->computeDistanceInput( input );
 	_winner_dist_rec = v_neur[_winner_neur]->computeDistanceRPos( v_neur[_old_winner_neur]->r_pos );
-	// Compare with the neuron what was predicted
-	_winner_dist_pred = v_neur[_pred_winner]->computeDistanceInput( input );
-	// best prediction will be the one with maximum _sim_rec
+        // prediction would be based on _sim_rec alone
 	auto it_pred = std::max_element( _sim_rec.begin(), _sim_rec.end());
 	_pred_winner = std::distance( _sim_rec.begin(), it_pred );
-
+        // Compare with the neuron what was predicted
+	_winner_dist_pred = v_neur[_pred_winner]->computeDistanceInput( input );
 	
 	return _winner_similarity;
   }
@@ -388,11 +387,12 @@ public:
     // Compute the winner, this will update similarities
     if( verb ) {
       std::cout << "__FORWARD" << std::endl;
-      std::cout << "  => pred is " << _pred_winner;
-      std::cout << "  " << v_neur[_pred_winner]->str_display() << std::endl;
-	}
+    }
+    
     computeWinner( input, beta, sig_input, sig_recur, sig_conv );
     if( verb ) {
+      std::cout << "  => pred is " << _pred_winner;
+      std::cout << "  " << v_neur[_pred_winner]->str_display() << std::endl;
       std::cout << "  in=" << input;
       std::cout << " old_win=" << _old_winner_neur << " at(" << v_neur[_old_winner_neur]->r_pos(0) << ")" << std::endl; 
       std::cout << "  => win is " << _winner_neur;
