@@ -201,6 +201,12 @@ public:
 				_mean_length(0), _mean_nb_point(0), _mean_x(0.0), _mean_y(0.0)
   {
   }
+  // ******************************************************Curve::copycreation
+  CurveMean( const CurveMean& c)
+    : Curve(c), _mean_mode( c._mean_mode), _mean_data( c._mean_data ),
+      _mean_length( c._mean_length ), _mean_nb_point( c._mean_nb_point ),
+      _mean_x( c._mean_x ), _mean_y( c._mean_y )
+  {}
   // ************************************************** CurveMean::switch_mode
   void set_mean_mode( bool mode )
   {
