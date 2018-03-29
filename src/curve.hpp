@@ -47,8 +47,17 @@ public:
   /** Creation */
   Curve() : _fg_col{1,0,0}, _line_width(1.f) // red,thin
   {}
-  virtual ~Curve() {std::cout << "Curve destroyed" << std::endl;};
+  virtual ~Curve()
+  {
+    //std::cout << "Curve destroyed" << std::endl;
+  };
 
+  // ******************************************************Curve::copycreation
+  Curve( const Curve& c)
+    : _data(c._data), _bbox( c._bbox ),
+      _fg_col( c._fg_col ), _line_width( c._line_width )
+  {}
+  
   // ************************************************************ Curve::clear
   void clear()
   {
