@@ -10,14 +10,20 @@ VERSION = '0.2'
 top = '.'
 out = 'wbuild'
 
+opt_flags = '-O3'
+debug_flags = '-O0 -g'
+
 # ********************************************************************** options
 def options( opt ):
     opt.load( 'compiler_cxx' )
 
+    # option debug
+    opt.add_option('--debug', type='string', help='compile with debugging symbols', dest='debug')
+
 # **************************************************************** CMD configure
 def configure( conf ):
     conf.load( 'compiler_cxx' )
-    conf.env['CXXFLAGS'] = ['-D_REENTRANT','-Wall','-fPIC','-g','-std=c++11']
+    conf.env['CXXFLAGS'] = ['-D_REENTRANT','-Wall','-fPIC','-std=c++11']
     conf.env.INCLUDES_JSON = conf.path.abspath()+'/include'
     
     ## Require GSL, using wrapper around pkg-config
@@ -78,6 +84,13 @@ def configure( conf ):
 # ******************************************************************** CMD build
 def build( bld ):
     print('→ build from ' + bld.path.abspath())
+
+    # check debug option
+    if bld.options.debug:
+        bld.env['CXXFLAGS'] += debug_flags.split(' ')
+    else:
+        bld.env['CXXFLAGS'] += opt_flags.split(' ')
+    
     ## bld.recurse( 'src' )
     bld.recurse( 'xp' )
     bld.recurse( 'test' )
