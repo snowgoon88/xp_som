@@ -11,6 +11,16 @@
  *  - graphic
  *  - batch learning
  *  - batch testing with rdsom and traj
+ *
+ * INTERFACE
+ *  - ESC : end
+ *  - s : one step
+ *  - p/m : +/- learning length
+ *  - SPACE : switch running
+ *  - v : switch verbose
+ *  - z : switch mean error
+ *  - w : force mean update if in mean error mode
+ *  - f : save figweight, 
  */
 
 #include <iostream>                // std::cout
@@ -56,6 +66,9 @@ using Problem = struct {
   unsigned int nb_states;
 };
 std::unique_ptr<Problem> _pb = nullptr;
+
+// Iteration counter
+unsigned int _ite_cur = 0;
 
 // Trajectory
 using Traj = Trajectory::HMM::Data;
@@ -115,6 +128,7 @@ TParam                       _opt_eps                = 0.1;
 TParam                       _opt_ela                = 0.2;
 TParam                       _opt_ela_rec            = 0.2;
 bool                         _opt_graph              = false;
+bool                         _opt_figerror           = false;
 unsigned int                 _opt_queue_size         = 5;
 unsigned int                 _opt_hist_size          = 50;
 std::unique_ptr<std::string> _opt_filesave_result    = nullptr;
@@ -128,6 +142,15 @@ unsigned int                 _opt_seqlog_size        = 6;
 unsigned int                 _opt_seqlog_nb          = 10;
 
 // ******************************************************** forward references
+void save_figseq( const std::string& filename,
+                  const std::string& title,
+                  bool verb);
+void save_figweight( const std::string& filename,
+                     const std::string& title,
+                     bool verb);
+void save_figerror( const std::string& filename,
+                    const std::string& title,
+                    bool verb);
 void update_graphic();
 void learn( RDSOM& rdsom,
 	    const Traj::iterator& input_begin,
@@ -158,6 +181,7 @@ void setup_options(int argc, char **argv)
 	("dsom_ela", po::value<TParam>(&_opt_ela)->default_value(_opt_ela), "dsom elasticity")
         ("dsom_ela_rec", po::value<TParam>(&_opt_ela_rec)->default_value(_opt_ela_rec), "dsom elasticity recurrent")
         ("graph,g", "graphics" )
+    ("figerror", "fig with errors at end")
         ("queue_size", po::value<unsigned int>(&_opt_queue_size)->default_value(_opt_queue_size), "Length of Queue for Graph")
     ("history_size", po::value<unsigned int>(&_opt_hist_size)->default_value(_opt_hist_size), "Length of Queue for History")
     ("save_result", po::value<std::string>(), "save RESULTS in filename")
@@ -223,6 +247,10 @@ void setup_options(int argc, char **argv)
   if( vm.count("graph") ) {
     _opt_graph = true;
   }
+  if( vm.count("figerror") ) {
+    _opt_figerror = true;
+  }
+  
   if( vm.count("testing") ) {
     _opt_test = true;
   }
@@ -270,17 +298,25 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
       if( learn_length == 0 ) learn_length = 1;
       step_learn( *_rdsom, learn_length,
 		  _data->begin(), _data->end() );
+      _ite_cur += learn_length;
       
       update_graphic();
     }
   }
   // increase / decrease learning length P/M
   else if( key == GLFW_KEY_P && action == GLFW_PRESS) {
-    if( _learn_length_multiplier == 0 ) _learn_length_multiplier = 1;
+    if( _learn_length_multiplier == 0 ) {
+      _learn_length_multiplier = 1;
+    }
+    else {
     _learn_length_multiplier = _learn_length_multiplier * 10;
+    }
   }
   else if( key == GLFW_KEY_SEMICOLON && action == GLFW_PRESS) {
     _learn_length_multiplier = _learn_length_multiplier / 10;
+    if( _learn_length_multiplier == 0 ) {
+      _learn_length_multiplier = 1;
+    }
   }
   // On/off continuous learning SPACE
   else if( key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
@@ -316,6 +352,14 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 	  _c_error_rec->recompute_means();
 	  _c_error_pred->recompute_means();
 	}
+  }
+  else if( key == GLFW_KEY_F && action == GLFW_PRESS) {
+    std::stringstream count;
+    count << std::setw(6) << std::setfill('0') <<  _ite_cur << ".png";
+    
+    save_figseq( "key_figseq"+count.str(), "KEY figseq", false);
+    save_figweight( "key_figweight"+count.str(), "KEY figweight", false);
+    save_figerror( "key_figerror"+count.str(), "KEY figerror", false);
   }
 }
 // ************************************************************ update_graphic
@@ -421,6 +465,11 @@ RDSOM load_rdsom( const std::string& filename )
 // ***************************************************************************
 // ******************************************************************** SeqLog
 // ***************************************************************************
+/**
+ * Save the '_opt_seqlog_nb' most frequent sequences.
+ * Format: id id id ... -> nb
+ * in filename
+ */
 void save_seqlog( const std::string& filename, const SequenceMap& smap )
 {
   auto ofile = std::ofstream( filename );
@@ -446,6 +495,110 @@ void save_seqlog( const std::string& filename, const SequenceMap& smap )
   ofile.close();
 }
 
+// ***************************************************************************
+// *************************************************************** save_figseq
+// ***************************************************************************
+/**
+ * Save a PNJ image of the last _opt_queue_size neurons, using circles and
+ * arrows on a nearly cirle for linear position of neurons.
+ *
+ * GLOBAL : _rdsom, _winner_queue
+ */
+void save_figseq( const std::string& filename,
+                  const std::string& title,
+                  bool verb)
+{
+  // OFFSCREEN saving.
+  if( verb ) {
+    std::cout << "  Saving PNG file=" << filename << std::endl;
+  }
+
+  Figure* fig_rdsom = new Figure( title, 450, 450, true /*offscreen */ );
+  RDSOMViewer* rdsom_viewer = new RDSOMViewer( *_rdsom, *_winner_queue );
+  fig_rdsom->add_curve( rdsom_viewer );
+  fig_rdsom->set_draw_axes( false );
+  fig_rdsom->render( true );
+  // std::this_thread::sleep_for(std::chrono::seconds(1));
+  fig_rdsom->save( filename );
+  // std::this_thread::sleep_for(std::chrono::seconds(5));
+  delete fig_rdsom;
+  delete rdsom_viewer;
+}
+/**
+ * Save a PNJ image of the weights, input (black) and recurrent (blue).
+ *
+ * GLOBAL : _rdsom
+ */
+void save_figweight( const std::string& filename,
+                     const std::string& title,
+                     bool verb)
+{
+  Figure* fig_weight = new Figure( title, 800, 350, true /*offscreen*/, 800, 50,
+			       {0.0, (double) _rdsom->v_neur.size(),10,2},
+			       {0.0, 1.0, 10, 2} );
+  Curve* c_weight = new Curve();
+  c_weight->set_color( {0.0, 0.0, 0.0} );
+  c_weight->set_width( 1 );
+  Curve* c_rweight = new Curve();
+  c_rweight->set_color( {0.0, 0.0, 1.0} );
+  c_rweight->set_width( 1 );
+  for( unsigned int i = 0; i < _rdsom->v_neur.size(); ++i) {
+    c_weight->add_sample( {(double)i, _rdsom->v_neur[i]->weights(0), 0.0} );
+    c_rweight->add_sample( {(double)i, _rdsom->v_neur[i]->r_weights(0), 0.0} ); 
+  }
+
+  fig_weight->add_curve( c_weight );
+  fig_weight->add_curve( c_rweight );
+
+  fig_weight->render( true );
+  fig_weight->save( filename );
+
+  delete c_weight;
+  delete c_rweight;
+  delete fig_weight;
+}
+/**
+ * Save a PNJ image of errors: input (black), recurrent (blue), pred(red).
+ *
+ * GLOBAL : _rdsom, _c_error_input, _c_error_rec, _c_error_pred
+ */
+void save_figerror( const std::string& filename,
+                     const std::string& title,
+                     bool verb)
+{
+  Figure* fig_error = new Figure( title, 800, 350, true /*offscreen*/, 400, 430,
+                                  {0.0, 100 ,10,2},
+                                  {0.0, 1.2, 10, 2});
+
+  CurveMean* c_error_input = new CurveMean( *_c_error_input );
+  if( c_error_input->get_mean_mode() == false ) {
+    c_error_input->set_mean_mode( true );
+    c_error_input->recompute_means();
+  }
+  CurveMean* c_error_rec = new CurveMean( *_c_error_rec );
+    if( c_error_rec->get_mean_mode() == false ) {
+    c_error_rec->set_mean_mode( true );
+    c_error_rec->recompute_means();
+  }
+  CurveMean* c_error_pred = new CurveMean( *_c_error_pred );
+  if( c_error_pred->get_mean_mode() == false ) {
+    c_error_pred->set_mean_mode( true );
+    c_error_pred->recompute_means();
+  }
+  
+  fig_error->add_curve( c_error_input );
+  fig_error->add_curve( c_error_rec );
+  fig_error->add_curve( c_error_pred );
+
+  fig_error->render( true );
+  // std::this_thread::sleep_for(std::chrono::seconds(1));
+  fig_error->save( filename );
+  // std::this_thread::sleep_for(std::chrono::seconds(5));
+  delete c_error_input;
+  delete c_error_rec;
+  delete c_error_pred;
+  delete fig_error;
+}
 // ***************************************************************************
 // ********************************************************************* learn
 // ***************************************************************************
@@ -523,7 +676,7 @@ void step_learn( RDSOM& rdsom,
     
 
     // Add error to figure
-    if( _opt_graph ) {
+    if( _opt_graph or _opt_figerror ) {
       _c_error_input->add_sample( {(double)_nb_step, rdsom.get_winner_dist_input(), 0.0 } );
       _c_error_rec->add_sample( {(double)_nb_step, rdsom.get_winner_dist_rec(), 0.0 } );
       _c_error_pred->add_sample( {(double)_nb_step, rdsom.get_winner_dist_pred(), 0.0} );
@@ -673,6 +826,14 @@ int main(int argc, char *argv[])
    _act_queue = new FixedQueue<double>( _opt_hist_size);
    _input_queue = new FixedQueue<double>( _opt_hist_size);
 
+   // GRAPHIC or LEARN or TEST will use _c_error_*
+   _c_error_input = new CurveMean();
+   _c_error_input->set_color( {0.0, 0.0, 0.0} );
+   _c_error_rec = new CurveMean();
+   _c_error_rec->set_color( {0.0, 0.0, 1.0} );
+   _c_error_pred = new CurveMean();
+   _c_error_pred->set_color( {1.0, 0.0, 0.0} );
+   
    // Graphic before Learning (as Learn will depend on it)
    if( _opt_graph and !_opt_test ) {
      if( _opt_verb) {
@@ -746,17 +907,11 @@ int main(int argc, char *argv[])
      _fig_error = new Figure( "Error", 800, 350, false, 400, 430,
 				{0.0, 100 ,10,2},
 				{0.0, 1.2, 10, 2});
-     _c_error_input = new CurveMean();
-     _c_error_input->set_color( {0.0, 0.0, 0.0} );
      _fig_error->add_curve( _c_error_input );
-     _c_error_rec = new CurveMean();
-     _c_error_rec->set_color( {0.0, 0.0, 1.0} );
      _fig_error->add_curve( _c_error_rec );
-     _c_error_pred = new CurveMean();
-     _c_error_pred->set_color( {1.0, 0.0, 0.0} );
      _fig_error->add_curve( _c_error_pred );
      
-
+     _ite_cur = 0;
      while( not _end_render ) {
        // update if _run_updata
        if( _run_update ) {
@@ -764,6 +919,7 @@ int main(int argc, char *argv[])
 	 if( learn_length == 0 ) learn_length = 1;
 	 step_learn( *_rdsom, learn_length,
 		     _data->begin(), _data->end() );
+         _ite_cur += learn_length;
 
 	 update_graphic();
        }       
@@ -778,46 +934,62 @@ int main(int argc, char *argv[])
 	 // Learn_________________________
 	 std::cout << "__LEARN" << std::endl;
 	   
-     unsigned int ite_cur = 0;
-	 while( ite_cur < _opt_learn_length ) {
+     _ite_cur = 0;
+     // Fig with weights is saved at start
+     std::stringstream count;
+     count << std::setw(6) << std::setfill('0') <<  _ite_cur << ".png";
+     save_figweight( *_opt_filesave_result+"_figweight_"+count.str(),
+                     "FigWeight", false );
+     
+	 while( _ite_cur < _opt_learn_length ) {
 	   step_learn( *_rdsom, _opt_period_save,
 				   _data->begin(), _data->end() );
 	   
-	   ite_cur += _opt_period_save;
+	   _ite_cur += _opt_period_save;
 	   
 	   // Test a copy of rdsom on all data
 	   RDSOM tmp_rdsom{ *_rdsom };
 	   tmp_rdsom.reset();
  	   step_test( tmp_rdsom, _data->begin(), _data->end() );
 	   
-	   std::cout << "  IT=" << ite_cur << ", saving..." << std::endl;
+	   std::cout << "  IT=" << _ite_cur << ", saving..." << std::endl;
 	   // std::cout << "  err_in=" << _v_err_input.back() << std::endl;
 	   
 	   // Save rdsom
 	   if( _opt_filesave_result ) {
 		 std::stringstream f_rdsomsave;
 		 f_rdsomsave << *_opt_filesave_result;
-		 f_rdsomsave << "_rdsom_" << ite_cur;
+		 f_rdsomsave << "_rdsom_" << _ite_cur;
 		 save_rdsom( f_rdsomsave.str(), *_rdsom );
 
 		 // Save most frequent test patterns
 		 std::stringstream f_seqlogsave;
 		 f_seqlogsave << *_opt_filesave_result;
-		 f_seqlogsave << "_seqlog_" << ite_cur;
+		 f_seqlogsave << "_seqlog_" << _ite_cur;
 		 save_seqlog( f_seqlogsave.str(), _seqmap );
 
 		 // Save most frequent learn patterns
 		 std::stringstream f_seqlogsave_learn;
 		 f_seqlogsave_learn << *_opt_filesave_result;
-		 f_seqlogsave_learn << "_seqlog_learn_" << ite_cur;
+		 f_seqlogsave_learn << "_seqlog_learn_" << _ite_cur;
 		 save_seqlog( f_seqlogsave_learn.str(), _seqmap_learn );
+
+                 // OFFSCREEN saving
+                 std::cout << "  PNG IT=" << _ite_cur << ", saving ong..." << std::endl;
+                 std::stringstream filename_png;
+                 filename_png << *_opt_filesave_result;
+                 filename_png << "_figseq_" << std::setw(6) << std::setfill('0') <<  _ite_cur << ".png";
+                 std::stringstream title_png;
+                 title_png << "Queue: it=" << _ite_cur;
+                 save_figseq( filename_png.str(), title_png.str(), /*verb*/ false );
+                 
 	   }
 	   
 	   // 	// Some kind of criteria
 	 }
 
      // At the end, save errors
-	 std::cout << "  END IT=" << ite_cur << ", saving..." << std::endl;
+	 std::cout << "  END IT=" << _ite_cur << ", saving..." << std::endl;
 	 std::stringstream filename_error;
 	 filename_error << *_opt_filesave_result;
 	 filename_error << "_errors";
@@ -837,12 +1009,12 @@ int main(int argc, char *argv[])
 	 // Header col names
 	 ofile << "ite\terr_in\terr_rec\terr_pred" << std::endl;
 	 // Data
-	 ite_cur = 0;
+	 _ite_cur = 0;
 	 unsigned int idx = 0;
-     while( ite_cur < _opt_learn_length ) {
-       ite_cur += _opt_period_save;
-       std::cout << "__SAVING for ite="<< ite_cur << " idx=" << idx << std::endl;
-       ofile << ite_cur << "\t";
+     while( _ite_cur < _opt_learn_length ) {
+       _ite_cur += _opt_period_save;
+       std::cout << "__SAVING for ite="<< _ite_cur << " idx=" << idx << std::endl;
+       ofile << _ite_cur << "\t";
        ofile << _v_err_input[idx] << "\t";
        ofile << _v_err_rec[idx] << "\t";
        ofile << _v_err_pred[idx];
@@ -856,21 +1028,15 @@ int main(int argc, char *argv[])
      
 
      // OFFSCREEN saving.
-     // And save a PNG image of the last _opt_queue_size neurons
-     std::cout << "  PNG IT=" << ite_cur << ", saving ong..." << std::endl;
-     std::stringstream filename_png;
-     filename_png << *_opt_filesave_result;
-     filename_png << "_rdsom.png";
-     
-     _fig_rdsom = new Figure( "RDSOM: r-network", 450, 450, true /*offscreen */ );
-     _rdsom_viewer = new RDSOMViewer( *_rdsom, *_winner_queue );
-     _fig_rdsom->add_curve( _rdsom_viewer );
-     _fig_rdsom->set_draw_axes( false );
-     _fig_rdsom->render( true );
-     // std::this_thread::sleep_for(std::chrono::seconds(1));
-     _fig_rdsom->save( filename_png.str() );
-     // std::this_thread::sleep_for(std::chrono::seconds(5));
-     delete _fig_rdsom;
+     // Fig with weights is saved at start
+     std::stringstream count_end;
+     count_end << std::setw(6) << std::setfill('0') <<  _ite_cur << ".png";
+     save_figweight( *_opt_filesave_result+"_figweight_"+count_end.str(),
+                     "FigWeight", false );
+     save_figseq( *_opt_filesave_result+"_figseq_"+count_end.str(),
+                     "FigSeq", false );
+     save_figerror( *_opt_filesave_result+"_figerror_"+count_end.str(),
+                     "FigError", false );
 
      // DEBUG write queue
      std::cout << str_queue() << std::endl;
