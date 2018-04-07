@@ -314,9 +314,6 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
   }
   else if( key == GLFW_KEY_SEMICOLON && action == GLFW_PRESS) {
     _learn_length_multiplier = _learn_length_multiplier / 10;
-    if( _learn_length_multiplier == 0 ) {
-      _learn_length_multiplier = 1;
-    }
   }
   // On/off continuous learning SPACE
   else if( key == GLFW_KEY_SPACE && action == GLFW_PRESS) {

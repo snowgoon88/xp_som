@@ -677,8 +677,30 @@ même avec ce que je pensais être les bons paramètres, \oe{}n a du mal a "bien
 les seqlog le montrent bien, avec en plus une différence quand on arrête l'apprentissage et qu'on repart d'une copie ou avec toutes les activités à 0.
 Importance de l'état latent
 [Q] comment mieux écarter les poids récurrents.
-*** TODO [0/1] <2017-09-07 Thu>
-**** TODO Essayer ABCD
+*** <2018-03-28 Wed> ABCD
+**** DONE sauvegarde la queue sous forme PNG tous les _opt_period_save 
+**** ABCD
+***** marche, avec courbe des W régulière (ela)
+err_pred est minimal après 200, 250 ite
+les départs des flèches sont bons bien plus tard...
+wbuild/xp/xp-004-rdsom -m data_hmm/hmm_ABCD.json -t data_hmm/traj_ABCD_100_n000.data -d data_rdsom/rdsom_10.json --dsom_beta 0.05 --dsom_ela 1.0 --dsom_ela_rec 1.0 --dsom_eps 0.25 --dsom_sig_i 0.1 --dsom_sig_r 0.1 --dsom_sig_c 0.05 --queue_size 10 -g
+
+wbuild/xp/xp-004-rdsom -m data_hmm/hmm_ABCD.json -t data_hmm/traj_ABCD_100_n000.data -d data_rdsom/rdsom_10.json --dsom_beta 0.05 --dsom_ela 1.0 --dsom_ela_rec 1.0 --dsom_eps 0.25 --dsom_sig_i 0.1 --dsom_sig_r 0.1 --dsom_sig_c 0.05 --queue_size 10 --learn_length 2000 --seqlog_size 4 --seqlog_threshold 0.55 --save_rdsom result_ABCD_100_10_1.0_1.0_0.1_0.1_0.1_0.5_2000_00_000_save --save_result result_ABCD_100_10_1.0_1.0_0.1_0.1_0.1_0.5_2000_00_000 --figerror
+
+***** marche avec courbe des W irrégulière (ela)
+wbuild/xp/xp-004-rdsom -m data_hmm/hmm_ABCD.json -t data_hmm/traj_ABCD_100_n000.data -d data_rdsom/rdsom_10.json --dsom_beta 0.05 --dsom_ela 0.1 --dsom_ela_rec 0.1 --dsom_eps 0.25 --dsom_sig_i 0.1 --dsom_sig_r 0.1 --dsom_sig_c 0.05 --queue_size 10 -g
+
+*** <2018-04-03 Tue> BCDE + -03
+**** modif de run_xp04.py pour ABCD, BCDE
+**** ajout de --debug dans WAF (opt par défaut)
+**** BCDE
+**** ABCDEF
+***** Bof bof
+wbuild/xp/xp-004-rdsom -m data_hmm/hmm_ABCDEF.json -t data_hmm/traj_ABCDEF_100_n000.data -d data_rdsom/rdsom_50_n000.json --dsom_beta 0.5 --dsom_ela 1.0 --dsom_ela_rec 1.0 --dsom_eps 0.25 --dsom_sig_i 0.05 --dsom_sig_r 0.01 --dsom_sig_c 0.01 --learn_length 10000 --queue_size 10 --period_save 100 --seqlog_size 6 --seqlog_threshold 0.55 --figerror -g
+wbuild/xp/xp-004-rdsom -m data_hmm/hmm_ABCDEF.json -t data_hmm/traj_ABCDEF_100_n000.data -d data_rdsom/rdsom_50_n000.json --dsom_beta 0.5 --dsom_ela 1.0 --dsom_ela_rec 0.2 --dsom_eps 0.25 --dsom_sig_i 0.1 --dsom_sig_r 0.1 --dsom_sig_c 0.5 --learn_length 10000 --queue_size 14 --period_save 100 --seqlog_size 6 --seqlog_threshold 0.55 --figerror -g
+***** Peut etre revoir le \beta(1-\beta) ?
+
+
 * [2/3] Visualisation
 ** DONE Ecrire du texte n'importe où 
 ** TODO Classe[Container] avec 2 membres "one", "two"

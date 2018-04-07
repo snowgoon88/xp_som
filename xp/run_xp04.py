@@ -77,7 +77,7 @@ def repeat( name_hmm, name_traj, name_rdsom,
             tmp_args.extend( ['--nb_test', str(nb_test)] )
         print "  → "+" ".join(tmp_args)
         with open( name_output+'_cmd.txt', 'w' ) as f:
-            f.write( "".join(tmp_args) )
+            f.write( " ".join(tmp_args) )
             f.write( "\n" )
             f.write( str(tmp_args) )
             f.write( "\n" )
@@ -91,24 +91,24 @@ def xp():
     base_args_hmm = ["wbuild/xp/xp-003-hmm"]
     base_args = ["wbuild/xp/xp-004-rdsom"]
     
-    l_hmm = ['BCDE']
-    l_hmm_names = ['BCDE']
+    l_hmm = ['ABCDEF']
+    l_hmm_names = ['ABCDEF']
     l_traj_size = [100]
-    l_hmm_names_test = ['BCDE']
+    l_hmm_names_test = ['ABCDEF']
     l_traj_size_test = [10]
     s_nb_test = 1
-    l_rdsom_size = [10]
+    l_rdsom_size = [50]
     l_ela = [1.0]
-    l_ela_rec = [0.01]
+    l_ela_rec = [1.0]
     l_eps = [0.25]
     l_sig_r = [0.1]
     l_sig_i = [0.1]
     l_sig_c = [0.05]
-    l_beta = [0.05]
-    l_learn_length = [2000]
-    s_period = 50
+    l_beta = [0.5]
+    l_learn_length = [10000]
+    s_period = 100
     s_queue_size = 10
-    seq_size = 10
+    seq_size = 6
     seq_thres = 0.55
     
     nb_traj    = 1       ## how many instances of each traj config
@@ -116,9 +116,9 @@ def xp():
     nb_rdsom     = 1       ## how many instances of each esn config
     nb_repeat  = 1       ## no need to repeat : deterministic learning
     nb_start   = 0       ## start numbering files with
-    generate_hmm  = True     ## need to generate hmm
-    generate_traj = True     ## need to generate traj
-    generate_rdsom  = False     ## need to generate esn
+    generate_hmm  = False     ## need to generate hmm
+    generate_traj = False     ## need to generate traj
+    generate_rdsom  = True     ## need to generate esn
     learn         = True    ## learn
     fg_test       = False    ## testing
 
