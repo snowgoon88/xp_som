@@ -9,6 +9,7 @@
  * - check for opengl errors
  */
 #include <iostream>              // std::cout
+#define PNG_SKIP_SETJMP_CHECK    // see /usr/include/libpng12/pngconf.h:383
 #include <pngwriter.h>
 #include <GL/gl.h>               // OpenGL
 #include <utils.hpp>              // make_unique

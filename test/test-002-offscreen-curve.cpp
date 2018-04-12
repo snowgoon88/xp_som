@@ -61,7 +61,7 @@ public:
     glfwSetErrorCallback(error_callback);
     if (!glfwInit())
       exit(EXIT_FAILURE);
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_VISIBLE, false );
     _offscreen_context = glfwCreateWindow(width, height, "", NULL, NULL);
     // The context must be made current to GL
     glfwMakeContextCurrent( _offscreen_context );

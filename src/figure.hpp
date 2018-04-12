@@ -76,7 +76,7 @@ public:
         exit(EXIT_FAILURE);
 
     if( _offscreen) {
-      glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+      glfwWindowHint(GLFW_VISIBLE, false );
     }
     _window = glfwCreateWindow(_width, _height, _title.c_str(), NULL, NULL);
     if (! _window ) {
