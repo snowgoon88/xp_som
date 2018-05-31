@@ -700,6 +700,124 @@ wbuild/xp/xp-004-rdsom -m data_hmm/hmm_ABCDEF.json -t data_hmm/traj_ABCDEF_100_n
 wbuild/xp/xp-004-rdsom -m data_hmm/hmm_ABCDEF.json -t data_hmm/traj_ABCDEF_100_n000.data -d data_rdsom/rdsom_50_n000.json --dsom_beta 0.5 --dsom_ela 1.0 --dsom_ela_rec 0.2 --dsom_eps 0.25 --dsom_sig_i 0.1 --dsom_sig_r 0.1 --dsom_sig_c 0.5 --learn_length 10000 --queue_size 14 --period_save 100 --seqlog_size 6 --seqlog_threshold 0.55 --figerror -g
 ***** Peut etre revoir le \beta(1-\beta) ?
 
+*** TODO <2018-04-12 Thu> p05AAAAAF, 50 neur OK
+wbuild/xp/xp-004-rdsom -m data_hmm/hmm_p05AAAAAF.json -t data_hmm/traj_p05AAAAAF_6000_n000.data -d data_rdsom/rdsom_50.json --dsom_beta 0.05 --dsom_ela 1.0 --dsom_ela_rec 0.005 --dsom_eps 0.25 --dsom_sig_i 0.1 --dsom_sig_r 0.05 --dsom_sig_c 0.05 --learn_length 100000 --queue_size 10 --period_save 1000 --seqlog_size 6 --seqlog_threshold 0.8 -g
+**** TODO Arrive pas à générer des rdsom_50 qui soient différents !!!!
+
+**** DONE MAIS semble pas marcher avec data_rdsom/rdsom_50_n001.json, copie de rdsom_50.json !!
+beta=0.05 !! (alors qu'il était à 0.5 dans run_xp04.py
+*** <2018-05-29 Tue> BCDEDC, 50 neur, OK 020000
+**** run_xp04
+    l_hmm = ['BCDEDC']
+    l_hmm_names = ['BCDEDC']
+    l_traj_size = [600]
+    l_hmm_names_test = ['BCDEDC']
+    l_traj_size_test = [600]
+    s_nb_test = 1
+    l_rdsom_size = [50]
+    l_ela = [1.0]
+    l_ela_rec = [0.005]
+    l_eps = [0.25]
+    l_sig_r = [0.05]
+    l_sig_i = [0.1]
+    l_sig_c = [0.05]
+    l_beta = [0.05]
+    l_learn_length = [200000]
+    s_period = 1000
+    s_queue_size = 10
+    seq_size = 6
+    seq_thres = 0.7
+    
+    nb_traj    = 1       ## how many instances of each traj config
+    nb_traj_test = 1
+    nb_rdsom     = 1       ## how many instances of each esn config
+    nb_repeat  = 1       ## no need to repeat : deterministic learning
+    nb_start   = 0       ## start numbering files with
+    generate_hmm  = True     ## need to generate hmm
+    generate_traj = True     ## need to generate traj
+    generate_rdsom  = False     ## need to generate esn
+    learn         = True    ## learn
+    fg_test       = False    ## testing
+
+**** learn cmd
+wbuild/xp/xp-004-rdsom -m data_hmm/hmm_BCDEDC.json -t data_hmm/traj_BCDEDC_600_n000.data -d data_rdsom/rdsom_50_n000.json --dsom_beta 0.05 --dsom_ela 1.0 --dsom_ela_rec 0.005 --dsom_eps 0.25 --dsom_sig_i 0.1 --dsom_sig_r 0.05 --dsom_sig_c 0.05 --learn_length 200000 --queue_size 10 --period_save 1000 --seqlog_size 6 --seqlog_threshold 0.7 --figerror --save_rdsom data_xprdsom/New/result_BCDEDC_600_50_1.0_0.005_0.25_0.1_0.05_0.05_0.05_200000_rdsom000_t000.data_save_000 --save_result data_xprdsom/New/result_BCDEDC_600_50_1.0_0.005_0.25_0.1_0.05_0.05_0.05_200000_rdsom000_t000.data_000
+**** result
+Marche bien après 5000 itérations. Je refais avec seulement 20000
+    
+*** <2018-05-31 Thu> ABCDEFEDCB, 50 neur, 0K 120000
+**** run_xp04
+l_hmm = ['ABCDEFEDCB']
+    l_hmm_names = ['ABCDEFEDCB']
+    l_traj_size = [600]
+    l_hmm_names_test = ['ABCDEFEDCB']
+    l_traj_size_test = [1000]
+    s_nb_test = 1
+    l_rdsom_size = [50]
+    l_ela = [1.0]
+    l_ela_rec = [0.005]
+    l_eps = [0.25]
+    l_sig_r = [0.05]
+    l_sig_i = [0.1]
+    l_sig_c = [0.05]
+    l_beta = [0.05]
+    l_learn_length = [200000]
+    s_period = 1000
+    s_queue_size = 10
+    seq_size = 6
+    seq_thres = 0.7
+    
+    nb_traj    = 1       ## how many instances of each traj config
+    nb_traj_test = 1
+    nb_rdsom     = 1       ## how many instances of each esn config
+    nb_repeat  = 1       ## no need to repeat : deterministic learning
+    nb_start   = 0       ## start numbering files with
+    generate_hmm  = True     ## need to generate hmm
+    generate_traj = True     ## need to generate traj
+    generate_rdsom  = False     ## need to generate esn
+    learn         = True    ## learn
+    fg_test       = False    ## testing
+**** learn_cmd
+wbuild/xp/xp-004-rdsom -m data_hmm/hmm_ABCDEFEDCB.json -t data_hmm/traj_ABCDEFEDCB_600_n000.data -d data_rdsom/rdsom_50_n000.json --dsom_beta 0.05 --dsom_ela 1.0 --dsom_ela_rec 0.005 --dsom_eps 0.25 --dsom_sig_i 0.1 --dsom_sig_r 0.05 --dsom_sig_c 0.05 --learn_length 200000 --queue_size 10 --period_save 1000 --seqlog_size 6 --seqlog_threshold 0.7 --figerror --save_rdsom data_xprdsom/New/result_ABCDEFEDCB_600_50_1.0_0.005_0.25_0.1_0.05_0.05_0.05_200000_rdsom000_t000.data_save_000 --save_result data_xprdsom/New/result_ABCDEFEDCB_600_50_1.0_0.005_0.25_0.1_0.05_0.05_0.05_200000_rdsom000_t000.data_000
+**** result
+Marche après 120000 itérations.
+Etonnament, fonctionne assez rapidement (presque au bout de 1000 itérations). Est-ce vraiment plastique au début ?
+
+*** <2018-05-31 Thu> ACEBDFDBEC, 50 neur, OK au début mais devient ambigü
+**** learn_xp04
+l_hmm = ['ACEBDFDBEC']
+    l_hmm_names = ['ACEBDFDBEC']
+    l_traj_size = [1000]
+    l_hmm_names_test = ['ACEBDFDBEC']
+    l_traj_size_test = [1000]
+    s_nb_test = 1
+    l_rdsom_size = [50]
+    l_ela = [1.0]
+    l_ela_rec = [0.005]
+    l_eps = [0.25]
+    l_sig_r = [0.05]
+    l_sig_i = [0.1]
+    l_sig_c = [0.05]
+    l_beta = [0.05]
+    l_learn_length = [200000]
+    s_period = 1000
+    s_queue_size = 10
+    seq_size = 6
+    seq_thres = 0.7
+    
+    nb_traj    = 1       ## how many instances of each traj config
+    nb_traj_test = 1
+    nb_rdsom     = 1       ## how many instances of each esn config
+    nb_repeat  = 1       ## no need to repeat : deterministic learning
+    nb_start   = 0       ## start numbering files with
+    generate_hmm  = True     ## need to generate hmm
+    generate_traj = True     ## need to generate traj
+    generate_rdsom  = False     ## need to generate esn
+    learn         = True    ## learn
+    fg_test       = False    ## testing
+**** learn_cmd
+wbuild/xp/xp-004-rdsom -m data_hmm/hmm_ACEBDFDBEC.json -t data_hmm/traj_ACEBDFDBEC_1000_n000.data -d data_rdsom/rdsom_50_n000.json --dsom_beta 0.05 --dsom_ela 1.0 --dsom_ela_rec 0.005 --dsom_eps 0.25 --dsom_sig_i 0.1 --dsom_sig_r 0.05 --dsom_sig_c 0.05 --learn_length 200000 --queue_size 10 --period_save 1000 --seqlog_size 6 --seqlog_threshold 0.7 --figerror --save_rdsom data_xprdsom/New/result_ACEBDFDBEC_1000_50_1.0_0.005_0.25_0.1_0.05_0.05_0.05_200000_rdsom000_t000.data_save_000 --save_result data_xprdsom/New/result_ACEBDFDBEC_1000_50_1.0_0.005_0.25_0.1_0.05_0.05_0.05_200000_rdsom000_t000.data_000
+**** result
+Marche assez vite 080000 assez bien mais ensuite (à partir de 124000), fusion de deux noeuds OBS, d'où une ambiguité.
 
 * [2/3] Visualisation
 ** DONE Ecrire du texte n'importe où 
