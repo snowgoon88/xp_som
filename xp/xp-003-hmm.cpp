@@ -288,10 +288,7 @@ void print_hmm(const std::string& name, bica::sampler::HMM& h, int nb)
 // *************************************************************** create_traj
 Traj create_traj( const unsigned int length, const Problem& pb )
 {
-  // Seed random generator
-  // Generate seed
-  unsigned int seed = utils::random::rnd_int<unsigned int>();
-  std::srand( seed );
+
   Traj traj;
   // Sampler pour le HMM
   bica::sampler::HMM hmm( pb.t, pb.o);
@@ -710,6 +707,11 @@ void test()
 // ***************************************************************************
 int main(int argc, char *argv[])
 {
+  // init random by default
+  // Generate seed
+  unsigned int seed = utils::random::rnd_int<unsigned int>();
+  std::srand( seed );  
+  
    setup_options( argc, argv );
    
    // HMM _______________________

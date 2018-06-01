@@ -778,7 +778,11 @@ void step_test( RDSOM& rdsom,
 // ***************************************************************************
 int main(int argc, char *argv[])
 {
-   setup_options( argc, argv );
+  // init random by default
+  // Generate seed
+  unsigned int seed = utils::random::rnd_int<unsigned int>();
+  std::srand( seed );  
+  setup_options( argc, argv );
    
    // HMM _______________________
    if( _opt_fileload_hmm ) {
@@ -804,8 +808,8 @@ int main(int argc, char *argv[])
      if( _opt_verb )
        std::cout << "__CREATE RDSOM " << std::endl;
      _rdsom = make_unique<RDSOM>( create_rdsom(1, _opt_rdsom_size, -1,
-											 0.0, 1.0 ));
-	 if( _opt_verb )
+                                               0.0, 1.0 ));
+     if( _opt_verb )
        std::cout << "__SAVE RDSOM to " << *_opt_filesave_rdsom << std::endl;
      save_rdsom( *_opt_filesave_rdsom, *_rdsom);
    }

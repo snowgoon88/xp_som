@@ -4,6 +4,7 @@
 ** FTGL - Draw text with OpenGL and FreeType2
 ** GSL - Gnu Scientific Library
 ** BOOST - Boost::program_options
+* TODO CURRENT : générer des RDSOM différents
 * DONE [2/2] Fenêtre GLFW version 3 
 ** DONE CMake pour GLFW
 ** DONE C++ pour GLFW
@@ -700,9 +701,48 @@ wbuild/xp/xp-004-rdsom -m data_hmm/hmm_ABCDEF.json -t data_hmm/traj_ABCDEF_100_n
 wbuild/xp/xp-004-rdsom -m data_hmm/hmm_ABCDEF.json -t data_hmm/traj_ABCDEF_100_n000.data -d data_rdsom/rdsom_50_n000.json --dsom_beta 0.5 --dsom_ela 1.0 --dsom_ela_rec 0.2 --dsom_eps 0.25 --dsom_sig_i 0.1 --dsom_sig_r 0.1 --dsom_sig_c 0.5 --learn_length 10000 --queue_size 14 --period_save 100 --seqlog_size 6 --seqlog_threshold 0.55 --figerror -g
 ***** Peut etre revoir le \beta(1-\beta) ?
 
-*** TODO <2018-04-12 Thu> p05AAAAAF, 50 neur OK
+*** DONE <2018-04-12 Thu> p05AAAAAF, 50 neur OK
 wbuild/xp/xp-004-rdsom -m data_hmm/hmm_p05AAAAAF.json -t data_hmm/traj_p05AAAAAF_6000_n000.data -d data_rdsom/rdsom_50.json --dsom_beta 0.05 --dsom_ela 1.0 --dsom_ela_rec 0.005 --dsom_eps 0.25 --dsom_sig_i 0.1 --dsom_sig_r 0.05 --dsom_sig_c 0.05 --learn_length 100000 --queue_size 10 --period_save 1000 --seqlog_size 6 --seqlog_threshold 0.8 -g
-**** TODO Arrive pas à générer des rdsom_50 qui soient différents !!!!
+**** DONE Arrive pas à générer des rdsom_50 qui soient différents !!!! => std::srand
+  // init random by default
+  // Generate seed
+  unsigned int seed = utils::random::rnd_int<unsigned int>();
+  std::srand( seed );  
+***** DONE [1/1] test/test-016-random.cpp
+- tester générateur de Eigen AVANT seed
+- tester générateur de Eigen APRES seed
+- tester notre générateur [src/utils.hpp] utils::random::rnd_int()
+****** DONE regarder où rnd_int() a été utilisé
+***** src/dsom/r_network.cpp RNetwork()
+// Init Random Engine
+std::random_device rnd_seeder;
+_rnd = std::default_random_engine( rnd_seeder() );
+
+// Create all the neurons
+for( int i=0; i < _size_grid; i++) {
+   Eigen::VectorXi v(-_nb_link);
+   v << i;
+   RNeuron *n = new RNeuron( i, v, dim_input, w_min, w_max );
+   n->r_pos << (RNeuron::TNumber) i / (RNeuron::TNumber) _size_grid;
+   v_neur.push_back(n);
+}
+
+// Create Links
+if( (i-1) >= 0 ) v_neur[i]->add_link( (i-1) );
+if( (i+1) < _size_grid ) v_neur[i]->add_link( (i+1) );
+
+***** DONE src/dsom/neuron.hpp Neuron()
+// Generate weights between -1 and 1 (Eigen)
+this->weights = Eigen::VectorXd::Random(dim_weights);
+// Scale
+this->weights= (this->weights.array() - -1.0) / (1.0 - -1.0) * (w_max - w_min) + w_min;
+***** DONE src/dsom/r_neuron.hpp RNeuron()
+this->r_weights = Eigen::VectorXd::Random(dim);
+this->r_weights= (this->r_weights.array() - -1.0) / (1.0 - -1.0) * (1.0 - 0.0) + 0.0;
+
+***** src/dsom/neuron.hpp Neuron::add_link( )
+// Mais pas random
+this->l_link.push_front( n_ind );
 
 **** DONE MAIS semble pas marcher avec data_rdsom/rdsom_50_n001.json, copie de rdsom_50.json !!
 beta=0.05 !! (alors qu'il était à 0.5 dans run_xp04.py
@@ -818,6 +858,7 @@ l_hmm = ['ACEBDFDBEC']
 wbuild/xp/xp-004-rdsom -m data_hmm/hmm_ACEBDFDBEC.json -t data_hmm/traj_ACEBDFDBEC_1000_n000.data -d data_rdsom/rdsom_50_n000.json --dsom_beta 0.05 --dsom_ela 1.0 --dsom_ela_rec 0.005 --dsom_eps 0.25 --dsom_sig_i 0.1 --dsom_sig_r 0.05 --dsom_sig_c 0.05 --learn_length 200000 --queue_size 10 --period_save 1000 --seqlog_size 6 --seqlog_threshold 0.7 --figerror --save_rdsom data_xprdsom/New/result_ACEBDFDBEC_1000_50_1.0_0.005_0.25_0.1_0.05_0.05_0.05_200000_rdsom000_t000.data_save_000 --save_result data_xprdsom/New/result_ACEBDFDBEC_1000_50_1.0_0.005_0.25_0.1_0.05_0.05_0.05_200000_rdsom000_t000.data_000
 **** result
 Marche assez vite 080000 assez bien mais ensuite (à partir de 124000), fusion de deux noeuds OBS, d'où une ambiguité.
+
 
 * [2/3] Visualisation
 ** DONE Ecrire du texte n'importe où 

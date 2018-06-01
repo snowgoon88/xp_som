@@ -272,6 +272,11 @@ void learn()
 // ********************************************************************** main
 int main( int argc, char *argv[] )
 {
+  // init random by default
+  // Generate seed
+  unsigned int seed = utils::random::rnd_int<unsigned int>();
+  std::srand( seed );
+  
   setup_options( argc, argv );
 
   // Generate

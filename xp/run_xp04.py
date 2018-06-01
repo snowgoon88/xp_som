@@ -97,7 +97,7 @@ def xp():
     l_hmm_names_test = ['ACEBDFDBEC']
     l_traj_size_test = [1000]
     s_nb_test = 1
-    l_rdsom_size = [50]
+    l_rdsom_size = [12]
     l_ela = [1.0]
     l_ela_rec = [0.005]
     l_eps = [0.25]
@@ -113,13 +113,13 @@ def xp():
     
     nb_traj    = 1       ## how many instances of each traj config
     nb_traj_test = 1
-    nb_rdsom     = 1       ## how many instances of each esn config
+    nb_rdsom     = 5       ## how many instances of each esn config
     nb_repeat  = 1       ## no need to repeat : deterministic learning
     nb_start   = 0       ## start numbering files with
-    generate_hmm  = True     ## need to generate hmm
-    generate_traj = True     ## need to generate traj
-    generate_rdsom  = False     ## need to generate esn
-    learn         = True    ## learn
+    generate_hmm  = False     ## need to generate hmm
+    generate_traj = False     ## need to generate traj
+    generate_rdsom  = True     ## need to generate esn
+    learn         = False    ## learn
     fg_test       = False    ## testing
 
     if generate_hmm:

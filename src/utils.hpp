@@ -74,8 +74,10 @@ namespace utils
     TInt rnd_int()
     {
       // first seed
-      auto ltime = std::chrono::steady_clock::now();
-      unsigned int first_seed = std::chrono::duration_cast<std::chrono::microseconds>(ltime.time_since_epoch()).count();
+      // auto ltime = std::chrono::steady_clock::now();
+      // unsigned int first_seed = std::chrono::duration_cast<std::chrono::microseconds>(ltime.time_since_epoch()).count();
+      std::random_device dev;
+      auto first_seed = dev();
       std::default_random_engine generator(first_seed);
       
       std::uniform_int_distribution<TInt> gen;

@@ -187,6 +187,11 @@ Model::POMDP make_cheese_maze( const double prob_success = 1.0,
 //******************************************************************************
 int main( int argc, char *argv[] )
 {
+  // init random by default
+  // Generate seed
+  unsigned int seed = utils::random::rnd_int<unsigned int>();
+  std::srand( seed );  
+  
   setup_options( argc, argv );
   
   Model::POMDP pomdp = make_cheese_maze( _proba, _length);
