@@ -859,6 +859,60 @@ wbuild/xp/xp-004-rdsom -m data_hmm/hmm_ACEBDFDBEC.json -t data_hmm/traj_ACEBDFDB
 **** result
 Marche assez vite 080000 assez bien mais ensuite (à partir de 124000), fusion de deux noeuds OBS, d'où une ambiguité.
 
+*** <2018-06-01 Fri> BBBBBBE, 50 neur, OK après 010000
+**** learn_xp04
+l_hmm = ['BBBBBBE']
+    l_hmm_names = ['BBBBBBE']
+    l_traj_size = [700]
+    l_hmm_names_test = ['BBBBBBE']
+    l_traj_size_test = [700]
+    s_nb_test = 1
+    l_rdsom_size = [50]
+    l_ela = [1.0]
+    l_ela_rec = [0.005]
+    l_eps = [0.25]
+    l_sig_r = [0.05]
+    l_sig_i = [0.1]
+    l_sig_c = [0.05]
+    l_beta = [0.05]
+    l_learn_length = [200000]
+    s_period = 1000
+    s_queue_size = 10
+    seq_size = 6
+    seq_thres = 0.7
+    
+    nb_traj    = 1       ## how many instances of each traj config
+    nb_traj_test = 1
+    nb_rdsom     = 1       ## how many instances of each esn config
+    nb_repeat  = 1       ## no need to repeat : deterministic learning
+    nb_start   = 0       ## start numbering files with
+    generate_hmm  = True     ## need to generate hmm
+    generate_traj = True     ## need to generate traj
+    generate_rdsom  = False     ## need to generate esn
+    learn         = True    ## learn
+    fg_test       = False    ## testing
+**** learn_cmd
+wbuild/xp/xp-004-rdsom -m data_hmm/hmm_BBBBBBE.json -t data_hmm/traj_BBBBBBE_700_n000.data -d data_rdsom/rdsom_50_n000.json --dsom_beta 0.05 --dsom_ela 1.0 --dsom_ela_rec 0.005 --dsom_eps 0.25 --dsom_sig_i 0.1 --dsom_sig_r 0.05 --dsom_sig_c 0.05 --learn_length 200000 --queue_size 10 --period_save 1000 --seqlog_size 6 --seqlog_threshold 0.7 --figerror --save_rdsom data_xprdsom/New/result_BBBBBBE_700_50_1.0_0.005_0.25_0.1_0.05_0.05_0.05_200000_rdsom000_t000.data_save_000 --save_result data_xprdsom/New/result_BBBBBBE_700_50_1.0_0.005_0.25_0.1_0.05_0.05_0.05_200000_rdsom000_t000.data_000
+**** result
+Fonctionne dès 010000. Refait à plus petite échelle.
+
+*** [0/1] <2018-06-04 Mon> test BCDEDC
+l_hmm_names <- nom(s) du hmm ayant servi à entraîner
+l_traj_size <- long des traj ayant servi à entraîner
+l_hmm_names_test <- nom(s) du hamm ayant a servi à générer test
+l_traj_size_test <- long des traj_test
+
+RDSOM dans un fichier qui doit être placé dans 'data_xprdsom/New' 
+  - result_BCDEDC_600_50_1.0_0.005_0.25_0.1_0.05_0.05_0.05_20000_rdsom000_t000.data_000_rdsom_20000
+mais pas dans
+  - result_BCDEDC_600_50_1.0_0.005_0.25_0.1_0.05_0.05_0.05_20000_rdsom000_t000.data_save_000
+qui est une sorte de réminiscence de la création de rdsom qui ne devrait pas être là.
+**** TODO sauvegarde plus fine de in, win, w_in(winner), err_pred, err_rec, err_in
+
+**** vs p01BCDEDC
+- génere HMM + 10 trajectoires
+- quel fichier pour charger le rdsom appris ?
+**** vs p05BCDEDC
 
 * [2/3] Visualisation
 ** DONE Ecrire du texte n'importe où 

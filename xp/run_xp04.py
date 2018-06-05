@@ -37,7 +37,7 @@ def repeat( name_hmm, name_traj, name_rdsom,
             seq_size, seq_thres,
             name_output, queue_size, period_save,
             nb_repeat, idx_start=0, nb_max=2,
-            testing=False, nb_test=1
+            generating_rdsom=False, learning=False, testing=False, nb_test=1
 ):
     """
     Launch nb_repeat copies of function fun, with parameters param in parallel
@@ -70,8 +70,10 @@ def repeat( name_hmm, name_traj, name_rdsom,
     for idx in range(nb_repeat):
         tmp_args = list(args)
         post = "_{0:03d}".format( idx_start+idx )
-        tmp_args.extend( ['--save_rdsom', name_output+'_save'+post ] )
-        tmp_args.extend( ['--save_result', name_output+post] )
+        if generating_rdsom:
+            tmp_args.extend( ['--save_rdsom', name_output+'_save'+post ] )
+        if learning or testing:
+            tmp_args.extend( ['--save_result', name_output+post] )
         if testing:
             tmp_args.extend( ['--testing'])
             tmp_args.extend( ['--nb_test', str(nb_test)] )
@@ -91,13 +93,13 @@ def xp():
     base_args_hmm = ["wbuild/xp/xp-003-hmm"]
     base_args = ["wbuild/xp/xp-004-rdsom"]
     
-    l_hmm = ['ACEBDFDBEC']
-    l_hmm_names = ['ACEBDFDBEC']
-    l_traj_size = [1000]
-    l_hmm_names_test = ['ACEBDFDBEC']
+    l_hmm = ['BCDEDC']
+    l_hmm_names = ['BCDEDC']
+    l_traj_size = [600]
+    l_hmm_names_test = ['p01BCDEDC']
     l_traj_size_test = [1000]
     s_nb_test = 1
-    l_rdsom_size = [12]
+    l_rdsom_size = [50]
     l_ela = [1.0]
     l_ela_rec = [0.005]
     l_eps = [0.25]
@@ -105,22 +107,22 @@ def xp():
     l_sig_i = [0.1]
     l_sig_c = [0.05]
     l_beta = [0.05]
-    l_learn_length = [200000]
-    s_period = 1000
+    l_learn_length = [20000]
+    s_period = 500
     s_queue_size = 10
     seq_size = 6
     seq_thres = 0.7
     
     nb_traj    = 1       ## how many instances of each traj config
-    nb_traj_test = 1
-    nb_rdsom     = 5       ## how many instances of each esn config
+    nb_traj_test = 10
+    nb_rdsom     = 1       ## how many instances of each esn config
     nb_repeat  = 1       ## no need to repeat : deterministic learning
     nb_start   = 0       ## start numbering files with
     generate_hmm  = False     ## need to generate hmm
     generate_traj = False     ## need to generate traj
-    generate_rdsom  = True     ## need to generate esn
+    generate_rdsom  = False     ## need to generate esn
     learn         = False    ## learn
-    fg_test       = False    ## testing
+    fg_test       = True    ## testing
 
     if generate_hmm:
         ## Pour chaque expression
@@ -224,7 +226,10 @@ def xp():
                         seq_thres = seq_thres,
                         period_save = s_period,
                         nb_repeat = nb_repeat,
-                        idx_start = nb_start
+                        idx_start = nb_start,
+                        generating_rdsom = generate_rdsom,
+                        learning = learn,
+                        testing = fg_test
                 )
             id_xp += 1
             pbar.update( id_xp )
@@ -247,7 +252,7 @@ def xp():
                 input_name = hmm_expr+"_"+str(traj_size)+"_"+str(rdsom_size)+"_"+str(ela)+"_"+str(ela_rec)+"_"+str(eps)+"_"+str(sig_i)+"_"+str(sig_r)+"_"+str(sig_c)+"_"+str(beta)+"_"+str(learn_length)
                 input_name += "_rdsom{0:03d}".format(id_rdsom)+"_t{0:03d}".format(id_traj_in)
                 input_name += ".data_000_rdsom_"+str(learn_length)             
-                input_name = "data_rdsom/New/result_"+input_name
+                input_name = "data_xprdsom/New/result_"+input_name
                 
                 output_name = input_name+"_test_"+hmm_expr_test+"_"+str(traj_size_test)+"_t{0:03d}".format( id_traj_test)
                 ## Run TEST
@@ -271,7 +276,9 @@ def xp():
                         seq_thres = seq_thres,
                         nb_repeat = nb_repeat,
                         idx_start = nb_start,
-                        testing = True,
+                        generating_rdsom = generate_rdsom,
+                        learning = learn,
+                        testing = fg_test,
                         nb_test = s_nb_test
                 )
 

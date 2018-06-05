@@ -388,7 +388,8 @@ public:
     if( verb ) {
       std::cout << "__FORWARD" << std::endl;
     }
-    
+
+    _old_winner_neur = _winner_neur;
     computeWinner( input, beta, sig_input, sig_recur, sig_conv );
     if( verb ) {
       std::cout << "  => pred is " << _pred_winner;
@@ -503,7 +504,7 @@ public:
       }
     }
 
-    _old_winner_neur = _winner_neur;
+    //_old_winner_neur = _winner_neur;
   }
   // ********************************************************** Network::is_in
   bool is_in( unsigned int elem,  std::list<unsigned int> ll )
