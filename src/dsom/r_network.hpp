@@ -576,6 +576,7 @@ public:
   // ****************************************************** Network::attributs
 public:
   unsigned int get_winner() const { return _winner_neur; }
+  unsigned int get_pred_winner() const { return _pred_winner; }
   double get_winner_dist() const { return _winner_dist; }
   double get_winner_dist_input() const { return _winner_dist_input; }
   double get_winner_dist_rec() const { return _winner_dist_rec; }

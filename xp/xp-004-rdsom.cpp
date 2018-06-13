@@ -81,8 +81,9 @@ using TInput = Model::DSOM::RNeuron::TWeight;
 using TParam = Model::DSOM::RNeuron::TNumber;
 Traj::iterator _ite_step;
 
-// Log some errors
-std::vector<double> _v_err_input, _v_err_rec, _v_err_pred;     
+// Log some errors and data
+std::vector<double> _v_in, _v_winner_w_in, _v_err_input, _v_err_rec, _v_err_pred;     
+std::vector<unsigned int> _v_winner, _v_pred_winner;
 
 // Graphic
 Figure*                    _fig_rdsom = nullptr;
@@ -727,9 +728,9 @@ void step_test( RDSOM& rdsom,
 		const Traj::iterator& input_start,
 		const Traj::iterator& input_end)
 {
-  Model::DSOM::RNetwork::TNumber err_input = 0;
-  Model::DSOM::RNetwork::TNumber err_rec = 0;
-  Model::DSOM::RNetwork::TNumber err_pred = 0;
+  // Model::DSOM::RNetwork::TNumber err_input = 0;
+  // Model::DSOM::RNetwork::TNumber err_rec = 0;
+  // Model::DSOM::RNetwork::TNumber err_pred = 0;
 
   _seqmap.clear();
   FixedQueue<unsigned int>  winqueue(_opt_seqlog_size);
@@ -755,9 +756,9 @@ void step_test( RDSOM& rdsom,
       _winner_queue->push_front( rdsom.get_winner() );
     }
 
-    err_input += rdsom.get_winner_dist_input();
-    err_rec += rdsom.get_winner_dist_rec();
-    err_pred += rdsom.get_winner_dist_pred();
+    // err_input += rdsom.get_winner_dist_input();
+    // err_rec += rdsom.get_winner_dist_rec();
+    // err_pred += rdsom.get_winner_dist_pred();
 
     // if "activated", retrieve sequence and add to _seqmap
     if( input[0] > _opt_seqlog_threshold ) {
@@ -765,13 +766,23 @@ void step_test( RDSOM& rdsom,
       Sequence seq(winqueue.rbegin(), winqueue.rend());
       _seqmap[seq]++;
     }
+
+    // log values
+    _v_in.push_back( (double) it->id_o );
+    _v_winner.push_back( rdsom.get_winner() );
+    _v_winner_w_in.push_back( rdsom.v_neur[rdsom.get_winner()]->weights[0] );
+    _v_pred_winner.push_back( rdsom.get_pred_winner() );
+    _v_err_input.push_back( rdsom.get_winner_dist_input() );
+    _v_err_rec.push_back( rdsom.get_winner_dist_rec() );
+    _v_err_pred.push_back( rdsom.get_winner_dist_pred() );
+    
   }
 
-  // mean
-  Model::DSOM::RNetwork::TNumber length = input_end - input_start;
-  _v_err_input.push_back(err_input / length );
-  _v_err_rec.push_back(err_rec / length );
-  _v_err_pred.push_back(err_pred / length );
+  // // mean
+  // Model::DSOM::RNetwork::TNumber length = input_end - input_start;
+  // _v_err_input.push_back(err_input / length );
+  // _v_err_rec.push_back(err_rec / length );
+  // _v_err_pred.push_back(err_pred / length );
 
   if( _opt_verb ) {
     // sort SequencePair and print most frequent
@@ -782,15 +793,15 @@ void step_test( RDSOM& rdsom,
     }
     // sort using pairs->second (lambda function)
     std::sort( seqvec.begin(), seqvec.end(),
-	       [] (SequencePair& a, SequencePair& b) {
-		 return a.second > b.second;
-	       }
-	       );
+               [] (SequencePair& a, SequencePair& b) {
+        	 return a.second > b.second;
+               }
+               );
 
     std::cout << "__FREQ SEQUENCE" << std::endl;
     for (auto it = seqvec.begin();
-	 it != std::min(seqvec.end(), seqvec.begin()+_opt_seqlog_nb);
-	 ++it) {
+         it != std::min(seqvec.end(), seqvec.begin()+_opt_seqlog_nb);
+         ++it) {
       std::cout << utils::str_vec(it->first) << " -> " << it->second << std::endl;
     }
   }
@@ -1073,40 +1084,84 @@ int main(int argc, char *argv[])
     std::cout << "__TEST"  << std::endl;
 
     for( unsigned int i = 0; i < _opt_nb_test; ++i) {
-      step_test( *_rdsom, _data->begin(), _data->end() );
       std::cout << "  IT=" << i << std::endl;
-    }
+      // clean logs
+      _v_in.clear();
+      _v_winner.clear();
+      _v_winner_w_in.clear();
+      _v_pred_winner.clear();
+      _v_err_input.clear();
+      _v_err_rec.clear();
+      _v_err_pred.clear();
+      
+      step_test( *_rdsom, _data->begin(), _data->end() );
 
-    // At the end, save errors
-    std::stringstream filename_error;
-    filename_error << *_opt_filesave_result;
-    filename_error << "_test";
-    auto ofile = std::ofstream( filename_error.str() );
+      //After iteration, save logs
+      std::stringstream filename_logs;
+      filename_logs << *_opt_filesave_result;
+      filename_logs << "_test_";
+      filename_logs << std::setw(3) << std::setfill('0') << i;
+
+      auto ofile = std::ofstream( filename_logs.str() );
 	 
-    // Header comments
-    ofile << "## \"traj_name\" : \"" << *_opt_fileload_traj << "\"," << std::endl;
-    ofile << "## \"rdsom_name\": \"" << *_opt_fileload_rdsom << "\"," << std::endl;
-    // @todo: parameters
-    ofile << "## \"beta\"; \"" << _opt_beta << "\"," << std::endl;
-    ofile << "## \"sigma_input\"; \"" << _opt_sig_input << "\"," << std::endl;
-    ofile << "## \"sigma_recur\"; \"" << _opt_sig_recur << "\"," << std::endl;
-    ofile << "## \"sigma_convo\"; \"" << _opt_sig_convo << "\"," << std::endl;
-    ofile << "## \"epsilon\"; \"" << _opt_eps << "\"," << std::endl;
-    ofile << "## \"ela_input\"; \"" << _opt_ela << "\"," << std::endl;
-    ofile << "## \"ela_rec\"; \"" << _opt_ela_rec << "\"," << std::endl;
-    // Header col names
-    ofile << "ite\terr_in\terr_rec\terr_pred" << std::endl;
-    // Data
-    for( unsigned int idx = 0; idx < _opt_nb_test; ++idx) {
-      ofile << idx << "\t";
-      ofile << _v_err_input[idx] << "\t";
-      ofile << _v_err_rec[idx] << "\t";
-      ofile << _v_err_pred[idx];
-      ofile << std::endl;
-
-      ++idx;
+      // Header comments
+      ofile << "## \"traj_name\" : \"" << *_opt_fileload_traj << "\"," << std::endl;
+      ofile << "## \"rdsom_name\": \"" << *_opt_fileload_rdsom << "\"," << std::endl;
+      // @todo: parameters
+      ofile << "## \"beta\"; \"" << _opt_beta << "\"," << std::endl;
+      ofile << "## \"sigma_input\"; \"" << _opt_sig_input << "\"," << std::endl;
+      ofile << "## \"sigma_recur\"; \"" << _opt_sig_recur << "\"," << std::endl;
+      ofile << "## \"sigma_convo\"; \"" << _opt_sig_convo << "\"," << std::endl;
+      ofile << "## \"epsilon\"; \"" << _opt_eps << "\"," << std::endl;
+      ofile << "## \"ela_input\"; \"" << _opt_ela << "\"," << std::endl;
+      ofile << "## \"ela_rec\"; \"" << _opt_ela_rec << "\"," << std::endl;
+      // Header col names
+      ofile << "ite\tinput\twinner\tw_win\tpred_win\terr_in\terr_rec\terr_pred" << std::endl;
+      // Data
+      for( unsigned int idx = 0; idx < _v_in.size(); ++idx) {
+        ofile << idx << "\t";
+        ofile << _v_in[idx] << "\t";
+        ofile << _v_winner[idx] << "\t";
+        ofile << _v_winner_w_in[idx] << "\t";
+        ofile << _v_pred_winner[idx] << "\t";
+        ofile << _v_err_input[idx] << "\t";
+        ofile << _v_err_rec[idx] << "\t";
+        ofile << _v_err_pred[idx];
+        ofile << std::endl;
+      }
+    ofile.close();      
     }
-    ofile.close();
+    
+    // // At the end, save errors
+    // std::stringstream filename_error;
+    // filename_error << *_opt_filesave_result;
+    // filename_error << "_test";
+    // auto ofile = std::ofstream( filename_error.str() );
+	 
+    // // Header comments
+    // ofile << "## \"traj_name\" : \"" << *_opt_fileload_traj << "\"," << std::endl;
+    // ofile << "## \"rdsom_name\": \"" << *_opt_fileload_rdsom << "\"," << std::endl;
+    // // @todo: parameters
+    // ofile << "## \"beta\"; \"" << _opt_beta << "\"," << std::endl;
+    // ofile << "## \"sigma_input\"; \"" << _opt_sig_input << "\"," << std::endl;
+    // ofile << "## \"sigma_recur\"; \"" << _opt_sig_recur << "\"," << std::endl;
+    // ofile << "## \"sigma_convo\"; \"" << _opt_sig_convo << "\"," << std::endl;
+    // ofile << "## \"epsilon\"; \"" << _opt_eps << "\"," << std::endl;
+    // ofile << "## \"ela_input\"; \"" << _opt_ela << "\"," << std::endl;
+    // ofile << "## \"ela_rec\"; \"" << _opt_ela_rec << "\"," << std::endl;
+    // // Header col names
+    // ofile << "ite\terr_in\terr_rec\terr_pred" << std::endl;
+    // // Data
+    // for( unsigned int idx = 0; idx < _opt_nb_test; ++idx) {
+    //   ofile << idx << "\t";
+    //   ofile << _v_err_input[idx] << "\t";
+    //   ofile << _v_err_rec[idx] << "\t";
+    //   ofile << _v_err_pred[idx];
+    //   ofile << std::endl;
+
+    //   ++idx;
+    // }
+    // ofile.close();
 
     // OFFSCREEN saving
     // And save a PNG image of the last _opt_queue_size neurons

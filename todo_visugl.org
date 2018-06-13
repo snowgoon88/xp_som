@@ -896,7 +896,7 @@ wbuild/xp/xp-004-rdsom -m data_hmm/hmm_BBBBBBE.json -t data_hmm/traj_BBBBBBE_700
 **** result
 Fonctionne dès 010000. Refait à plus petite échelle.
 
-*** [0/1] <2018-06-04 Mon> test BCDEDC
+*** [7/9] <2018-06-04 Mon> test BCDEDC
 l_hmm_names <- nom(s) du hmm ayant servi à entraîner
 l_traj_size <- long des traj ayant servi à entraîner
 l_hmm_names_test <- nom(s) du hamm ayant a servi à générer test
@@ -907,12 +907,24 @@ RDSOM dans un fichier qui doit être placé dans 'data_xprdsom/New'
 mais pas dans
   - result_BCDEDC_600_50_1.0_0.005_0.25_0.1_0.05_0.05_0.05_20000_rdsom000_t000.data_save_000
 qui est une sorte de réminiscence de la création de rdsom qui ne devrait pas être là.
-**** TODO sauvegarde plus fine de in, win, w_in(winner), err_pred, err_rec, err_in
+**** DONE sauvegarde plus fine de in, win, w_in(winner), err_pred, err_rec, err_in
 
-**** vs p01BCDEDC
+**** DONE vs p01BCDEDC
 - génere HMM + 10 trajectoires
 - quel fichier pour charger le rdsom appris ?
-**** vs p05BCDEDC
+**** DONE vs p03BCDEDC
+**** DONE vs p05BCDEDC
+**** DONE vs AF95p05BCDEDC, AF05p05BCDEDC,
+assez bruité, mais il faudrait ploter en regard traj BCDEF et traj de test
+plot_AFxxpxxBCDEDC_180611.pdf
+p_root+perra05[1]+perra95[1]+perr1[1]+perra05[2]+perra95[2]+perr1[2]+coord_cartesian(xlim=c(10,100))+theme(legend.position = c(0.35,0.89))
+**** DONE vs BCDEDC05p95*, BCDEDC10p90*
+pas mal de bruit.
+plot_BCDEDCxxpxxs_180611.pdf
+p_root+perrp10[1]+perrp05[1]+perr1[1]+perrp10[2]+perrp05[2]+perr1[2]+coord_cartesian(xlim=c(10,100))+theme(legend.position = c(0.1,0.89))
+**** DONE vs BCDEDC
+**** TODO ggplot, tracer trajectoires
+**** TODO augmenter polices caractère quand sauve ggplot
 
 * [2/3] Visualisation
 ** DONE Ecrire du texte n'importe où 
