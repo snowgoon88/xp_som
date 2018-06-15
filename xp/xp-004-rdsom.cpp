@@ -82,7 +82,7 @@ using TParam = Model::DSOM::RNeuron::TNumber;
 Traj::iterator _ite_step;
 
 // Log some errors and data
-std::vector<double> _v_in, _v_winner_w_in, _v_err_input, _v_err_rec, _v_err_pred;     
+std::vector<double> _v_in, _v_winner_w_in, _v_pred_winner_w, _v_err_input, _v_err_rec, _v_err_pred;     
 std::vector<unsigned int> _v_winner, _v_pred_winner;
 
 // Graphic
@@ -772,6 +772,7 @@ void step_test( RDSOM& rdsom,
     _v_winner.push_back( rdsom.get_winner() );
     _v_winner_w_in.push_back( rdsom.v_neur[rdsom.get_winner()]->weights[0] );
     _v_pred_winner.push_back( rdsom.get_pred_winner() );
+    _v_pred_winner_w.push_back( rdsom.v_neur[rdsom.get_pred_winner()]->weights[0] );
     _v_err_input.push_back( rdsom.get_winner_dist_input() );
     _v_err_rec.push_back( rdsom.get_winner_dist_rec() );
     _v_err_pred.push_back( rdsom.get_winner_dist_pred() );
@@ -1090,6 +1091,7 @@ int main(int argc, char *argv[])
       _v_winner.clear();
       _v_winner_w_in.clear();
       _v_pred_winner.clear();
+      _v_pred_winner_w.clear();
       _v_err_input.clear();
       _v_err_rec.clear();
       _v_err_pred.clear();
@@ -1116,7 +1118,7 @@ int main(int argc, char *argv[])
       ofile << "## \"ela_input\"; \"" << _opt_ela << "\"," << std::endl;
       ofile << "## \"ela_rec\"; \"" << _opt_ela_rec << "\"," << std::endl;
       // Header col names
-      ofile << "ite\tinput\twinner\tw_win\tpred_win\terr_in\terr_rec\terr_pred" << std::endl;
+      ofile << "ite\tinput\twinner\tw_win\tpred_win\tw_predwin\terr_in\terr_rec\terr_pred" << std::endl;
       // Data
       for( unsigned int idx = 0; idx < _v_in.size(); ++idx) {
         ofile << idx << "\t";
@@ -1124,6 +1126,7 @@ int main(int argc, char *argv[])
         ofile << _v_winner[idx] << "\t";
         ofile << _v_winner_w_in[idx] << "\t";
         ofile << _v_pred_winner[idx] << "\t";
+        ofile << _v_pred_winner_w[idx] << "\t";
         ofile << _v_err_input[idx] << "\t";
         ofile << _v_err_rec[idx] << "\t";
         ofile << _v_err_pred[idx];

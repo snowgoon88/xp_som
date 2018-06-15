@@ -100,9 +100,10 @@ def xp():
     l_hmm = ['BCDEDC']
     l_hmm_names = ['BCDEDC']
     l_traj_size = [600]
-    ##l_hmm_names_test = ['p03BCDEDC','BCDEDC10p90s','BCDEDC05p95s']
-    ##l_hmm_names_test = ['AF05p05BCDEDC','AF95p05BCDEDC']
-    l_hmm_names_test = ['BCDEDC']
+    ##l_hmm_names_test = ['BCDEDC10p90s','BCDEDC05p95s']
+    l_hmm_names_test = ['AF05p05BCDEDC','AF95p05BCDEDC']
+    ##l_hmm_names_test = ['p01BCDEDC','p03BCDEDC','p05BCDEDC']
+    ##l_hmm_names_test = ['BCDEDC']
     l_traj_size_test = [1000]
     s_nb_test = 1
     l_rdsom_size = [50]
@@ -120,7 +121,7 @@ def xp():
     seq_thres = 0.7
     
     nb_traj    = 1      ## how many instances of each traj config
-    nb_traj_test = 1
+    nb_traj_test = 10
     nb_rdsom     = 1       ## how many instances of each esn config
     nb_repeat  = 1       ## no need to repeat : deterministic learning
     nb_start   = 0       ## start numbering files with

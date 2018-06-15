@@ -1,5 +1,6 @@
 # utilise ggplot
 require(ggplot2)
+source("r_scripts/utils.R")
 
 ###############################################################################
 ## Visualiser les tests de RDSOM
@@ -25,7 +26,7 @@ require(ggplot2)
 ## - "00x" is inserted for i in 0:(nbfiles-1)
 ## - endname = _000_test_000
 ##
-## with names(data)= "ite", "e_pred0", "e_pred1", etc
+## with names(data)= "ite", "label", "w_in0", "w_pred0", "e_pred0", etc
 load_err_pred <- function( startname, label, endname, nbfiles )
 {
   # initial data
@@ -42,13 +43,15 @@ load_err_pred <- function( startname, label, endname, nbfiles )
                   label, "_1000_t",
                   formatC(0:(nbfiles-1), width=3, flag="0"), 
                   endname, sep="")
-  # list of columns names
-  colnames <- paste( "e_pred", 0:(nbfiles-1), sep="")
+  # list of columns names w_in0,w_pred0,e_pred0, w_in1,w_pred1,e_pred1,...
+  colnames <- paste( c("w_in","w_pred","e_pred"), rep(0:(nbfiles-1), each=3), sep="")
 
-  ## Function to add err_pred to dataframe
+  ## Function to add w_pred AND err_pred to dataframe
   add_err_pred.d <- function( name ) {
     print( paste("R:",name))
     dread <- read.table( file=name, header=TRUE )
+    data <<- cbind( data, dread$input)
+    data <<- cbind( data, dread$w_predwin)
     data <<- cbind( data, dread$err_pred)
   }
   lapply( files, add_err_pred.d )
@@ -63,17 +66,30 @@ load_err_pred <- function( startname, label, endname, nbfiles )
 ## compute mean and sd of data
 ## new columns e_pred_mean e_pred_sd
 ## WARN: only if data is "it","e_pred0",...,"e_predn"
+## mean of column N° 5,8,9
 compute_stats <- function( data )
 {
-  # mean and sd are not applied to first column (ite)
-  data$e_pred_mean = apply(data[,-2:-1], 1, mean)
-  data$e_pred_sd = apply(data[,-2:-1], 1, sd)
+  col_idx <- seq( from=5, to=length(data), by=3)
+  # mean of SEVERAL colums
+  if (is.null( dim(data[,col_idx]))) {
+    data$e_pred_mean = data[,5]
+    data$e_pred_sd = rep( 0, length(data$ite))
+  }
+  else {
+    # mean and sd are not applied to first column (ite)
+    data$e_pred_mean = apply(data[,col_idx], 1, mean)
+    data$e_pred_sd = apply(data[,col_idx], 1, sd)
+  }
   return(data)
 }
 ###############################################################################
 
 ###############################################################################
-## plot ite vs mean+/-sd for e_pred
+## make plot ite vs mean+/-sd for e_pred
+## - data: dataframe with cols like e_pred_mean and e_pred_sd
+##
+## => (p_err_pred_mean, p_err_pred_sd)
+##
 plot_err_pred <- function(data)
 {
   p_err_pred_sd <- geom_ribbon(data=data,
@@ -91,14 +107,57 @@ plot_err_pred <- function(data)
 ###############################################################################
 
 ###############################################################################
-## plot in a pdf
-to_pdf <- function( filename, gplot )
+## make plot trajectories : w_pred vs w_in
+## - data: dataframe with cols like w_inX and w_predX
+## - idx_traj : index of trajctory we want to plot
+##
+## => (p_tra_in, p_traj_pred)
+##
+plot_traj <- function(data, idx_traj )
 {
-  # Must use print( cmd...) otherwise, nothing is plotted in script mode
-  # Defaut size is 7x7 inches
-  pdf( file=filename )
-  print( gplot )
-  dev.off()
+  print( paste( "plot_traj with idx=", idx_traj))
+  col_in <- paste( "w_in", idx_traj, sep="")
+  col_pred <- paste( "w_pred", idx_traj, sep="")
+  p_traj_in <- geom_line( data=data,
+                          mapping=aes_( x=quote(ite),
+                                        y=as.name(col_in),
+                                        color=col_in)
+                          )
+  p_traj_pred <- geom_line( data=data,
+                            mapping=aes_( x=quote(ite),
+                                          y=as.name(col_pred),
+                                          color=col_pred)
+  )
+  return( list(p_traj_in,p_traj_pred))
+}
+###############################################################################
+
+###############################################################################
+## Effective multiplot of all in/pred trajectories using 2 columns
+## - data : dataframe with w_inX, w_predX columns
+## - idx_all : sequence of trajectory indexes
+## - ... : gplot extra commands for each subplot
+##
+## Example : plot_all_traj(df3[1:200,], 0:9, coord_cartesian(xlim=c(10,100)), 
+##             theme(axis.title.x = element_blank(), axis.title.y = element_blank()) )
+##
+plot_all_traj <- function( data, idx_all, ... )
+{
+    ## base for plotting
+    p_root <- ggplot()
+    gplot_extra <- list(...)
+    ## list of all plots
+    all_plots <- lapply( idx_all,
+                        function(x) {
+                            ptraj <- plot_traj( data, x )
+                            pl <- p_root+ptraj[1]+ptraj[2]
+                            for( gp in gplot_extra ) {
+                              pl <- pl + gp
+                            }
+                            return(pl)
+                        }
+                        )
+    multiplot( plotlist=all_plots, cols=2 )
 }
 ###############################################################################
 
@@ -107,4 +166,9 @@ to_pdf <- function( filename, gplot )
 ## BCDEDC__p__s
 ## p_root+perrp10[1]+perrp05[1]+perr1[1]+perrp10[2]+perrp05[2]+perr1[2]+coord_cartesian(xlim=c(10,100))+theme(legend.position = c(0.1,0.89))
 
+## plot traj
+## plot_all_traj(df3[1:200,], 0:9, coord_cartesian(xlim=c(10,100)), theme(axis.title.x = element_blank(), axis.title.y = element_blank()) )
+## plot_all_traj(df5[1:200,], 0:9, coord_cartesian(xlim=c(10,100)), theme(axis.title.x = element_blank(), axis.title.y = element_blank()) )
+## proot+pt5.0[1]+pt5.0[2]+coord_cartesian(xlim=c(10,100))
+## proot+pt5.0[1]+pt5.0[2]+coord_cartesian(xlim=c(45,65))
 
