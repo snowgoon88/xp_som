@@ -172,3 +172,5 @@ plot_all_traj <- function( data, idx_all, ... )
 ## proot+pt5.0[1]+pt5.0[2]+coord_cartesian(xlim=c(10,100))
 ## proot+pt5.0[1]+pt5.0[2]+coord_cartesian(xlim=c(45,65))
 
+## pl <- proot+pt5.0[1]+pt5.0[2]+coord_cartesian(xlim=c(45,65))
+## plot_adapt <- function( plot, title=NA, x=NA, y=NA, textsize=1, leg_rel=0.75, leg_pos=NULL)

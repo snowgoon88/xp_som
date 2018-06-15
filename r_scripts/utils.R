@@ -7,6 +7,8 @@
 ##      => plot multiple function in ggplot
 ## - to_pdf( filename, gplot )
 ##      => save ggplot to pdf
+## - plot_adapt <- function( plot, title=NA, x=NA, y=NA, textsize=1, leg_rel=0.75, leg_pos=NULL)
+##      => adapt text, legend and axis of plot
 ###############################################################################
 
 ###############################################################################
@@ -68,5 +70,53 @@ to_pdf <- function( filename, gplot )
   pdf( file=filename )
   print( gplot )
   dev.off()
+}
+###############################################################################
+
+###############################################################################
+## modify text size, title, axis and legend position
+## - plot : a ggplot
+## - title : if any, string for plot title
+## - x : if any, string for x axis title
+## - y : if any, string for y axis title
+## - textsize : relative change in overall text size
+## - leg_rel : size of legend relative to other text
+## - leg_pos : c(x,y) if any, position of legend INSIDE plot (x,y \in [O,1])
+##
+## => ggplot
+##
+## Exampe : plot_adapt(pl, title="p05BCDEDC", x="time", y="weight", leg_pos=c(0.9,0.1), textsize = 1.5, leg_rel=1.5)
+##
+plot_adapt <- function( plot, title=NA, x=NA, y=NA, textsize=1, leg_rel=0.75, leg_pos=NULL)
+{
+  axis.size <- element_text( size = rel(textsize))
+  tick.size <- element_text( size = rel(textsize*0.75))
+  leg.size <- element_text( size = rel(textsize*leg_rel))
+  leg.text.size <- element_text( size = rel(textsize*leg_rel*0.75))
+  
+  newtheme <- NULL
+  if (is.null(leg_pos)) {
+    newtheme <- theme( plot.title=element_text(size=rel(textsize+1), hjust=0.5),
+                       axis.text=tick.size, axis.title=axis.size,
+                       legend.title=leg.size, legend.text = leg.text.size)
+  }
+  else {
+    newtheme <- theme( plot.title=element_text(size=rel(textsize+1), hjust=0.5),
+                       axis.text=tick.size, axis.title=axis.size,
+                       legend.title=leg.size, legend.text = leg.text.size,
+                       legend.position = leg_pos )
+  }
+  if (!is.na(title)) {
+    plot <- plot + ggtitle( title )
+  }
+  if (!is.na(x)) {
+    plot <- plot + xlab( x )
+  }
+  if (!is.na(y)) {
+    plot <- plot + ylab( y )
+  }
+  
+  plot <- plot + newtheme
+  return (plot)
 }
 ###############################################################################

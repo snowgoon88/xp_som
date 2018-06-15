@@ -896,7 +896,7 @@ wbuild/xp/xp-004-rdsom -m data_hmm/hmm_BBBBBBE.json -t data_hmm/traj_BBBBBBE_700
 **** result
 Fonctionne dès 010000. Refait à plus petite échelle.
 
-*** [8/10] <2018-06-04 Mon> test BCDEDC
+*** [9/10] <2018-06-04 Mon> test BCDEDC
 l_hmm_names <- nom(s) du hmm ayant servi à entraîner
 l_traj_size <- long des traj ayant servi à entraîner
 l_hmm_names_test <- nom(s) du hamm ayant a servi à générer test
@@ -925,7 +925,8 @@ p_root+perrp10[1]+perrp05[1]+perr1[1]+perrp10[2]+perrp05[2]+perr1[2]+coord_carte
 **** DONE vs BCDEDC
 **** DONE ggplot, tracer trajectoires
 **** TODO faire moyenne avec plusieurs RDSOM
-**** TODO augmenter polices caractère quand sauve ggplot
+**** DONE augmenter polices caractère quand sauve ggplot
+voir plot_adapt() dans r_script/utils.R
 
 * [2/3] Visualisation
 ** DONE Ecrire du texte n'importe où 
