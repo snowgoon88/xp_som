@@ -122,14 +122,14 @@ def xp():
     
     nb_traj    = 1      ## how many instances of each traj config
     nb_traj_test = 10
-    nb_rdsom     = 1       ## how many instances of each esn config
+    nb_rdsom     = 10       ## how many instances of each esn config
     nb_repeat  = 1       ## no need to repeat : deterministic learning
     nb_start   = 0       ## start numbering files with
     generate_hmm  = False     ## need to generate hmm
     generate_traj = False     ## need to generate traj
     generate_rdsom  = False     ## need to generate esn
-    learn         = False    ## learn
-    fg_test       = True    ## testing
+    learn         = True    ## learn
+    fg_test       = False    ## testing
 
     if generate_hmm:
         ## Pour chaque expression

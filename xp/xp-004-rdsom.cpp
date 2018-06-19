@@ -82,8 +82,12 @@ using TParam = Model::DSOM::RNeuron::TNumber;
 Traj::iterator _ite_step;
 
 // Log some errors and data
+// => updated in step_test
 std::vector<double> _v_in, _v_winner_w_in, _v_pred_winner_w, _v_err_input, _v_err_rec, _v_err_pred;     
 std::vector<unsigned int> _v_winner, _v_pred_winner;
+// => updated in step_learn
+std::vector<double> _vl_in, _vl_winner_w_in, _vl_pred_winner_w, _vl_err_input, _vl_err_rec, _vl_err_pred;
+std::vector<unsigned int> _vl_winner, _vl_pred_winner;
 
 // Graphic
 Figure*                    _fig_rdsom = nullptr;
@@ -702,6 +706,15 @@ void step_learn( RDSOM& rdsom,
       _c_error_rec->add_sample( {(double)_nb_step, rdsom.get_winner_dist_rec(), 0.0 } );
       _c_error_pred->add_sample( {(double)_nb_step, rdsom.get_winner_dist_pred(), 0.0} );
     }
+    // Add errors to log
+    _vl_in.push_back( (double) _ite_step->id_o; );
+    _vl_winner.push_back( rdsom.get_winner() );
+    _vl_winner_w_in.push_back( rdsom.v_neur[rdsom.get_winner()]->weights[0] );
+    _vl_pred_winner.push_back( rdsom.get_pred_winner() );
+    _vl_pred_winner_w.push_back( rdsom.v_neur[rdsom.get_pred_winner()]->weights[0] );
+    _vl_err_input.push_back( rdsom.get_winner_dist_input() );
+    _vl_err_rec.push_back( rdsom.get_winner_dist_rec() );
+    _vl_err_pred.push_back( rdsom.get_winner_dist_pred() );
     
     // update iterator
     ++ _ite_step;
@@ -977,7 +990,16 @@ int main(int argc, char *argv[])
     count << std::setw(6) << std::setfill('0') <<  _ite_cur << ".png";
     save_figweight( *_opt_filesave_result+"_figweight_"+count.str(),
                     "FigWeight", false );
-     
+
+    // clean logs for error in learning
+    _vl_in.clear();
+    _vl_winner.clear();
+    _vl_winner_w_in.clear();
+    _vl_pred_winner.clear();
+    _vl_pred_winner_w.clear();
+    _vl_err_input.clear();
+    _vl_err_rec.clear();
+    _vl_err_pred.clear();
     while( _ite_cur < _opt_learn_length ) {
       step_learn( *_rdsom, _opt_period_save,
                   _data->begin(), _data->end(),
@@ -1049,17 +1071,24 @@ int main(int argc, char *argv[])
     // Data
     _ite_cur = 0;
     unsigned int idx = 0;
-    while( _ite_cur < _opt_learn_length ) {
-      _ite_cur += _opt_period_save;
-      std::cout << "__SAVING for ite="<< _ite_cur << " idx=" << idx << std::endl;
-      ofile << _ite_cur << "\t";
-      ofile << _v_err_input[idx] << "\t";
-      ofile << _v_err_rec[idx] << "\t";
-      ofile << _v_err_pred[idx];
-      ofile << std::endl;
+    for( unsigned int idx = 0; idx < _vl_in.size(); ++idx) {
+        ofile << idx << "\t";
+        ofile << _vl_err_input[idx] << "\t";
+        ofile << _vl_err_rec[idx] << "\t";
+        ofile << _vl_err_pred[idx];
+        ofile << std::endl;
+      }  
+    // while( _ite_cur < _opt_learn_length ) {
+    //   _ite_cur += _opt_period_save;
+    //   std::cout << "__SAVING for ite="<< _ite_cur << " idx=" << idx << std::endl;
+    //   ofile << _ite_cur << "\t";
+    //   ofile << _v_err_input[idx] << "\t";
+    //   ofile << _v_err_rec[idx] << "\t";
+    //   ofile << _v_err_pred[idx];
+    //   ofile << std::endl;
        
-      ++idx;
-    }
+    //   ++idx;
+    // }
     ofile.close();
 
     // Seqlog most frequent

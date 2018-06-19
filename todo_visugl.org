@@ -925,6 +925,9 @@ p_root+perrp10[1]+perrp05[1]+perr1[1]+perrp10[2]+perrp05[2]+perr1[2]+coord_carte
 **** DONE vs BCDEDC
 **** DONE ggplot, tracer trajectoires
 **** TODO faire moyenne avec plusieurs RDSOM
+- genereate data_rdsom/rdsom_50_nXXX.json
+- learn for everyone => data_xprdsom/New
+- dans R : dataframe: ite epred_t00 epred_t01 ... epred_mean epred_sd
 **** DONE augmenter polices caractère quand sauve ggplot
 voir plot_adapt() dans r_script/utils.R
 

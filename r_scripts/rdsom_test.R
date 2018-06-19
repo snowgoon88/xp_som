@@ -61,18 +61,55 @@ load_err_pred <- function( startname, label, endname, nbfiles )
   return(data)
 }
 ###############################################################################
+## - startname = "result_BCDEDC_600_50_1.0_0.005_0.25_0.1_0.05_0.05_0.05_20000_rdsom"
+## - ename = "_t000.data_000_errors"
+## - then insert "00x" for i in 0:(nbfiles-1)
+##
+## with names(data) = "ite", epred0, e_pre1, ...
+load_err_pred_learn <- function( startname, label, endname, nbfiles )
+{
+    
+  # initial data
+  dread <- read.table( paste(startname,
+                             "000", endname, sep=""),
+                      header=TRUE)
+  data <- as.data.frame( dread$ite )
+  # then add a column with label
+  data$label <- rep( label, length(data[,1]))
+
+  ## add all err_pred
+  # list of all the files name "rootname+00x"
+  files <- paste( startname,
+                  formatC(0:(nbfiles-1), width=3, flag="0"), 
+                  endname, sep="")
+  # list of columns names epred0, epred1, etc
+  colnames <- paste( c("epred"), rep(0:(nbfiles-1), each=1), sep="")
+  print( colnames )
+
+  ## Function to err_pred to dataframe
+  add_err_pred.d <- function( name ) {
+    print( paste("R:",name))
+    dread <- read.table( file=name, header=TRUE )
+    data <<- cbind( data, dread$err_pred)
+  }
+  lapply( files, add_err_pred.d )
+  # rename columns
+  names(data) <- c("ite","label",colnames)
+
+  return(data)  
+}
 
 ###############################################################################
 ## compute mean and sd of data
 ## new columns e_pred_mean e_pred_sd
 ## WARN: only if data is "it","e_pred0",...,"e_predn"
-## mean of column N° 5,8,9
-compute_stats <- function( data )
+## mean of column N° idx.start, idx.start+idx.stride, idx.start+2*idx.stride, ...
+compute_stats <- function( data, idx.start=5, idx.stride=3)
 {
-  col_idx <- seq( from=5, to=length(data), by=3)
+  col_idx <- seq( from=idx.start, to=length(data), by=idx.stride)
   # mean of SEVERAL colums
   if (is.null( dim(data[,col_idx]))) {
-    data$e_pred_mean = data[,5]
+    data$e_pred_mean = data[,idx.start]
     data$e_pred_sd = rep( 0, length(data$ite))
   }
   else {
