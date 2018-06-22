@@ -707,7 +707,7 @@ void step_learn( RDSOM& rdsom,
       _c_error_pred->add_sample( {(double)_nb_step, rdsom.get_winner_dist_pred(), 0.0} );
     }
     // Add errors to log
-    _vl_in.push_back( (double) _ite_step->id_o; );
+    _vl_in.push_back( (double) _ite_step->id_o );
     _vl_winner.push_back( rdsom.get_winner() );
     _vl_winner_w_in.push_back( rdsom.v_neur[rdsom.get_winner()]->weights[0] );
     _vl_pred_winner.push_back( rdsom.get_pred_winner() );
@@ -1070,7 +1070,6 @@ int main(int argc, char *argv[])
     ofile << "ite\terr_in\terr_rec\terr_pred" << std::endl;
     // Data
     _ite_cur = 0;
-    unsigned int idx = 0;
     for( unsigned int idx = 0; idx < _vl_in.size(); ++idx) {
         ofile << idx << "\t";
         ofile << _vl_err_input[idx] << "\t";

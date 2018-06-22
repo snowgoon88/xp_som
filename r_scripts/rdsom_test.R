@@ -1,5 +1,9 @@
 # utilise ggplot
 require(ggplot2)
+# utilise zoo for rollapply
+require(zoo)
+# utilise reshape2 for melt
+require(reshape2)
 source("r_scripts/utils.R")
 
 ###############################################################################
@@ -121,6 +125,25 @@ compute_stats <- function( data, idx.start=5, idx.stride=3)
 }
 ###############################################################################
 
+## use zoo::rollapply to compute sliced means on columns defined be idx
+## suppose that time index is data$ite
+compute_roll_stats <- function( data, by, width, col_idx )
+{
+  ## transform into a zoo object
+  zoodata <- zoo( x=data[,col_idx], order.by=data$ite )
+  zstats.m <- rollapply(zoodata, width=width, by=by, by.column=TRUE, align="center",
+                     FUN=mean )
+  zstats.sd <- rollapply(zoodata, width=width, by=by, by.column=TRUE, align="center",
+                       FUN=sd)
+  newdata <- data.frame( ite=index(zstats.m), zstats.m, zstats.sd )
+  # set mean names in _m and _sd
+  names(newdata) <- c( "ite", paste( names(data[,col_idx]), "_m", sep=""),
+                       paste( names(data[,col_idx]), "_sd", sep=""))
+  
+  return(newdata)
+}
+
+
 ###############################################################################
 ## make plot ite vs mean+/-sd for e_pred
 ## - data: dataframe with cols like e_pred_mean and e_pred_sd
@@ -211,3 +234,27 @@ plot_all_traj <- function( data, idx_all, ... )
 
 ## pl <- proot+pt5.0[1]+pt5.0[2]+coord_cartesian(xlim=c(45,65))
 ## plot_adapt <- function( plot, title=NA, x=NA, y=NA, textsize=1, leg_rel=0.75, leg_pos=NULL)
+
+## windowed plot with zoom
+#dl <- load_err_pred_learn( lsname, lename, 10)
+#dstat <- compute_stats(dl)
+#z0 <- zoo(x=dstat$epred0)
+#z0m <- rollapply(z0, FUN=mean, by=100, width=500 )
+#z0d <- rollapply(z0, FUN=sd, by=100, width=500 )
+#d0 <- data.frame( ite=index(z0d), z0m, z0d)
+#ggplot()+geom_line(data=d0,mapping=aes(x=ite,y=z0m))+geom_ribbon(data=d0,mapping=aes(x=ite,ymin=z0m-z0d,ymax=z0m+z0d),alpha=0.1)
+#ggplot(data=dstat)+geom_line(aes(x=ite,y=epred0))+coord_cartesian(xlim=c(4650,4700))
+## new version 22/06/2018
+#p0 <-ggplot(dl.statroll)+geom_line(aes(x=ite,y=epred0_m))+geom_ribbon(aes(x=ite,ymin=epred0_m-epred0_sd,ymax=epred0_m+epred0_sd),alpha=0.2)+geom_rect(aes(xmin=4650,xmax=4700,ymin=-0.2,ymax=0.3),color="blue")
+#pz <- ggplot(data=dl.stat)+geom_line(aes(x=ite,y=epred0))+coord_cartesian(xlim=c(4650,4700))
+#gpz <- ggplotGrob(pz)
+#p0 + geom_segment(x=4680,y=0.15,xend=10000,yend=0.3,color="blue")+geom_rect(xmin=9900,xmax=20100,ymin=0.09,ymax=0.41,fill="blue")+annotation_custom(gpz,xmin=10000,xmax=20000,ymin=0.1,ymax=0.4)
+## flat print of all err_learn
+#dl.flat <- melt(dl.statroll, id.vars="ite", measure.vars = 2:11, variable.name = "lab_m", value.name = "val_m")
+#dl.flat.sd <- melt(dl.statroll, id.vars="ite", measure.vars = 13:22, variable.name = "lab_sd", value.name = "val_sd")
+#dl.flat$val_sd = dl.flat.sd$val_sd
+#dl.flat$lab_sd = dl.flat.sd$lab_sd
+#dl.flat.sd = NULL
+#ggplot(dl.flat)+geom_line(aes(x=ite,y=val_m,color=lab_m))+geom_ribbon(aes(x=ite,ymin=val_m-val_sd,ymax=val_m+val_sd,fill=lab_m),alpha=0.1)
+## avec le mean
+#ggplot(data=dl.statroll)+ geom_line(aes(x=ite,y=val_m,color=lab_m),data=dl.flat) + geom_line(aes(x=ite,y=e_pred_mean_m),size=2)+geom_ribbon(aes(x=ite,ymin=e_pred_mean_m-e_pred_mean_sd,ymax=e_pred_mean_m+e_pred_mean_sd),alpha=0.1)
