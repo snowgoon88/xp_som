@@ -512,7 +512,7 @@ http://www.astrostatistics.psu.edu/su07/R/html/MASS/html/lm.ridge.html
 ** TODO Copy operator/assignment => copie de l_link et l_neighbors
 ** DONE quelles fonctions utiles ?
 ** DONE need regularly put pos neurons
-* [5/7] REC_DSOM
+* [6/7] REC_DSOM
 ** DONE recurrent neuron [dsom/r_neuron.hpp]
 ** DONE recurrent network [dsom/r_network.hpp]
 ** DONE Visualization de la récurrence
@@ -522,7 +522,7 @@ http://www.astrostatistics.psu.edu/su07/R/html/MASS/html/lm.ridge.html
 *** SPACE : run ON/OFF
 *** S : step
 *** V : verbose ON/OFF
-** TODO Info sur ce qui est appris
+** DONE Info sur ce qui est appris
 ** TODO Expé pour bons paramètres
 *** Génération de traj
 build/xp/xp-003-hmm -m data_rdsom/hmm_p05AAAAAF.json --length_traj 600 --save_traj data_rdsom/traj_p05AAAAAF_600_n000.data
@@ -566,7 +566,7 @@ wbuild/xp/xp-004-rdsom -t data_rdsom/traj_p05AAAAAF_600_n000.data -d data_rdsom/
 wbuild/xp/xp-004-rdsom -t data_rdsom/traj_p05AAAAAF_600_n000.data -d data_rdsom/rdsom_50.json -g --queue_size 10 --dsom_ela 1.0 --dsom_sig_r 0.01 --dsom_sig_i 0.01 --dsom_beta 0.9
 
 build/xp/xp-004-rdsom -t data_rdsom/traj_p05AAAAAF_600_n000.data -d data_rdsom/rdsom_50.json -g --queue_size 10 --dsom_ela 1.3 --dsom_sig_r 0.01 --dsom_sig_i 0.01 --dsom_beta 0.6
-*** DONE [4/8] <2017-03-21 Tue>
+*** DONE [7/8] <2017-03-21 Tue>
 Modifier le rôle de beta
 **** DONE Essayer en linéaire ? => *BAD*
 merged = mu * beta + (1-beta) * nu 
@@ -580,11 +580,11 @@ pour avoir plus de choix dans le neurone d'entrée, que chacun puisse se spécia
 **** DONE SUCCESS (à partir de 20.000)
 wbuild/xp/xp-004-rdsom -t data_rdsom/traj_p05AAAAAF_6000.data -d data_rdsom/rdsom_50.json -g --queue_size 10 --dsom_ela 1.0 --dsom_sig_r 0.1 --dsom_sig_i 0.1 --dsom_beta 0.05 --dsom_ela_rec 0.01 --dsom_eps 0.25
 => après 95620
-**** TODO essayer sur autres
-**** [2/3] Critère de performance (diff de prédiction)
+**** DONE essayer sur autres
+**** [3/3] Critère de performance (diff de prédiction)
 ***** DONE Erreur entre winner et input -> mais c'est pas suffisant
 ***** DONE Erreur de prédiction => prochain et prochain input
-***** TODO mémoriser les derniers neurones visité et chercher le prochain parmi ceux la
+***** DONE mémoriser les derniers neurones visité et chercher le prochain parmi ceux la
 **** TODO sauvegarder les films
 **** [4/4] TODO sauvegarder les données
 ***** DONE _periodic_, rdsom
@@ -596,10 +596,10 @@ wbuild/xp/xp-004-rdsom -t data_rdsom/traj_p05AAAAAF_6000.data -d data_rdsom/rdso
 ***** Création de Traj
 ***** Création de RDSOM
 ***** Pas de bruit dans l'apprentissage.
-**** TODO Légende des courbres ??
-**** TODO refaire les courbes de séquences / prédition de ESN
+**** DONE Légende des courbres ??
+**** DONE refaire les courbes de séquences / prédition de ESN
 
-*** DONE [7/8] <2017-08-29 Tue>
+*** DONE [8/8] <2017-08-29 Tue>
 **** DONE XP
 l_hmm = ['! .05 AAAAAF']
     l_hmm_names = ['p05AAAAAF']
@@ -670,7 +670,7 @@ _QUEUE
 **** DONE Vérifier que seqlog test DIFFERENT de seqlog learn
 C'est effectivement différent !!! 
 Il faut donc un temps certain pour recréer le "bon" état interne latent.
-**** TODO essayer avec BBBBBE (moins près des extrêmes)
+**** DONE essayer avec BBBBBE (moins près des extrêmes)
 **** Meilleure prédiction/erreurs
 **** Pourquoi, ds test intérmédiqires, le fait de repartide 0 est moins bon ?
 **** CONCLUSION
@@ -933,6 +933,10 @@ voir fin de r_script/rdsom_test.R
 **** DONE augmenter polices caractère quand sauve ggplot
 voir plot_adapt() dans r_script/utils.R
 
+* [3/3] REC_SOM
+** DONE vérifier toujours bon avec REC_DSOM
+** DONE implémenter avec sig_som
+** DONE gérer les header de sauvegarde et nom de fichiers
 * [2/3] Visualisation
 ** DONE Ecrire du texte n'importe où 
 ** TODO Classe[Container] avec 2 membres "one", "two"

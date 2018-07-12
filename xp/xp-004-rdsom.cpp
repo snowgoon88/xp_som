@@ -120,15 +120,19 @@ unsigned int _nb_step = 0;
 unsigned int _learn_length_multiplier = 1;
 // ******************************************************************* Options
 // Options
+enum class TypeNet { SOM, DSOM };
 std::unique_ptr<std::string> _opt_fileload_hmm       = nullptr;
 std::unique_ptr<std::string> _opt_fileload_traj      = nullptr;
 int                          _opt_rdsom_size           = 10;
 std::unique_ptr<std::string> _opt_filesave_rdsom     = nullptr;
 std::unique_ptr<std::string> _opt_fileload_rdsom     = nullptr;
+std::unique_ptr<std::string> _opt_typenet_str        = nullptr;
+TypeNet                      _opt_typenet            = TypeNet::DSOM;
 TParam                       _opt_beta               = 0.5;
 TParam                       _opt_sig_input          = 0.1;
 TParam                       _opt_sig_recur          = 0.1;
 TParam                       _opt_sig_convo          = 0.1;
+TParam                       _opt_sig_som            = 0.1;
 TParam                       _opt_eps                = 0.1;
 TParam                       _opt_ela                = 0.2;
 TParam                       _opt_ela_rec            = 0.2;
@@ -179,10 +183,12 @@ void setup_options(int argc, char **argv)
     ("rdsom_size", po::value<int>(&_opt_rdsom_size)->default_value(_opt_rdsom_size),"rdsom size")
     ("save_rdsom", po::value<std::string>(), "save RDSOM in filename")
     ("load_rdsom,d", po::value<std::string>(), "load RDSOM from filename")
+    ("type_net,n", po::value<std::string>(), "type of SOM/DSOM net")
     ("dsom_beta", po::value<TParam>(&_opt_beta)->default_value(_opt_beta), "dsom beta")
     ("dsom_sig_i", po::value<TParam>(&_opt_sig_input)->default_value(_opt_sig_input), "dsom sigma input")
     ("dsom_sig_r", po::value<TParam>(&_opt_sig_recur)->default_value(_opt_sig_recur), "dsom sigma recurrent")
     ("dsom_sig_c", po::value<TParam>(&_opt_sig_convo)->default_value(_opt_sig_convo), "dsom sigma convolution")
+    ("som_sig", po::value<TParam>(&_opt_sig_convo)->default_value(_opt_sig_som), "som sigma distance")    
     ("dsom_eps", po::value<TParam>(&_opt_eps)->default_value(_opt_eps), "dsom epsilon")
     ("dsom_ela", po::value<TParam>(&_opt_ela)->default_value(_opt_ela), "dsom elasticity")
     ("dsom_ela_rec", po::value<TParam>(&_opt_ela_rec)->default_value(_opt_ela_rec), "dsom elasticity recurrent")
@@ -243,6 +249,19 @@ void setup_options(int argc, char **argv)
   }
   if (vm.count("load_rdsom")) {
     _opt_fileload_rdsom = make_unique<std::string>(vm["load_rdsom"].as< std::string>());
+  }
+  // TYPE_NET
+  if (vm.count("type_net")) {
+    _opt_typenet_str = make_unique<std::string>(vm["type_net"].as< std::string>());
+    if( _opt_typenet_str->compare( "DSOM" ) == 0 ) {
+      _opt_typenet = TypeNet::DSOM;
+    }
+    else {
+      _opt_typenet = TypeNet::SOM;
+    }
+  }
+  else {
+    _opt_typenet_str = make_unique<std::string>("DSOM");
   }
   // RESULTS
   if (vm.count("save_result")) {
@@ -632,8 +651,13 @@ void learn( RDSOM& rdsom,
     rdsom.forward( input, _opt_beta,
                    _opt_sig_input, _opt_sig_recur, _opt_sig_convo,
                    _opt_verb);
-    rdsom.deltaW( input, _opt_eps, _opt_ela, _opt_ela_rec, _opt_verb);
-
+    if (_opt_typenet == TypeNet::DSOM ) {
+      rdsom.deltaW( input, _opt_eps, _opt_ela, _opt_ela_rec, _opt_verb);
+    }
+    else {
+      rdsom.deltaWSOM( input, _opt_eps, _opt_sig_som, _opt_verb );
+    }
+    
     if( _winner_queue ) {
       _winner_queue->push_front( rdsom.get_winner() );
     }
@@ -679,7 +703,12 @@ void step_learn( RDSOM& rdsom,
       if (_opt_verb) {
         std::cout << "  should learn" << std::endl;
       }
-      rdsom.deltaW( input, _opt_eps, _opt_ela, _opt_ela_rec, _opt_verb);
+      if (_opt_typenet == TypeNet::DSOM) {
+        rdsom.deltaW( input, _opt_eps, _opt_ela, _opt_ela_rec, _opt_verb);
+      }
+      else {
+        rdsom.deltaWSOM( input, _opt_eps, _opt_sig_som, _opt_verb );        
+      }
     }
 
     // store winner for SeqMAP
@@ -1058,6 +1087,7 @@ int main(int argc, char *argv[])
     // Header comments
     ofile << "## \"traj_name\" : \"" << *_opt_fileload_traj << "\"," << std::endl;
     ofile << "## \"rdsom_name\": \"" << *_opt_fileload_rdsom << "\"," << std::endl;
+    ofile << "## \"typenet\": \"" << *_opt_typenet_str << "\"," << std::endl;
     // @todo: parameters
     ofile << "## \"beta\"; \"" << _opt_beta << "\"," << std::endl;
     ofile << "## \"sigma_input\"; \"" << _opt_sig_input << "\"," << std::endl;
@@ -1066,6 +1096,7 @@ int main(int argc, char *argv[])
     ofile << "## \"epsilon\"; \"" << _opt_eps << "\"," << std::endl;
     ofile << "## \"ela_input\"; \"" << _opt_ela << "\"," << std::endl;
     ofile << "## \"ela_rec\"; \"" << _opt_ela_rec << "\"," << std::endl;
+    ofile << "## \"sig_som\"; \"" << _opt_sig_som << "\"," << std::endl;
     // Header col names
     ofile << "ite\terr_in\terr_rec\terr_pred" << std::endl;
     // Data
@@ -1137,6 +1168,7 @@ int main(int argc, char *argv[])
       // Header comments
       ofile << "## \"traj_name\" : \"" << *_opt_fileload_traj << "\"," << std::endl;
       ofile << "## \"rdsom_name\": \"" << *_opt_fileload_rdsom << "\"," << std::endl;
+      ofile << "## \"typenet\": \"" << *_opt_typenet_str << "\"," << std::endl;
       // @todo: parameters
       ofile << "## \"beta\"; \"" << _opt_beta << "\"," << std::endl;
       ofile << "## \"sigma_input\"; \"" << _opt_sig_input << "\"," << std::endl;
@@ -1145,6 +1177,7 @@ int main(int argc, char *argv[])
       ofile << "## \"epsilon\"; \"" << _opt_eps << "\"," << std::endl;
       ofile << "## \"ela_input\"; \"" << _opt_ela << "\"," << std::endl;
       ofile << "## \"ela_rec\"; \"" << _opt_ela_rec << "\"," << std::endl;
+      ofile << "## \"sig_som\"; \"" << _opt_sig_som << "\"," << std::endl;
       // Header col names
       ofile << "ite\tinput\twinner\tw_win\tpred_win\tw_predwin\terr_in\terr_rec\terr_pred" << std::endl;
       // Data

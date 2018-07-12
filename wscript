@@ -72,6 +72,8 @@ def configure( conf ):
     print "Checking for 'BOOST::program_options'"
     conf.find_file( 'lib'+conf.env.LIB_BOOST[0]+'.so', conf.env.LIBPATH_BOOST )
     ## Require/Check pngwriter
+    ## WARN: marche avec pngwriter tag: 0.6.0 car les versions suivantes
+    ##       s'appelle libPNGwriter, ne fournisse que librairie statique..
     pngwriter_path = '/home/dutech/Projets/pngwriter'
     conf.env.LIB_PNGWRITER = ['pngwriter']
     conf.env.INCLUDES_PNGWRITER  = [pngwriter_path+'/include']

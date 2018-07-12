@@ -31,8 +31,8 @@ def sub_xp03( name_hmm, name_traj, name_esn, regul, name_noise, name_output, pos
 
     return sp.Popen( args )
 # ********************************************************************* repeat
-def repeat( name_hmm, name_traj, name_rdsom,
-            ela, ela_rec, eps, sig_i, sig_r, sig_c, beta,
+def repeat( name_hmm, name_traj, name_rdsom, name_typenet,
+            ela, ela_rec, eps, sig_i, sig_r, sig_c, beta, sig_som,
             learn_length,
             seq_size, seq_thres,
             name_output, queue_size, period_save,
@@ -50,6 +50,7 @@ def repeat( name_hmm, name_traj, name_rdsom,
     args.extend( ['-m', name_hmm] )
     args.extend( ['-t', name_traj] )
     args.extend( ['-d', name_rdsom] )
+    args.extend( ['-n', name_typenet] )
     args.extend( ['--dsom_beta', str(beta)] )
     args.extend( ['--dsom_ela', str(ela)] )
     args.extend( ['--dsom_ela_rec', str(ela_rec)] )
@@ -57,6 +58,7 @@ def repeat( name_hmm, name_traj, name_rdsom,
     args.extend( ['--dsom_sig_i', str(sig_i)] )
     args.extend( ['--dsom_sig_r', str(sig_r)] )
     args.extend( ['--dsom_sig_c', str(sig_c)] )
+    args.extend( ['--som_sig', str(sig_som)] )
     if not testing:
         args.extend( ['--learn_length', str(learn_length)] )
     args.extend( ['--queue_size', str(queue_size)] )
@@ -101,28 +103,30 @@ def xp():
     l_hmm_names = ['BCDEDC']
     l_traj_size = [600]
     ##l_hmm_names_test = ['BCDEDC10p90s','BCDEDC05p95s']
-    l_hmm_names_test = ['AF05p05BCDEDC','AF95p05BCDEDC']
+    ##l_hmm_names_test = ['AF05p05BCDEDC','AF95p05BCDEDC']
     ##l_hmm_names_test = ['p01BCDEDC','p03BCDEDC','p05BCDEDC']
-    ##l_hmm_names_test = ['BCDEDC']
-    l_traj_size_test = [1000]
+    l_hmm_names_test = ['BCDEDC']
+    l_traj_size_test = [600]
     s_nb_test = 1
     l_rdsom_size = [50]
+    l_typenet = ["SOM"]
     l_ela = [1.0]
     l_ela_rec = [0.005]
     l_eps = [0.25]
     l_sig_r = [0.05]
     l_sig_i = [0.1]
     l_sig_c = [0.05]
+    l_sig_som = [0.1]
     l_beta = [0.05]
-    l_learn_length = [20000]
-    s_period = 500
+    l_learn_length = [5000]
+    s_period = 100
     s_queue_size = 10
     seq_size = 6
     seq_thres = 0.7
     
     nb_traj    = 1      ## how many instances of each traj config
     nb_traj_test = 10
-    nb_rdsom     = 10       ## how many instances of each esn config
+    nb_rdsom     = 1       ## how many instances of each esn config
     nb_repeat  = 1       ## no need to repeat : deterministic learning
     nb_start   = 0       ## start numbering files with
     generate_hmm  = False     ## need to generate hmm
@@ -198,20 +202,20 @@ def xp():
 
     if learn:
         # ## Apprentissage pour toutes les combinaisons
-        nb_combination = len(l_hmm_names)*len(l_traj_size)*len(l_rdsom_size)*len(l_ela)*len(l_ela_rec)*len(l_eps)*len(l_sig_i)*len(l_sig_r)*len(l_beta)*len(l_learn_length)
+        nb_combination = len(l_hmm_names)*len(l_traj_size)*len(l_rdsom_size)*len(l_typenet)*len(l_ela)*len(l_ela_rec)*len(l_eps)*len(l_sig_i)*len(l_sig_r)*len(l_sig_som)*len(l_beta)*len(l_learn_length)
         print "__LEARN","  "+str(nb_rdsom*nb_traj)+" x nb_config="+str(nb_combination)
         pbar = pb.ProgressBar(maxval=nb_combination,
                               widgets = ['  ',pb.SimpleProgress(), ' ', pb.Bar()]).start()
         id_xp = 0
         
-        for hmm_expr,traj_size,rdsom_size,ela,ela_rec,eps,sig_i,sig_r,sig_c,beta,learn_length in it.product( l_hmm_names, l_traj_size, l_rdsom_size, l_ela, l_ela_rec, l_eps, l_sig_i, l_sig_r, l_sig_c, l_beta, l_learn_length):
+        for hmm_expr,traj_size,rdsom_size,typenet,ela,ela_rec,eps,sig_i,sig_r,sig_c,sig_som,beta,learn_length in it.product( l_hmm_names, l_traj_size, l_rdsom_size, l_typenet, l_ela, l_ela_rec, l_eps, l_sig_i, l_sig_r, l_sig_c, l_sig_som, l_beta, l_learn_length):
             for id_rdsom,id_traj in it.product( range(nb_rdsom), range(nb_traj)):
                 hmm_name = "data_hmm/hmm_"+hmm_expr+".json"
                 traj_name = "data_hmm/traj_"+hmm_expr+"_"+str(traj_size)+"_n{0:03d}".format( id_traj )+".data"
                 rdsom_name = "data_rdsom/rdsom_"+str(rdsom_size)
                 rdsom_name += "_n{0:03d}".format( id_rdsom )+".json"
                 ## allow saving RDSOMs
-                output_name = hmm_expr+"_"+str(traj_size)+"_"+str(rdsom_size)+"_"+str(ela)+"_"+str(ela_rec)+"_"+str(eps)+"_"+str(sig_i)+"_"+str(sig_r)+"_"+str(sig_c)+"_"+str(beta)+"_"+str(learn_length)
+                output_name = hmm_expr+"_"+str(traj_size)+"_"+str(rdsom_size)+"_"+str(typenet)+"_"+str(ela)+"_"+str(ela_rec)+"_"+str(eps)+"_"+str(sig_i)+"_"+str(sig_r)+"_"+str(sig_c)+"_"+str(sig_som)+"_"+str(beta)+"_"+str(learn_length)
                 output_name += "_rdsom{0:03d}".format(id_rdsom)+"_t{0:03d}".format(id_traj)
 
                 output_name = "data_xprdsom/New/result_"+output_name+".data"
@@ -219,12 +223,14 @@ def xp():
                 repeat( name_hmm = hmm_name,
                         name_traj=    traj_name,
                         name_rdsom=     rdsom_name,
+                        name_typenet = typenet,
                         ela = ela,
                         ela_rec = ela_rec,
                         eps = eps,
                         sig_i = sig_i,
                         sig_r = sig_r,
                         sig_c = sig_c,
+                        sig_som = sig_som,
                         beta = beta,
                         learn_length = learn_length,
                         name_output = output_name,
@@ -244,19 +250,19 @@ def xp():
 
     if fg_test:
         # ## Test pour toutes les combinaisons de RDSOM x TRAJ
-        nb_combination = len(l_hmm_names)*len(l_traj_size)*len(l_rdsom_size)*len(l_ela)*len(l_ela_rec)*len(l_eps)*len(l_sig_i)*len(l_sig_r)*len(l_sig_c)*len(l_beta)*len(l_learn_length)*len(l_hmm_names_test)*len(l_traj_size_test)
+        nb_combination = len(l_hmm_names)*len(l_traj_size)*len(l_rdsom_size)*len(l_typenet)*len(l_ela)*len(l_ela_rec)*len(l_eps)*len(l_sig_i)*len(l_sig_r)*len(l_sig_c)*len(l_sig_som)*len(l_beta)*len(l_learn_length)*len(l_hmm_names_test)*len(l_traj_size_test)
         print "__TEST","  "+str(nb_rdsom*nb_traj)+" x nb_config="+str(nb_combination)
         pbar = pb.ProgressBar(maxval=nb_combination,
                               widgets = ['  ',pb.SimpleProgress(), ' ', pb.Bar()]).start()
         id_xp = 0
         
-        for hmm_expr,traj_size,rdsom_size,ela,ela_rec,eps,sig_i,sig_r,sig_c,beta,learn_length, hmm_expr_test,traj_size_test in it.product( l_hmm_names, l_traj_size, l_rdsom_size, l_ela, l_ela_rec, l_eps, l_sig_i, l_sig_r, l_sig_c, l_beta, l_learn_length, l_hmm_names_test, l_traj_size_test):
+        for hmm_expr,traj_size,rdsom_size,typenet,ela,ela_rec,eps,sig_i,sig_r,sig_c,sig_som,beta,learn_length, hmm_expr_test,traj_size_test in it.product( l_hmm_names, l_traj_size, l_rdsom_size, l_typenet, l_ela, l_ela_rec, l_eps, l_sig_i, l_sig_r, l_sig_c, l_sig_som, l_beta, l_learn_length, l_hmm_names_test, l_traj_size_test):
             for id_rdsom,id_traj_in,id_traj_test in it.product( range(nb_rdsom), range(nb_traj), range(nb_traj_test)):
                 hmm_name = "data_hmm/hmm_"+hmm_expr+".json"
                 traj_name_test = "data_hmm/traj_"+hmm_expr_test+"_"+str(traj_size_test)+"_n{0:03d}".format( id_traj_test )+".data"
 
                 ## allow saving RDSOMs
-                input_name = hmm_expr+"_"+str(traj_size)+"_"+str(rdsom_size)+"_"+str(ela)+"_"+str(ela_rec)+"_"+str(eps)+"_"+str(sig_i)+"_"+str(sig_r)+"_"+str(sig_c)+"_"+str(beta)+"_"+str(learn_length)
+                input_name = hmm_expr+"_"+str(traj_size)+"_"+str(rdsom_size)+"_"+typenet+"_"+str(ela)+"_"+str(ela_rec)+"_"+str(eps)+"_"+str(sig_i)+"_"+str(sig_r)+"_"+str(sig_c)+"_"+str(sig_som)+"_"+str(beta)+"_"+str(learn_length)
                 input_name += "_rdsom{0:03d}".format(id_rdsom)+"_t{0:03d}".format(id_traj_in)
                 input_name += ".data_000_rdsom_"+str(learn_length)             
                 input_name = "data_xprdsom/New/result_"+input_name
@@ -268,12 +274,14 @@ def xp():
                 repeat( name_hmm = hmm_name,
                         name_traj=    traj_name_test,
                         name_rdsom=     input_name,
+                        name_typenet = typenet,
                         ela = ela,
                         ela_rec = ela_rec,
                         eps = eps,
                         sig_i = sig_i,
                         sig_r = sig_r,
                         sig_c = sig_c,
+                        sig_som = sig_som,
                         beta = beta,
                         learn_length = learn_length,
                         name_output = output_name,
