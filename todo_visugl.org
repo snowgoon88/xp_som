@@ -937,6 +937,20 @@ voir plot_adapt() dans r_script/utils.R
 ** DONE vérifier toujours bon avec REC_DSOM
 ** DONE implémenter avec sig_som
 ** DONE gérer les header de sauvegarde et nom de fichiers
+** AAAAAAAF : bien choisir les paramètres
+Par rapport à RDSOM, pour bien différencier les rec, j'ai dû diminuer sig_c (0.01). On sent bien qu'il faudrait soit un eps qui diminue, soit un voisinage (sig_som) qui diminue. Il a été difficile de faire apprendre avec un sig_som=0.1 (nécessaire, car s'il est trop grand, tous les 'A' sont rassemblés) en un seul.
+wbuild/xp/xp-004-rdsom -m data_hmm/hmm_7AF.json -t data_hmm/traj_7AF_1000_n000.data -d data_rdsom/rdsom_50_n000.json -n SOM --dsom_beta 0.05 --dsom_ela 1.0 --dsom_ela_rec 0.005 --dsom_eps 0.25 --dsom_sig_i 0.1 --dsom_sig_r 0.1 --dsom_sig_c 0.01 --som_sig 0.1 --learn_length 5000 --queue_size 10 -g
+
+=> essayer avec sig_som plus grand et sig_c plus petit. (sig_som=0.25)
+Ca ne marche pas, le 'F' prend trop de place, et tous les 'A' ne peuvent pas se déplier.
+
+=> essayer avec sig_som plus petit
+sig_som=0.07, sig_c=0.01 : ça marche, mais les w_rec se stabilisent pas. eps ? voisinage ?
+sig_som=0.07, sigc=0.008 : ça marche, mais les w_rec se stabilisent pas. eps ? voisinage ?
+sig_som=0.07, sigc=0.005 : ça marche bien, mais la position se déstabilise d'un coup, pour retrouver rapidement une autre configuration pseudo-stable.
+
+
+
 * [2/3] Visualisation
 ** DONE Ecrire du texte n'importe où 
 ** TODO Classe[Container] avec 2 membres "one", "two"
