@@ -4,10 +4,24 @@
 ** FTGL - Draw text with OpenGL and FreeType2
 ** GSL - Gnu Scientific Library
 ** BOOST - Boost::program_options
-* TODO CURRENT : générer des RDSOM différents
-* DONE [2/2] Fenêtre GLFW version 3 
+* TODO CURRENT : integration de AntTweakBar
+* DONE [2/3] Fenêtre GLFW version 3 
 ** DONE CMake pour GLFW
 ** DONE C++ pour GLFW
+** TODO [1/2] CLANG et clang-company + helm
+*** DONE modif de wscript pour créer le dictionnaire de fonctions
+- ressources/cl_compilation_database.py
+à copier dans ./waf-2.0.9-XXX/waflib/extras
+*** TODO s'en servir dans emacs ??
+** [1/2] AntTweakBar
+*** DONE Ajout avec Figure => test-020-anttweak
+**** Modif Figure::render( )
+//if( not _offscreen ) {
+//  glfwSwapBuffers( _window );
+//  glfwPollEvents();
+//}
+*** TODO Repartir de GLFW3::Window plus basique
+Et ca clignote...
 * [5/6] Afficher Graphe
 ** TODO Afficher Grille
 ** DONE [4/4] Afficher Axes avec ticks et range

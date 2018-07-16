@@ -3,7 +3,7 @@
 #pragma once
 
 /** 
- * A Curve rended in OpenGL.
+ * A Curve rended in OpenGL. **!! Classical/Legacy OpenGL !!**
  *
  * Samples can be static copies of data
  * - add_sample
