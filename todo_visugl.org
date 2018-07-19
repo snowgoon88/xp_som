@@ -13,15 +13,17 @@
 - ressources/cl_compilation_database.py
 à copier dans ./waf-2.0.9-XXX/waflib/extras
 *** TODO s'en servir dans emacs ??
-** [1/2] AntTweakBar
+** [3/3] AntTweakBar
 *** DONE Ajout avec Figure => test-020-anttweak
 **** Modif Figure::render( )
 //if( not _offscreen ) {
 //  glfwSwapBuffers( _window );
 //  glfwPollEvents();
 //}
-*** TODO Repartir de GLFW3::Window plus basique
-Et ca clignote...
+*** DONE Repartir de GLFW3::Window plus basique
+Et ca clignote avec test-020-anttweak (car utilise Figure ??)
+*** DONE Xlib error => 2> /dev/null
+*** Tester avec Figure
 * [5/6] Afficher Graphe
 ** TODO Afficher Grille
 ** DONE [4/4] Afficher Axes avec ticks et range
