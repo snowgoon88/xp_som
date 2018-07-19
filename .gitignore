@@ -2,8 +2,11 @@
 *.[oad]
 *.pyc
 *~
+.waf-*
+.lock-waf*
 /build
 /wbuild
+/cbuild
 /data*
 
 *.data
