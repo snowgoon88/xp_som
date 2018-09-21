@@ -4,15 +4,38 @@
 ** FTGL - Draw text with OpenGL and FreeType2
 ** GSL - Gnu Scientific Library
 ** BOOST - Boost::program_options
-* TODO CURRENT : integration de AntTweakBar
-* DONE [2/3] Fenêtre GLFW version 3 
+* TODO CURRENT : améliorer Scatter (Afficher Graphe)
+* DONE [3/3] Fenêtre GLFW version 3 
 ** DONE CMake pour GLFW
 ** DONE C++ pour GLFW
-** TODO [1/2] CLANG et clang-company + helm
+** DONE [2/2] CLANG et clang-company + helm
 *** DONE modif de wscript pour créer le dictionnaire de fonctions
 - ressources/cl_compilation_database.py
 à copier dans ./waf-2.0.9-XXX/waflib/extras
-*** TODO s'en servir dans emacs ??
+*** DONE s'en servir dans emacs ??
+a priori ça marche si on a ajouté dans .emacs
+;; ---- Completion C++ ---------------------------------------
+;; cquery parse code
+;; see https://github.com/cquery-project/cquery/wiki/Getting-started
+(setq cquery-executable "/home/dutech/Projets/cquery/build/release/bin/cquery")
+(setq cquery-extra-init-params '(:index (:comments 2) :cacheFormat "msgpack" :completion (:detailedLabel t)))
+;; need lsp-ui
+;; (add-hook 'lsp-mode-hook
+;;           '(lambda ()
+;;              (define-key c-mode-base-map (kbd "C-p") 'lsp-ui-peek-jump-forward)
+;;              (define-key c-mode-base-map (kbd "C-m") 'lsp-ui-peek-jump-backward)
+;;              ))
+
+;;To turn on cquery for all C/C++ modes:
+(defun cquery//enable ()
+  (condition-case nil
+      (lsp-cquery-enable)
+    (user-error nil)))
+
+(use-package cquery
+  :commands lsp-cquery-enable
+  :init (add-hook 'c-mode-common-hook #'cquery//enable))
+;; Also see lsp-project-whitelist lsp-project-blacklist cquery-root-matchers
 ** [3/3] AntTweakBar
 *** DONE Ajout avec Figure => test-020-anttweak
 **** Modif Figure::render( )
@@ -24,7 +47,7 @@
 Et ca clignote avec test-020-anttweak (car utilise Figure ??)
 *** DONE Xlib error => 2> /dev/null
 *** Tester avec Figure
-* [5/6] Afficher Graphe
+* [5/9] Afficher Graphe : OLD classic/legacy OpenGL
 ** TODO Afficher Grille
 ** DONE [4/4] Afficher Axes avec ticks et range
 *** DONE Label
@@ -37,7 +60,10 @@ Et ca clignote avec test-020-anttweak (car utilise Figure ??)
 ** DONE Taille du texte en fonction de la taille de la fenêtre (ratio).
 ** DONE Position du texte en fonction de la taille de la fenètre (ratio)
 ** DONE Afficher Courbe
+** TODO Scatter + offset et stride
+** TODO Scatter avec variance verticale
 
+** TODO Faire module indépendant
 * DONE [1/1] Constructeurs, Copy, Move
 ** DONE tester Copy pour Layer
 * TODO [8/10] BICA -HMM

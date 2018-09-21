@@ -8,6 +8,7 @@
 
 #include <figure_ant.hpp>
 #include <curve.hpp>
+#include <scatter.hpp>
 
 #include <AntTweakBar.h>
 
@@ -20,7 +21,11 @@
 /** Figure and curves */
 FigureAnt* _fig;
 Curve* _c_sin;
-float curve_color[] = { 0.7f, 0.5f, 0.6f };
+float _curve_color[] = { 0.7f, 0.5f, 0.6f };
+ScatterPlotter* _scatter;
+bool _scatter_active = false;
+float _scatter_size = 0.15;
+float _scatter_color[] = { 1.0f, 0.0f, 0.0f };
 
 /** Parameters */
 double time_glfw = 0;
@@ -54,7 +59,10 @@ void render()
   while( not _end_render and !glfwWindowShouldClose(_fig->_window) ) {
     time_glfw = glfwGetTime();
     
-    _c_sin->set_color( {curve_color[0], curve_color[1], curve_color[2]} );
+    _c_sin->set_color( {_curve_color[0], _curve_color[1], _curve_color[2]} );
+    _scatter->set_active( _scatter_active );
+    _scatter->set_size( _scatter_size );
+    _scatter->set_color( {_scatter_color[0], _scatter_color[1], _scatter_color[2]} );
     _fig->render( true, true ); /* update x_axis, y_axis */
 
   }
@@ -99,24 +107,40 @@ int main(int argc, char *argv[])
 
     
   // curve_color
-  TwAddVarRW( _fig->_bar, "curve_color", TW_TYPE_COLOR3F, &curve_color, 
+  TwAddVarRW( _fig->_bar, "curve_color", TW_TYPE_COLOR3F, &_curve_color, 
               " label='Curve color' help='Color of the curve.' ");
+
+  // scatter active ?
+  TwAddVarRW( _fig->_bar, "scattter ?", TW_TYPE_BOOLCPP, &_scatter_active,
+              " label='Plot scatter ?' help='Switch between plot/no-plot' ");
+
+  // scatter size ?
+  TwAddVarRW( _fig->_bar, "size", TW_TYPE_FLOAT, &_scatter_size,
+              " label='Scatter Size' min=0 step=0.01 help='Size of each marker.' " );
+  // scatter_color
+  TwAddVarRW( _fig->_bar, "scatter_color", TW_TYPE_COLOR3F, &_scatter_color, 
+              " label='Scatter color' help='Color of the scatter marker.' ");
   
   // Curves
   std::cout << "__Curves" << std::endl;
   _c_sin = new Curve();
   _c_sin->create_data();
   _fig->add_curve( _c_sin );
+  // ScatterPlotter
+  _scatter = new ScatterPlotter( *_c_sin );
+  _fig->add_curve( _scatter );
 
   std::cout << "__RENDER" << std::endl;
   render();
 
   std::cout << "__END" << std::endl;
   delete _c_sin;
+  delete _scatter;
   delete _fig;
 
   glfw_end();
 
   return 0;
 }
+
 // *********************************************************************** END

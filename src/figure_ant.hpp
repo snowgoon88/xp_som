@@ -91,7 +91,7 @@ public:
     // TODO can also be set to another DataStructure
     glfwSetWindowUserPointer( _window, this);
     glfwSetKeyCallback( _window, key_callback);
-
+    glfwSetWindowSizeCallback( _window, window_size_cbk );
     /** Init Fonts */
     _font = new FTGLTextureFont( FONT_PATH );
     if (! _font) {
@@ -333,6 +333,19 @@ public:
   /*static*/ FTFont* _font;
   /** GLew variables for FrameBufferObject, RenderBuffer */
   GLuint _fbo, _render_buf;
+
+private:
+  // ***************************************************** FigureAnt::callback
+  static void window_size_cbk( GLFWwindow *win, int width, int height )
+  {
+    // call inner callback
+    ((FigureAnt *)glfwGetWindowUserPointer(win))->on_window_resized( width, height );
+  }
+  void on_window_resized( int width, int height )
+  {
+    // Send the new window size to AntTweakBar
+    TwWindowSize(width, height);
+  }
 };
 
 

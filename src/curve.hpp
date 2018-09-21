@@ -153,6 +153,7 @@ public:
   /** get BoundingBox */
   const BoundingBox& get_bbox() const {return _bbox;}
   std::list<Sample> get_samples() const { return _data; }
+  Color get_color() const { return _fg_col; }
 protected:
   /** Data are a list of Samples*/
   std::list<Sample> _data;

@@ -30,6 +30,9 @@ def options( opt ):
 def configure( conf ):
     conf.load( 'compiler_cxx' )
 
+    ## To generate 'compile_commands.json' at the root of buildpath
+    # to be linked/copied in order to user 'cquery' in emacs through lsp-mode
+    # see https://github.com/cquery-project/cquery/wiki/Emacs
     conf.load('clang_compilation_database')
     print( "CXX=",conf.env.CXX)
     
