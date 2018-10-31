@@ -4,6 +4,8 @@
 #include <iostream>
 #include <utility>
 #include <vector>
+#include <map>
+
 
 void print(const std::string& name, bica::sampler::HMM& h, int nb) {
   std::cout << name << " : " << std::fixed;
@@ -21,6 +23,53 @@ int main(int argc, char* argv[]) {
   bica::hmm::T t;
   bica::hmm::O o;
 
+  // test from_map
+  bica::hmm::T t_base = bica::hmm::uniform(1);
+  std::map<std::string,double> ex_probaO;
+  ex_probaO["B"] = 0.3;
+  ex_probaO["E"] = 0.7;
+  bica::sampler::HMM h0(t_base, bica::hmm::from_map( ex_probaO ));
+  print("h0", h0, 10);
+
+  auto hmm = bica::hmm::make("+ c & < 0.3 B , 0.7 E >");
+  std::tie(t, o) = hmm.first;
+  //auto nb_states = hmm.second;
+
+  bica::sampler::HMM h(t,o);
+  print("hmm", h, 10);  
+
+  // test density of HMM
+  auto h_A_full = bica::hmm::make( "A" );
+  std::cout << "A with nb_state=" << h_A_full.second << std::endl;
+  
+  auto h_AB_full = bica::hmm::make( "BC" );
+  auto h_DE_full = bica::hmm::make( "DEFD" );
+
+  // Test concat
+  auto h_concat = bica::hmm::concat( h_AB_full.first, h_AB_full.second,
+                                     h_DE_full.first, h_DE_full.second);
+  bica::sampler::HMM hmm_concat( h_concat.first, h_concat.second );
+  print("hmm_concat", hmm_concat, 10); 
+  
+  std::vector<std::pair<bica::hmm::T,bica::hmm::O>> hmm_l;
+  hmm_l.push_back( {h_AB_full.first.first, h_AB_full.first.second} );
+  hmm_l.push_back( {h_DE_full.first.first, h_DE_full.first.second} );
+  std::vector<unsigned int> nbstate_l;
+  nbstate_l.push_back( h_AB_full.second );
+  nbstate_l.push_back( h_DE_full.second );
+  std::vector<double> proba_l;
+  proba_l.push_back( 0.3 );
+  proba_l.push_back( 0.7 );
+  auto h_BC_DE = bica::hmm::from_lists( hmm_l, nbstate_l, proba_l );
+
+  auto h_sto = bica::hmm::concat( h_A_full.first, h_A_full.second,
+                                    h_BC_DE, 8);
+  
+  bica::sampler::HMM hmm_sto(h_sto.first, h_sto.second);
+  print("hmm_sto", hmm_sto, 10); 
+  
+  return 0;
+  
   // unpack the std::pair returned by hmm
   std::tie(t,o) = bica::hmm::periodic("ABCDEF");
   bica::sampler::HMM h1(t,o);

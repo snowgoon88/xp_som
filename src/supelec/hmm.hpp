@@ -8,6 +8,9 @@
 #include <stdexcept>
 #include <iostream>
 #include <sstream>
+#include <map>
+#include <vector>
+#include <numeric> // std::accumulate
 
 namespace bica {
   namespace random {
@@ -49,6 +52,11 @@ namespace bica {
     typedef std::function<int(int)>    T;
     typedef std::function<double(int)> O;
 
+    /**
+     * PO is a density of probabilities for O
+     */
+    using PO = std::map<std::string,double>;
+
     // random transitions entre 0 et nb_states
     T uniform(unsigned int nb_states) {
       return [nb_states](int) -> int {return random::uniform(nb_states);};
@@ -77,6 +85,7 @@ namespace bica {
     // periodic dernier etat -> 0
     T periodic(unsigned int nb_states) {
       return [nb_states](int s) -> int {
+        std::cout << "\n__PERIODIC with s=" << s << std::endl;
 	if(s == int(nb_states-1)) return 0;
 	else                 return s+1;
       };
@@ -96,21 +105,45 @@ namespace bica {
       };
     }
 
-    // 0 a partir d'un symbole 1BCDEF, *=uniform, 0
-    O from_string(const std::string& seq) {
-      return [seq](int s) -> double {
-	double res;
-	switch(seq[s]){
-	case 'A': res = 0.0; break;
+    // (private) return a double from a char O
+    double _from_string(const char& c) {
+      double res;
+      switch(c) {
+        case 'A': res = 0.0; break;
 	case 'B': res = 0.2; break;
 	case 'C': res = 0.4; break;
+        case 'c': res = 0.5; break;
 	case 'D': res = 0.6; break;
 	case 'E': res = 0.8; break;
 	case 'F': res = 1.0; break;
 	case '*': res = random::uniform(0,1); break;
 	default : res = 0;
 	}
-	return res;
+      return res;
+    }
+    
+    // 0 a partir d'un symbole ABCDEF, *=uniform, 0
+    O from_string(const std::string& seq) {
+      return [seq](int s) -> double {
+        std::cout << "__FROM_STRING with s=" << s  << std::endl;
+        return _from_string(seq[s]);
+      };
+    }
+
+    // O a partir d'une map de <proba,string>, i;e. density
+    O from_map( const PO& density ) {
+      return [density](int s) -> double {
+        double dsum = 0.0;
+        double proba = random::uniform(0,1);
+        for( auto& po: density) {
+          // probability sum
+          dsum += po.second;
+          if (proba <= dsum ) {
+            return _from_string( po.first[s] );
+          }
+        }
+        // default returns 0
+        return _from_string( '0' );
       };
     }
 
@@ -161,6 +194,7 @@ namespace bica {
     std::pair<T,O> concat(const std::pair<T,O>& hmm1, unsigned int nb_state_hhmm1,
 			  const std::pair<T,O>& hmm2, unsigned int nb_state_hhmm2) {
       auto t = [nb_state_hhmm1,nb_state_hhmm2,hmm1,hmm2](int s) -> int {
+        std::cout << "\n__CONCAT with s=" << s << std::endl;
 	if(s < int(nb_state_hhmm1-1))
 	    return hmm1.first(s);
 	else if(s == int(nb_state_hhmm1-1))
@@ -211,16 +245,78 @@ namespace bica {
       return {t,o};
     }
 
+    std::pair<T,O> from_lists( std::vector<std::pair<T,O>> l_hmm,
+                               std::vector<unsigned int>  l_nb_state,
+                               std::vector<double>        l_proba ) {
+
+      auto t = [l_hmm,l_nb_state,l_proba](int s) -> int {
+        std::cout << "\n__from_lists" << std::endl;
+        // need to chose
+        if (s == 0) {
+          std::cout << "  s == 0" << std::endl;
+          double psum = 0.0;
+          double proba = random::uniform(0,1);
+          unsigned int nb_sum = 0;
+          for( unsigned int i = 0; i < l_hmm.size(); ++i) {
+            psum += l_proba[i];
+            if (proba <= psum) {
+              std::cout << "  use hmm[" << i << "]" << std::endl;
+              return nb_sum + l_hmm[i].first(s);
+            }
+            nb_sum += l_nb_state[i];
+          }
+          // default
+          std::cout << "  **DEF" << std::endl;
+          return l_hmm[0].first(s);  
+        }
+        else { // find the proper HMM
+          std::cout << "  s > 0 as s=" << s << std::endl;
+          unsigned int nb_sum = 0;
+          for( unsigned int i = 0; i < l_hmm.size(); ++i) {
+            nb_sum += l_nb_state[i];
+            if (s < int(nb_sum-1)) { // in this HMM
+              std::cout << "  use hmm[" << i << "]" << std::endl;
+              return l_hmm[i].first(s);
+            }
+            else if (s == int(nb_sum-1)) { // at the end
+              std::cout << "  at end of " << i << std::endl;
+              return std::accumulate( l_nb_state.begin(), l_nb_state.end(), 0 );
+            }
+          }
+        }
+        std::cout << "  **DEF" << std::endl;
+        return std::accumulate( l_nb_state.begin(), l_nb_state.end(), 0 );
+      };
+
+      auto o = [l_hmm,l_nb_state,l_proba](int s) -> double {
+        std::cout << "  from_list 0 with s=" << s << std::endl;
+        unsigned int nb_sum = 0;
+        for( unsigned int i = 0; i < l_hmm.size(); ++i) {
+          std::cout << "  nb_sum=" << nb_sum << " and l_nb_state[" << i << "]=" << l_nb_state[i] << std::endl;
+          if (s < int(l_nb_state[i]+nb_sum)) { // in this HMM
+            std::cout << "  s=" << s << " => hmm[" << i << "]" << std::endl;
+            return l_hmm[i].second(s-nb_sum);
+          }
+          nb_sum += l_nb_state[i];
+        }
+        std::cout << "  **DEF" << std::endl;
+        return 0.0;
+      };
+      
+      return {t,o};
+    }
 
     // Grammar:
     // 
     // HMM := SEQ | ALT | CONCAT | NOISE
+    // STO := '<' <float> HMM _STO_END
+    // _STO_END := <float> HMM _STO_END | '>'
     // CONCAT := '+' HMM '&' HMM
     // ALT := '|' <float> HMM <float> HMM
     // NOISE := '!' <float> HMM
     // SEQ := ELEM _SEQ_END
     // SEQ_END := ^ | ELEM _SEQ_END
-    // ELEM := 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | '*'
+    // ELEM := 'A' | 'B' | 'C' | 'c' |'D' | 'E' | 'F' | '*'
 
     /**
      * Cree un HMM decrit par une chaine de caracter en utilisant la grammaire
@@ -235,12 +331,36 @@ namespace bica {
       double sigma;
       double p12,p21;
       std::pair<std::pair<T,O>,unsigned int> hmm,hmm1,hmm2;
+
+      PO densityO;
+      double proba;
+      std::pair<std::pair<T,O>,unsigned int> hmmO;
+      
       is >> c;
 
+      // density of proba for O
+      if (c == '<') {
+        densityO.clear();
+
+        do {
+          is >> proba;
+          is >> s;
+          densityO[s] = proba;
+          std::cout << "__densityO" << std::endl;
+          for( auto& po: densityO) {
+            std::cout << "  " << po.first << " : " << po.second << std::endl;
+          }
+          is >> c;
+          std::cout << "c=" << c << "-" << std::endl;
+        } while ( c != '>' );
+        return { {bica::hmm::uniform(1), bica::hmm::from_map( densityO )}, 1};
+      }
+      
       switch(c) {
       case 'A':
       case 'B':
       case 'C':
+      case 'c':
       case 'D':
       case 'E':
       case 'F':
