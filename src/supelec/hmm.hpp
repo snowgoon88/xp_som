@@ -85,7 +85,7 @@ namespace bica {
     // periodic dernier etat -> 0
     T periodic(unsigned int nb_states) {
       return [nb_states](int s) -> int {
-        std::cout << "\n__PERIODIC with s=" << s << std::endl;
+        //std::cout << "\n__PERIODIC with s=" << s << std::endl;
 	if(s == int(nb_states-1)) return 0;
 	else                 return s+1;
       };
@@ -125,7 +125,7 @@ namespace bica {
     // 0 a partir d'un symbole ABCDEF, *=uniform, 0
     O from_string(const std::string& seq) {
       return [seq](int s) -> double {
-        std::cout << "__FROM_STRING with s=" << s  << std::endl;
+        //std::cout << "__FROM_STRING with s=" << s  << std::endl;
         return _from_string(seq[s]);
       };
     }
@@ -194,7 +194,7 @@ namespace bica {
     std::pair<T,O> concat(const std::pair<T,O>& hmm1, unsigned int nb_state_hhmm1,
 			  const std::pair<T,O>& hmm2, unsigned int nb_state_hhmm2) {
       auto t = [nb_state_hhmm1,nb_state_hhmm2,hmm1,hmm2](int s) -> int {
-        std::cout << "\n__CONCAT with s=" << s << std::endl;
+        //std::cout << "\n__CONCAT with s=" << s << std::endl;
 	if(s < int(nb_state_hhmm1-1))
 	    return hmm1.first(s);
 	else if(s == int(nb_state_hhmm1-1))
@@ -245,62 +245,88 @@ namespace bica {
       return {t,o};
     }
 
-    std::pair<T,O> from_lists( std::vector<std::pair<T,O>> l_hmm,
-                               std::vector<unsigned int>  l_nb_state,
-                               std::vector<double>        l_proba ) {
-
-      auto t = [l_hmm,l_nb_state,l_proba](int s) -> int {
-        std::cout << "\n__from_lists" << std::endl;
-        // need to chose
-        if (s == 0) {
-          std::cout << "  s == 0" << std::endl;
+    /**
+     * at the end of hmm_start, fork to one of the HMM in the list.
+     * at the end of a sub_HMM, jump to the end of the block
+     * i.e: state -> sum(nb_states)
+     */
+    std::pair<T,O> fork( const std::pair<T,O>& hmm_start,
+                         unsigned int nb_state_start,
+                         std::vector<std::pair<T,O>> l_hmm,
+                         std::vector<unsigned int>  l_nb_state,
+                         std::vector<double>        l_proba ) {
+      
+      auto t = [hmm_start,nb_state_start,
+                l_hmm,l_nb_state,l_proba](int s) -> int {
+        //std::cout << "\n__FORK with s=" << s  << std::endl;
+        if (s < nb_state_start-1) {
+          // still in hmm_start
+          //std::cout << "  in start" << std::endl;
+          return hmm_start.first(s);
+        }
+        else if (s == nb_state_start-1) {
+          // end of hmm_start, need to fork
+          //std::cout << "  end of hmm_start" << std::endl;
           double psum = 0.0;
           double proba = random::uniform(0,1);
           unsigned int nb_sum = 0;
           for( unsigned int i = 0; i < l_hmm.size(); ++i) {
             psum += l_proba[i];
             if (proba <= psum) {
-              std::cout << "  use hmm[" << i << "]" << std::endl;
-              return nb_sum + l_hmm[i].first(s);
+              //std::cout << "  use hmm[" << i << "]" << std::endl;
+              return nb_state_start + nb_sum;
             }
             nb_sum += l_nb_state[i];
           }
           // default
-          std::cout << "  **DEF" << std::endl;
-          return l_hmm[0].first(s);  
+          //std::cout << "  **DEF" << std::endl;
+          return nb_state_start;
         }
-        else { // find the proper HMM
-          std::cout << "  s > 0 as s=" << s << std::endl;
+        else {
+          // find the proper HMM
+          //std::cout << "  s >= nb_state_start as s=" << s << std::endl;
           unsigned int nb_sum = 0;
           for( unsigned int i = 0; i < l_hmm.size(); ++i) {
             nb_sum += l_nb_state[i];
-            if (s < int(nb_sum-1)) { // in this HMM
-              std::cout << "  use hmm[" << i << "]" << std::endl;
-              return l_hmm[i].first(s);
+            if (s < int(nb_state_start+nb_sum-1)) {
+              // in this HMM
+              //std::cout << "  use hmm[" << i << "]" << std::endl;
+              return nb_state_start+nb_sum-l_nb_state[i]+l_hmm[i].first(s-nb_state_start-nb_sum+l_nb_state[i]);
             }
-            else if (s == int(nb_sum-1)) { // at the end
-              std::cout << "  at end of " << i << std::endl;
-              return std::accumulate( l_nb_state.begin(), l_nb_state.end(), 0 );
+            else if (s == int(nb_state_start+nb_sum-1)) {
+              // at the end
+              //std::cout << "  at end of " << i << std::endl;
+              //return nb_state_start+std::accumulate( l_nb_state.begin(), l_nb_state.end(), 0 );
+              // go back to start
+              return 0;
             }
           }
         }
-        std::cout << "  **DEF" << std::endl;
-        return std::accumulate( l_nb_state.begin(), l_nb_state.end(), 0 );
+        //std::cout << "  **DEF" << std::endl;
+        return nb_state_start+std::accumulate( l_nb_state.begin(), l_nb_state.end(), 0 );
       };
 
-      auto o = [l_hmm,l_nb_state,l_proba](int s) -> double {
-        std::cout << "  from_list 0 with s=" << s << std::endl;
-        unsigned int nb_sum = 0;
-        for( unsigned int i = 0; i < l_hmm.size(); ++i) {
-          std::cout << "  nb_sum=" << nb_sum << " and l_nb_state[" << i << "]=" << l_nb_state[i] << std::endl;
-          if (s < int(l_nb_state[i]+nb_sum)) { // in this HMM
-            std::cout << "  s=" << s << " => hmm[" << i << "]" << std::endl;
-            return l_hmm[i].second(s-nb_sum);
-          }
-          nb_sum += l_nb_state[i];
+      auto o = [hmm_start,nb_state_start,
+                l_hmm,l_nb_state,l_proba](int s) -> double {
+        //std::cout << "  from_list 0 with s=" << s << std::endl;
+        if (s < int(nb_state_start)) {
+          // in hmm_start
+          return hmm_start.second(s);
         }
-        std::cout << "  **DEF" << std::endl;
-        return 0.0;
+        else {
+          // in one of the sub HMM
+          unsigned int nb_sum = 0;
+          for( unsigned int i = 0; i < l_hmm.size(); ++i) {
+            //std::cout << "  nb_sum=" << nb_sum << " and l_nb_state[" << i << "]=" << l_nb_state[i] << std::endl;
+            if (s < int(nb_state_start+l_nb_state[i]+nb_sum)) { // in this HMM
+              //std::cout << "  s=" << s << " => hmm[" << i << "]" << std::endl;
+              return l_hmm[i].second(s-nb_sum-nb_state_start);
+            }
+            nb_sum += l_nb_state[i];
+          }
+          //std::cout << "  **DEF" << std::endl;
+          return 0.0;
+        }
       };
       
       return {t,o};
@@ -308,7 +334,9 @@ namespace bica {
 
     // Grammar:
     // 
-    // HMM := SEQ | ALT | CONCAT | NOISE
+    // HMM := SEQ | FORK | ALT | CONCAT | NOISE
+    // FORK := [ HMM , _END_FORK
+    // _END_FORK := float HMM , _END_FORK | ]
     // STO := '<' <float> HMM _STO_END
     // _STO_END := <float> HMM _STO_END | '>'
     // CONCAT := '+' HMM '&' HMM
@@ -338,20 +366,49 @@ namespace bica {
       
       is >> c;
 
+      // fork
+      if (c == '[') {
+        //std::cout << "__read FORK" << std::endl;
+        std::pair<std::pair<T,O>,unsigned int> hmm_start;
+        std::pair<std::pair<T,O>,unsigned int> hmm_sub;
+        std::vector<std::pair<T,O>> l_hmm;
+        std::vector<unsigned int>  l_nb_state;
+        std::vector<double>        l_proba;
+        hmm_start = make(is);
+
+        is >> c;
+        do {
+          is >> proba;
+          hmm_sub = make(is);
+
+          l_hmm.push_back( hmm_sub.first );
+          l_nb_state.push_back( hmm_sub.second );
+          l_proba.push_back( proba );
+
+          is >> c;
+          //std::cout << "c=" << c << "-" << std::endl;
+        } while ( c != ']' );
+        return { bica::hmm::fork( hmm_start.first, hmm_start.second,
+                                  l_hmm, l_nb_state, l_proba ),
+            hmm_start.second + std::accumulate( l_nb_state.begin(),
+                                                l_nb_state.end(),
+                                                0 ) };
+      }
+      
       // density of proba for O
-      if (c == '<') {
+      else if (c == '<') {
         densityO.clear();
 
         do {
           is >> proba;
           is >> s;
           densityO[s] = proba;
-          std::cout << "__densityO" << std::endl;
-          for( auto& po: densityO) {
-            std::cout << "  " << po.first << " : " << po.second << std::endl;
-          }
+          //std::cout << "__densityO" << std::endl;
+          // for( auto& po: densityO) {
+          //   std::cout << "  " << po.first << " : " << po.second << std::endl;
+          // }
           is >> c;
-          std::cout << "c=" << c << "-" << std::endl;
+          //std::cout << "c=" << c << "-" << std::endl;
         } while ( c != '>' );
         return { {bica::hmm::uniform(1), bica::hmm::from_map( densityO )}, 1};
       }

@@ -39,11 +39,11 @@ int main(int argc, char* argv[]) {
   print("hmm", h, 10);  
 
   // test density of HMM
-  auto h_A_full = bica::hmm::make( "A" );
+  auto h_A_full = bica::hmm::make( "AC" );
   std::cout << "A with nb_state=" << h_A_full.second << std::endl;
   
-  auto h_AB_full = bica::hmm::make( "BC" );
-  auto h_DE_full = bica::hmm::make( "DEFD" );
+  auto h_AB_full = bica::hmm::make( "BD" );
+  auto h_DE_full = bica::hmm::make( "EFE" );
 
   // Test concat
   auto h_concat = bica::hmm::concat( h_AB_full.first, h_AB_full.second,
@@ -60,13 +60,20 @@ int main(int argc, char* argv[]) {
   std::vector<double> proba_l;
   proba_l.push_back( 0.3 );
   proba_l.push_back( 0.7 );
-  auto h_BC_DE = bica::hmm::from_lists( hmm_l, nbstate_l, proba_l );
+  auto h_fork = bica::hmm::fork( h_A_full.first, h_A_full.second,
+                                hmm_l, nbstate_l, proba_l );
 
-  auto h_sto = bica::hmm::concat( h_A_full.first, h_A_full.second,
-                                    h_BC_DE, 8);
-  
-  bica::sampler::HMM hmm_sto(h_sto.first, h_sto.second);
-  print("hmm_sto", hmm_sto, 10); 
+  bica::sampler::HMM hmm_fork(h_fork.first, h_fork.second);
+  print("hmm_fork", hmm_fork, 10); 
+
+  // test reading
+  auto read_hmm = bica::hmm::make("[ AB , 0.3 CD , 0.7 EFF ]");
+  std::tie(t, o) = read_hmm.first;
+  //auto nb_states = hmm.second;
+
+  bica::sampler::HMM read_h(t,o);
+  print("**FORK** hmm", read_h, 10);  
+
   
   return 0;
   
