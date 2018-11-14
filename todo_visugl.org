@@ -5,6 +5,7 @@
 ** GSL - Gnu Scientific Library
 ** BOOST - Boost::program_options
 * TODO CURRENT : améliorer Scatter (Afficher Graphe)
+* TODO CURRENT : tester sur des séquences stochastiques (Fork)
 * DONE [3/3] Fenêtre GLFW version 3 
 ** DONE CMake pour GLFW
 ** DONE C++ pour GLFW
@@ -66,7 +67,7 @@ Et ca clignote avec test-020-anttweak (car utilise Figure ??)
 ** TODO Faire module indépendant
 * DONE [1/1] Constructeurs, Copy, Move
 ** DONE tester Copy pour Layer
-* TODO [8/10] BICA -HMM
+* [8/10] BICA -HMM
 ** Séquence
 wbuild/xp/xp-003-hmm --create_hmm "AAAAF" --save_hmm my_hmm
 wbuild/xp/xp-003-hmm -m my_hmm --length_traj 1000 --save_traj my_traj
@@ -92,6 +93,8 @@ std::string("ABCD"),           // periodic
 "| 0.03 ! 0.05 AAAAAAAAAAF 0.1 | 0.5 A 0.5 F"
                                // alterne 1) AAAAAAAAAAAF gaussien
                                //         2) soit A, soit F
+"+ c & < 0.3 B , 0.7 E >",     // "c" then "B" or "E"
+      "[ AB , 0.3 CD , 0.7 EFF ]"    // Fork AB then CD or EFE
 ** DONE test-hmm.cpp
 ** DONE [3/3] Apprendre (o)_t -> o_{t+1} avec réservoir
 *** DONE générer trajectoire HMM
@@ -393,12 +396,11 @@ ltraj lesn leak regul fw lnoise ltest prec_err     mse_err
 ** DONE [0/1] Visualization with R
 *** TODO Tester si autres scripts marchent.
 ** DONE visualization on-line
-* TODO Rec-SOM
-* [/] Data
+* Data
 ** DONE McKey-Glass
 *** DONE Serialiser avec gaml::make-output_iterator ?
 => son propre reader/writer
-* TODO [3/4] Reservoir Computing
+* [3/4] Reservoir Computing
 ** DONE Serialiser
 ** DONE Learn
 Mise en place de Ridge Regression
@@ -413,8 +415,8 @@ Eigen
 http://stackoverflow.com/questions/7758580/writing-your-own-stl-container/7759622#7759622
 
 ** TODO Cherche le meilleur Ridge Coef
-* TODO Data en séquence
-* TODO [7/10] XP POMDP 
+* Data en séquence
+* [7/10] XP POMDP 
 J'ai l'impression qu'essayer d'apprendre les transitions ne marche que dans des cas quasi déterministes, non? Dans ce cas, faudrait plutôt essayer de voir si on peut pas apprendre V(s) ou V(o) ??
 ** DONE ajout d'un jsonreader pour transition
 ** DONE Générer et sauvegarder une trajectoire de transitions

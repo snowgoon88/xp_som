@@ -23,60 +23,6 @@ int main(int argc, char* argv[]) {
   bica::hmm::T t;
   bica::hmm::O o;
 
-  // test from_map
-  bica::hmm::T t_base = bica::hmm::uniform(1);
-  std::map<std::string,double> ex_probaO;
-  ex_probaO["B"] = 0.3;
-  ex_probaO["E"] = 0.7;
-  bica::sampler::HMM h0(t_base, bica::hmm::from_map( ex_probaO ));
-  print("h0", h0, 10);
-
-  auto hmm = bica::hmm::make("+ c & < 0.3 B , 0.7 E >");
-  std::tie(t, o) = hmm.first;
-  //auto nb_states = hmm.second;
-
-  bica::sampler::HMM h(t,o);
-  print("hmm", h, 10);  
-
-  // test density of HMM
-  auto h_A_full = bica::hmm::make( "AC" );
-  std::cout << "A with nb_state=" << h_A_full.second << std::endl;
-  
-  auto h_AB_full = bica::hmm::make( "BD" );
-  auto h_DE_full = bica::hmm::make( "EFE" );
-
-  // Test concat
-  auto h_concat = bica::hmm::concat( h_AB_full.first, h_AB_full.second,
-                                     h_DE_full.first, h_DE_full.second);
-  bica::sampler::HMM hmm_concat( h_concat.first, h_concat.second );
-  print("hmm_concat", hmm_concat, 10); 
-  
-  std::vector<std::pair<bica::hmm::T,bica::hmm::O>> hmm_l;
-  hmm_l.push_back( {h_AB_full.first.first, h_AB_full.first.second} );
-  hmm_l.push_back( {h_DE_full.first.first, h_DE_full.first.second} );
-  std::vector<unsigned int> nbstate_l;
-  nbstate_l.push_back( h_AB_full.second );
-  nbstate_l.push_back( h_DE_full.second );
-  std::vector<double> proba_l;
-  proba_l.push_back( 0.3 );
-  proba_l.push_back( 0.7 );
-  auto h_fork = bica::hmm::fork( h_A_full.first, h_A_full.second,
-                                hmm_l, nbstate_l, proba_l );
-
-  bica::sampler::HMM hmm_fork(h_fork.first, h_fork.second);
-  print("hmm_fork", hmm_fork, 10); 
-
-  // test reading
-  auto read_hmm = bica::hmm::make("[ AB , 0.3 CD , 0.7 EFF ]");
-  std::tie(t, o) = read_hmm.first;
-  //auto nb_states = hmm.second;
-
-  bica::sampler::HMM read_h(t,o);
-  print("**FORK** hmm", read_h, 10);  
-
-  
-  return 0;
-  
   // unpack the std::pair returned by hmm
   std::tie(t,o) = bica::hmm::periodic("ABCDEF");
   bica::sampler::HMM h1(t,o);
@@ -118,8 +64,42 @@ int main(int argc, char* argv[]) {
   // Alterne entre les 2 HMM en ajoutant un bruit uniforme aux observations
   bica::sampler::HMM h8(t3,bica::hmm::add_noise(o3,.05));
   print("h8",h8,30);
-  
 
+
+  // test from_map : observation is taken from a density represented by
+  // a map {"obs" : proba}
+  bica::hmm::T t_base = bica::hmm::uniform(1);   // transition 1 state
+  std::map<std::string,double> ex_probaO;        // density for O
+  ex_probaO["B"] = 0.3;
+  ex_probaO["E"] = 0.7;
+  bica::sampler::HMM h9(t_base, bica::hmm::from_map( ex_probaO ));
+  print("h9", h9, 30);
+
+  // test of Fork : after HMM_start, fork to HMMs according to a probability
+  // need hmm_start, nb_states_hmm_start, list_HMMs, list_nbStates, list_Proba
+  
+  auto h_AC_full = bica::hmm::make( "AC" );    // hmm_start
+  
+  auto h_BD_full = bica::hmm::make( "BD" );    // first choice in fork
+  auto h_EFE_full = bica::hmm::make( "EFE" );  // second choice in fork
+
+  std::vector<std::pair<bica::hmm::T,bica::hmm::O>> hmm_l;
+  hmm_l.push_back( {h_BD_full.first.first, h_BD_full.first.second} );
+  hmm_l.push_back( {h_EFE_full.first.first, h_EFE_full.first.second} );
+  std::vector<unsigned int> nbstate_l;
+  nbstate_l.push_back( h_BD_full.second );
+  nbstate_l.push_back( h_EFE_full.second );
+  std::vector<double> proba_l;
+  proba_l.push_back( 0.3 );
+  proba_l.push_back( 0.7 );
+  // start "AC" when, with p=0.3 "BD" or p=0.7 "EFE"
+  auto h_fork = bica::hmm::fork( h_AC_full.first, h_AC_full.second,
+                                hmm_l, nbstate_l, proba_l );
+
+  bica::sampler::HMM hmm_fork(h_fork.first, h_fork.second);
+  print("hmm_fork", hmm_fork, 30); 
+
+  // test using string representations
   std::vector<std::string> exprs = {{
       std::string("ABCD"),           // periodic
       "AB*D",                        // periodic, mais avec *=uniform obs
@@ -129,9 +109,11 @@ int main(int argc, char* argv[]) {
       "+ ! .05 ABC & DEF",           // suite gaussien puis deterministe
       "| .05 ABC .05 DEF",           // alterne entre deux deterministes
       "| .05 ! .05 ABCD .01 *",      // alterne entre 1) Gaussien 2) random O
-      "| 0.03 ! 0.05 AAAAAAAAAAF 0.1 | 0.5 A 0.5 F"
+      "| 0.03 ! 0.05 AAAAAAAAAAF 0.1 | 0.5 A 0.5 F",
                                      // alterne 1) AAAAAAAAAAAF gaussien
                                      //         2) soit A, soit F
+      "+ c & < 0.3 B , 0.7 E >",     // "c" then "B" or "E"
+      "[ AB , 0.3 CD , 0.7 EFF ]"    // Fork AB then CD or EFE
      }};
   for(auto& expr : exprs) {
     bica::hmm::T t;
