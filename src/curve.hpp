@@ -12,6 +12,9 @@
  * Samples can be dynamical and come from
  * - a container : 
  * - something with constant iterators :
+ *
+ * WARNING : 'samples' are considered taken from a growing time_serie.
+ * I've added 'add_data' which does not suppose a time serie.
  */
 
 #include <list>
@@ -101,6 +104,30 @@ public:
 	if (sample.y > get_bbox().y_max) _bbox.y_max = sample.y;
 	if (sample.y < get_bbox().y_min) _bbox.y_min = sample.y;
       }
+    }
+  }
+  /** Add any data (not as atime serie) to Curve and adust _bbox */
+  virtual void add_data( const Sample sample)
+  {
+    //std::cout << "Curve::add_data" << std::endl;
+    // First sample ?
+    if (_data.size() == 0 ) {
+      //std::cout << "add_sample : NEW" << std::endl;
+      _data.push_back( sample );
+      _bbox.x_min = sample.x;
+      _bbox.x_max = sample.x;
+      _bbox.y_min = sample.y;
+      _bbox.y_max = sample.y;
+    }
+    else {
+      //std::cout << "add_sample : ADD" << std::endl;
+      _data.push_back( sample );
+      
+      // Check it is after the last point
+      if (sample.x > get_bbox().x_max) _bbox.x_max = sample.x;
+      if (sample.x < get_bbox().x_min) _bbox.x_min = sample.x;
+      if (sample.y > get_bbox().y_max) _bbox.y_max = sample.y;
+      if (sample.y < get_bbox().y_min) _bbox.y_min = sample.y;
     }
   }
   // *************************************************** Curve::add_time_serie
