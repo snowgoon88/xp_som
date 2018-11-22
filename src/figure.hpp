@@ -4,7 +4,7 @@
 #define FIGURE_HPP
 
 /** 
- * A Window with a Figure inside to plot several curves.
+ * A Window with a Figure inside to plot several Plotter.
  * Has its own font.
  * Can be rendered and saved OFFSCREEN.
  *
@@ -26,7 +26,7 @@
 // Default scale for fonts : screen width=800, axe from -1 to 1.
 #define FONT_SCALE ((1.0 - -1.0) / 800.0)
 
-#include <curve.hpp>
+#include <plotter.hpp>
 #include <axis.hpp>
 #include <gl_utils.hpp>              // utils::gl::to_png
 
@@ -51,8 +51,8 @@ public:
   };
 public:
   // *********************************************************** Figure::Types
-  using CurvePtr = Curve* ;
-  using CurveList = std::list<CurvePtr>;
+  using PlotterPtr = Plotter* ;
+  using PlotterList = std::list<PlotterPtr>;
 public:
   // ******************************************************** Figure::creation
   Figure( std::string title = "Figure",
@@ -63,7 +63,7 @@ public:
 	  const Range& y_range = {-1.0, 1.0, 10, 2} ) :
     _title( title ), _width(width), _height(height),
     _offscreen(offscreen),
-    _window(nullptr), _curves(),
+    _window(nullptr), _plotters(),
     _draw_axes( true ),
     _axis_x( "X", x_range),
     _axis_y( "Y", y_range),
@@ -145,12 +145,12 @@ public:
       utils::gl::check_error();
     }
   }
-  // ******************************************************* Figure::add_curve
-  CurvePtr add_curve( CurvePtr curve )
+  // ***************************************************** Figure::add_plotter
+  PlotterPtr add_plotter( PlotterPtr plotter )
   {
-	_curves.push_back( curve );
+	_plotters.push_back( plotter );
 
-	return curve;
+	return plotter;
   }
   // *************************************************** Figure::set_draw_axes
   void set_draw_axes( bool draw_axes )
@@ -197,13 +197,13 @@ public:
     
     if( update_axes_x || update_axes_y ) {
       // Build proper axis by finding min/max on each axe
-      Curve::BoundingBox bbox{ std::numeric_limits<double>::max(),
+      Plotter::BoundingBox bbox{ std::numeric_limits<double>::max(),
 	  (-std::numeric_limits<double>::max()),
 	  std::numeric_limits<double>::max(),
 	  -std::numeric_limits<double>::max() };
       
-      for( const auto& curve: _curves ) {
-	auto b = curve->get_bbox();
+      for( const auto& plotter: _plotters ) {
+	auto b = plotter->get_bbox();
 	if( b.x_min < bbox.x_min ) bbox.x_min = b.x_min;
 	if( b.x_max > bbox.x_max ) bbox.x_max = b.x_max;
 	if( b.y_min < bbox.y_min ) bbox.y_min = b.y_min;
@@ -250,6 +250,11 @@ public:
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
+	// All other objects
+	for( const auto& plotter: _plotters) {
+	  plotter->render( ratio_x, ratio_y );
+	}
+        
 	// Basic axes
 	if( _draw_axes ) {
 	  _axis_x.render( ratio_x, ratio_y );
@@ -257,10 +262,6 @@ public:
 	  glRotated( 90.0, 0.0, 0.0, 1.0 );
 	  _axis_y.render( ratio_y, ratio_x);
 	  glPopMatrix(); // AXE_Y
-	}
-	// All other objects
-	for( const auto& curve: _curves) {
-	  curve->render();
 	}
 
 	// GraphicText
@@ -284,8 +285,8 @@ public:
   int _width, _height;
   bool _offscreen;
   GLFWwindow* _window;
-  /** All the curves */
-  CurveList _curves;
+  /** All the plotters */
+  PlotterList _plotters;
   /** X and Y axes*/
   bool _draw_axes;
   Axis _axis_x, _axis_y;

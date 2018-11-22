@@ -22,10 +22,12 @@
 #include <math.h>
 #include <functional>
 
+#include <plotter.hpp>
+
 // ***************************************************************************
 // ********************************************************************* Curve
 // ***************************************************************************
-class Curve
+class Curve : public Plotter
 {
 public:
   /** Un Sample est un triplet */
@@ -33,11 +35,6 @@ public:
     double x;
     double y;
     double z;
-  };
-
-  /** Bounding box around data */
-  using BoundingBox = struct {
-    double x_min, x_max, y_min, y_max;
   };
 
   /** Color */
@@ -48,7 +45,7 @@ public:
 public:
   // ********************************************************* Curve::creation
   /** Creation */
-  Curve() : _fg_col{1,0,0}, _line_width(1.f) // red,thin
+  Curve() : Plotter(), _fg_col{1,0,0}, _line_width(1.f) // red,thin
   {}
   virtual ~Curve()
   {
@@ -57,7 +54,8 @@ public:
 
   // ******************************************************Curve::copycreation
   Curve( const Curve& c)
-    : _data(c._data), _bbox( c._bbox ),
+    : Plotter(),
+      _data(c._data), _bbox( c._bbox ),
       _fg_col( c._fg_col ), _line_width( c._line_width )
   {}
   
@@ -65,7 +63,7 @@ public:
   void clear()
   {
     _data.clear();
-	_bbox = {0.0, 0.0, 0.0, 0.0};
+    _bbox = {0.0, 1.0, 0.0, 1.0};
   }
   // ******************************************************* Curve::add_sample
   template<typename Itr>
@@ -153,7 +151,7 @@ public:
   }
   // *********************************************************** Curve::render
   /** Draw curve with OpenGL */
-  virtual void render()
+  virtual void render( float screen_ratio_x = 1.0, float screen_ratio_y = 1.0 )
   {
     //std::cout << "  Curve::render" << std::endl;
     // for( auto& pt : _data) {
@@ -177,10 +175,9 @@ public:
     
   }
   // ******************************************************** Curve::attributs
-  /** get BoundingBox */
-  const BoundingBox& get_bbox() const {return _bbox;}
   std::list<Sample> get_samples() const { return _data; }
   Color get_color() const { return _fg_col; }
+
 protected:
   /** Data are a list of Samples*/
   std::list<Sample> _data;
@@ -288,7 +285,7 @@ public:
   }
   // ******************************************************* CurveMean::render
   /** Draw curve with OpenGL */
-  virtual void render()
+  virtual void render( float screen_ratio_x = 1.0, float screen_ratio_y = 1.0 )
   {
     //std::cout << "  Curve::render" << std::endl;
     // for( auto& pt : _data) {

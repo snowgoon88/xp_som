@@ -35,7 +35,7 @@ public:
   }
   // ************************************************** ScatterPlotter::render
   /** Draw diamonds with classic OpenGL */
-  virtual void render()
+  virtual void render( float screen_ratio_x = 1.0, float screen_ratio_y = 1.0 )
   {
     if (not _active ) return;
                      

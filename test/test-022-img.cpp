@@ -6,91 +6,75 @@
  * Display data as images in Figure
  */
 
-#include <GLFW/glfw3.h>
 #include <string>
 #include <stdlib.h>
 #include <iostream>
 
+#include <figure.hpp>
 #include <img_plotter.hpp>
+#include <cmap_plotter.hpp>
 #include <math.h>
 
+/** Figure and plotters */
+Figure* _fig;
 ImgPlotter<std::vector<double>>* _img_plotter;
+ColormapPlotter<std::vector<double>>* _cmap_plotter;
 
-// ******************************************************************** Window
+/** Parameters */
+double time_glfw = 0;
+
+/** Graphic */
+bool _end_render = false;
+
+//******************************************************************************
 /**
- *
+ * Callback qui gère les événements 'key'
  */
-class Window
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-public:
-  /**  
-   * Création avec titre et taille de fenetre.
-   */
-  Window(const std::string& title = "GLFW Window", int width=640, int height=400)
-  {
-    std::cout << "Window creation" << std::endl;
-    GLFWwindow* window;
+  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+    glfwSetWindowShouldClose(window, GL_TRUE);
+}
+// ***************************************************************************
+/**
+ * Callback pour gérer les messages d'erreur de GLFW
+ */
+static void error_callback(int error, const char* description)
+{
+  std::cerr <<  description << std::endl;
+  //fputs(description, stderr);
+}
 
-    glfwSetErrorCallback(error_callback);
-
-    if (!glfwInit())
+// ***************************************************************************
+// ********************************************************* Graphic Functions
+// ***************************************************************************
+/**
+ * Init and end GLFW
+*/
+void init_glfw()
+{
+  std::cout << "__GLFW Init" << std::endl;
+  
+  glfwSetErrorCallback(error_callback);
+  
+  if (!glfwInit())
         exit(EXIT_FAILURE);
+}
+void glfw_end()
+{
+  glfwTerminate();
+  std::cout << "__GLFW destroyed" << std::endl;
+}
+// ******************************************************************** render
+void render()
+{
+  while( not _end_render and !glfwWindowShouldClose(_fig->_window) ) {
+    time_glfw = glfwGetTime();
     
-    window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
-    if (!window) {
-      glfwTerminate();
-      exit(EXIT_FAILURE);
-    }
-    glfwMakeContextCurrent(window);
-    glfwSetKeyCallback(window, key_callback);
+    _fig->render( true, true ); /* update x_axis, y_axis */
 
-    while (!glfwWindowShouldClose(window)) {
-      float ratio;
-      int width, height;
-      
-      glfwGetFramebufferSize(window, &width, &height);
-      ratio = width / (float) height;
-      
-      glViewport(0, 0, width, height);
-      glClear(GL_COLOR_BUFFER_BIT);
-      
-      glMatrixMode(GL_PROJECTION);
-      glLoadIdentity();
-      glOrtho(-ratio, ratio, -1.f, 1.f, 1.f, -1.f);
-      glMatrixMode(GL_MODELVIEW);
-      
-      _img_plotter->render();
-      
-      glfwSwapBuffers(window);
-      glfwPollEvents();
-    }
-    
-    glfwDestroyWindow(window);
-    
-    glfwTerminate();
-    //exit(EXIT_SUCCESS);
   }
-private:
-  //******************************************************************************
-  /**
-   * Callback qui gère les événements 'key'
-   */
-  static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-  {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-      glfwSetWindowShouldClose(window, GL_TRUE);
-  }
-  // ***************************************************************************
-  /**
-   * Callback pour gérer les messages d'erreur de GLFW
-   */
-  static void error_callback(int error, const char* description)
-  {
-    std::cerr <<  description << std::endl;
-    //fputs(description, stderr);
-  }
-};
-
+}
 //******************************************************************************
 int main( int argc, char *argv[] )
 {
@@ -104,9 +88,25 @@ int main( int argc, char *argv[] )
       data.push_back( sin( 10 * (x*x + y*y)) );
     }
   }
+
+  // ****** GRAPHIC ********
+  init_glfw();
+  _fig = new Figure( "ImgPlotter", 600, 600 );
+  _img_plotter = new ImgPlotter<std::vector<double>>( data, 200, 100,
+                                                      -0.5, 0.8, 0.0, 0.6);
+  _cmap_plotter = new ColormapPlotter<std::vector<double>>( *_img_plotter );
+ 
+  _fig->add_plotter( _img_plotter );
+  _fig->add_plotter( _cmap_plotter );
   
-  _img_plotter = new ImgPlotter<std::vector<double>>( data, 200, 100 );
-  Window win("ImgPlotter", 600, 600);
+  std::cout << "__RENDER" << std::endl;
+  render();
+
+  std::cout << "__END" << std::endl;
+  delete _img_plotter;
+  delete _fig;
+
+  glfw_end();
   
   return 0;
 }

@@ -67,6 +67,7 @@ Et ca clignote avec test-020-anttweak (car utilise Figure ??)
 **** fabriquer à partir de LinearSegmentedColormap
  https://matplotlib.org/api/_as_gen/matplotlib.colors.LinearSegmentedColormap.html#matplotlib.colors.LinearSegmentedColormap
 **** importer de description ptyhon (dict, array, etc) : matplotlib
+**** DONE utiliser la Cmap "viridis" comme #include
 *** TODO Image as Texture or DrawPixel
 read/draw pixels https://www.glprogramming.com/red/chapter08.html
 textures https://www.glprogramming.com/red/chapter09.html
