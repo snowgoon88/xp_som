@@ -3,6 +3,14 @@
 #ifndef CMAP_PLOTTER_HPP
 #define CMAP_PLOTTER_HPP
 
+#include <iomanip>
+#include <FTGL/ftgl.h>       // Fontes dans OpenGL
+#define FONT_PATH "ressources/Consolas.ttf"
+#define FONT_SIZE 12
+#define DIM_MAJOR 6
+// Scale par défaut des fontes : écran de 800 de large, axe de -1 à 1.
+#define FONT_SCALE ((1.0 - -1.0) / 800.0)
+
 /** 
  * Plot a Colormap vertically
  */
@@ -14,6 +22,16 @@ public:
   ColormapPlotter( ImgPlotter<TData>& img_plotter ) :
     Plotter(), _plt(img_plotter)
   {
+    _font = new FTGLTextureFont( FONT_PATH );
+    if (! _font) {
+      std::cerr << "ERROR: Unable to open file " << FONT_PATH << std::endl;
+    }
+    else {
+      if (!_font->FaceSize(FONT_SIZE)) {
+	std::cerr << "ERROR: Unable to set font face size " << FONT_SIZE << std::endl;
+      }
+    }
+    
     // create cmap_data to be displayed
     _cmap_data.clear();
     for( unsigned int i = 0; i < _plt._cmap._veridis_cmap.size(); ++i) {
@@ -44,20 +62,49 @@ public:
     _bbox = {x_min, x_max, plt_bbox.y_min, plt_bbox.y_max};
 
     // Need also minmax of data
-    // auto minmax = std::minmax_element( plt.data.begin(), plt.data.end() );
-    // _min_cmap = *(minmax.first);
-    // _max_cmap = *(minmax.second);
+    auto minmax = std::minmax_element( _plt._data.begin(), _plt._data.end() );
+    _min_cmap = double(*(minmax.first));
+    _max_cmap = double(*(minmax.second));
    }
   // ************************************************* ColormapPlotter::render
   virtual void render( float screen_ratio_x = 1.0, float screen_ratio_y = 1.0 )
   {
     update();
     _cmap_plotter->render( screen_ratio_x, screen_ratio_y );
+
+    // Print CMAP min,max
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    std::stringstream min_str, max_str;
+    min_str << std::setprecision(2) << _min_cmap;
+    max_str << std::setprecision(2) << _max_cmap;
+
+    glPushMatrix(); {
+      glTranslated( _bbox.x_max + 0.08 * (_bbox.x_max - _bbox.x_min),
+                    _bbox.y_min,
+                    0.0);
+      glScaled( screen_ratio_x, screen_ratio_y, 1.0 );
+      _font->Render( min_str.str().c_str() );
+    } glPopMatrix();
+    
+    glPushMatrix(); {
+      glTranslated( _bbox.x_max + 0.08 * (_bbox.x_max - _bbox.x_min),
+                    _bbox.y_max,
+                    0.0);
+      glScaled( screen_ratio_x, screen_ratio_y, 1.0 );
+      _font->Render( max_str.str().c_str() );
+    } glPopMatrix();
   }
+  
   // ********************************************** ColormapPlotter::attributs
   ImgPlotter<TData>& _plt;
   std::vector<double> _cmap_data;
   ImgPlotter<std::vector<double>>* _cmap_plotter;
+  double _min_cmap, _max_cmap;
+  /** Fonts for text */
+  /*static*/ FTFont* _font;
   
 }; // ColormapPlotter
 
