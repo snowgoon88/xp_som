@@ -68,7 +68,7 @@ public:
 
     // Prepare context________________________________________________
     // Build proper axis by finding min/max on each axe
-    Curve::BoundingBox bbox{
+    BoundingBox bbox{
       std::numeric_limits<double>::max(),
 	-std::numeric_limits<double>::max(),
 	std::numeric_limits<double>::max(),

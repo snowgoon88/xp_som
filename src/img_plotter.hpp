@@ -41,6 +41,7 @@ public:
   /* scr_ratio is (max - min) in screen space / length in pixel size */
   virtual void render( float screen_ratio_x = 1.0, float screen_ratio_y = 1.0 )
   {
+    //std::cout << "  render_img at " << get_bbox() << std::endl;
     GLfloat zoomx = (_bbox.x_max - _bbox.x_min) /
       screen_ratio_x / float(_img_width);
     GLfloat zoomy = (_bbox.y_max - _bbox.y_min) /

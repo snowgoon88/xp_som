@@ -4,7 +4,7 @@
 ** FTGL - Draw text with OpenGL and FreeType2
 ** GSL - Gnu Scientific Library
 ** BOOST - Boost::program_options
-* TODO CURRENT : améliorer Scatter (Afficher Graphe)
+* TODO CURRENT : [[Plotfig][Plot dans Figure]]
 * TODO CURRENT : tester sur des séquences stochastiques (Fork)
 * DONE [3/3] Fenêtre GLFW version 3 
 ** DONE CMake pour GLFW
@@ -48,7 +48,7 @@ a priori ça marche si on a ajouté dans .emacs
 Et ca clignote avec test-020-anttweak (car utilise Figure ??)
 *** DONE Xlib error => 2> /dev/null
 *** Tester avec Figure
-* [5/12] Afficher Graphe : OLD classic/legacy OpenGL
+* [6/15] Afficher Graphe : OLD classic/legacy OpenGL
 ** TODO Afficher Grille
 ** DONE [4/4] Afficher Axes avec ticks et range
 *** DONE Label
@@ -61,22 +61,26 @@ Et ca clignote avec test-020-anttweak (car utilise Figure ??)
 ** DONE Taille du texte en fonction de la taille de la fenêtre (ratio).
 ** DONE Position du texte en fonction de la taille de la fenètre (ratio)
 ** DONE Afficher Courbe
-** TODO [0/2] Image
+** DONE [1/2] Image
 *** TODO Cmap 0,1 -> R,G,B,A
 **** list de couleur (rgba) et on map entre 0,1 et 0,N
 **** fabriquer à partir de LinearSegmentedColormap
  https://matplotlib.org/api/_as_gen/matplotlib.colors.LinearSegmentedColormap.html#matplotlib.colors.LinearSegmentedColormap
 **** importer de description ptyhon (dict, array, etc) : matplotlib
 **** DONE utiliser la Cmap "viridis" comme #include
-*** TODO Image as Texture or DrawPixel
+*** DONE Image as Texture or DrawPixel
 read/draw pixels https://www.glprogramming.com/red/chapter08.html
 textures https://www.glprogramming.com/red/chapter09.html
 ** TODO Scatter + offset et stride
 ** TODO Scatter avec variance verticale   
 ** TODO Faire module indépendant
+** TODO Callback pour Window resize [[file:src/window.hpp::70]]
+** TODO update bbox (or not) when adding plotter in Figure
 ** TODO Data vs Time Serie
 Actuellement, Curve est implicitement une TimeSerie => un nouveau point n'est accepté par 'add_sample' que si x > xmax.
 ** TODO séparer données (DataSet, TimeSerie) et Plotter
+** TODO Plot dans Figure : par exemple, séparer Img de CmapPlot
+#<<Plotfig>>
 * DONE [1/1] Constructeurs, Copy, Move
 ** DONE tester Copy pour Layer
 * [8/10] BICA -HMM

@@ -22,6 +22,7 @@
 #include <math.h>
 #include <functional>
 
+#include <visugl.hpp>
 #include <plotter.hpp>
 
 // ***************************************************************************
@@ -54,8 +55,8 @@ public:
 
   // ******************************************************Curve::copycreation
   Curve( const Curve& c)
-    : Plotter(),
-      _data(c._data), _bbox( c._bbox ),
+    : Plotter( c._bbox.x_min, c._bbox.x_max, c._bbox.y_min, c._bbox.y_max ),
+      _data(c._data),
       _fg_col( c._fg_col ), _line_width( c._line_width )
   {}
   
@@ -63,7 +64,7 @@ public:
   void clear()
   {
     _data.clear();
-    _bbox = {0.0, 1.0, 0.0, 1.0};
+    set_bbox( {0.0, 1.0, 0.0, 1.0} );
   }
   // ******************************************************* Curve::add_sample
   template<typename Itr>
@@ -182,7 +183,7 @@ protected:
   /** Data are a list of Samples*/
   std::list<Sample> _data;
   /** Bounding box around Data */
-  BoundingBox _bbox;
+  //BoundingBox _bbox;
   /** Color for the Curve */
   Color _fg_col;
   /** Line Width */
@@ -192,7 +193,7 @@ public:
   /** Create artificial data y=sin(x) pour x=[0,2PI[ */
   void create_data()
   {
-	const unsigned int _nb_data = 100;
+    const unsigned int _nb_data = 100;
 	
     std::cout << "Create_data nb=" << _nb_data << std::endl;
     for( unsigned int i=0; i < _nb_data; ++i) {
@@ -202,10 +203,9 @@ public:
       pt.z = 0.0;      
       _data.push_back( pt );
     }
-    _bbox = {0.0, 2.0 * M_PI, -1.0, 1.0};
+    set_bbox( {0.0, 2.0 * M_PI, -1.0, 1.0} );
     std::cout << "Curve  size(data)=" << _data.size() << std::endl;
-    std::cout << "bbox = {" << get_bbox().x_min <<"; " << get_bbox().x_max << "; ";
-    std::cout << get_bbox().y_min << "; " << get_bbox().y_max << "}" << std::endl;
+    std::cout << "bbox = " << get_bbox() << std::endl;
   }
 };
 // ***************************************************************************

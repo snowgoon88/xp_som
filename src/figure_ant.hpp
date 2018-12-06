@@ -231,7 +231,7 @@ public:
     
     if( update_axes_x || update_axes_y ) {
       // Build proper axis by finding min/max on each axe
-      Curve::BoundingBox bbox{ std::numeric_limits<double>::max(),
+      BoundingBox bbox{ std::numeric_limits<double>::max(),
 	  (-std::numeric_limits<double>::max()),
 	  std::numeric_limits<double>::max(),
 	  -std::numeric_limits<double>::max() };

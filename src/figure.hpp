@@ -4,153 +4,52 @@
 #define FIGURE_HPP
 
 /** 
- * A Window with a Figure inside to plot several Plotter.
- * Has its own font.
- * Can be rendered and saved OFFSCREEN.
- *
- * MUST have error_callback and key_callback defined as static somewhere !!
+ * A Figure has Axes and is a Plotter which can containes Plotter.
+ * Can have a title.
  */
 
-// include OpenGL > 1.1
-#include <GL/glew.h>
-
-#include <GLFW/glfw3.h>
 #include <iostream>                  // std::cout
 #include <string>                    // std::string
 
-//#include <GL/gl.h>                   // OpenGL
-#include <FTGL/ftgl.h>               // Fonts in OpenGL
-#define FONT_PATH "ressources/Consolas.ttf"
-#define FONT_SIZE 12
-#define DIM_MAJOR 6
-// Default scale for fonts : screen width=800, axe from -1 to 1.
-#define FONT_SCALE ((1.0 - -1.0) / 800.0)
-
 #include <plotter.hpp>
+#include <window.hpp>
 #include <axis.hpp>
 #include <gl_utils.hpp>              // utils::gl::to_png
+#include <visugl.hpp>
 
-#include <list>
-#include <memory>
-
-static void error_callback(int error, const char* description );
-static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 // ***************************************************************************
 // ******************************************************************** Figure
 // ***************************************************************************
-class Figure
+class Figure : public Plotter
 {
 public:
-  // *************************************************************************
-  // ***************************************************** Figure::Graphictext
-  // *************************************************************************
-  using GraphicText = struct {
-    double x, y;
-    const std::string msg;
-  };
-public:
-  // *********************************************************** Figure::Types
-  using PlotterPtr = Plotter* ;
-  using PlotterList = std::list<PlotterPtr>;
-public:
   // ******************************************************** Figure::creation
-  Figure( std::string title = "Figure",
-	  const int width=640, const int height=400,
-	  const bool offscreen=false,
-	  const int posx=-1, const int posy = -1,
+  Figure( const Window& window,
+          std::string title = "",
 	  const Range& x_range = {-1.0, 1.0, 10, 2},
 	  const Range& y_range = {-1.0, 1.0, 10, 2} ) :
-    _title( title ), _width(width), _height(height),
-    _offscreen(offscreen),
-    _window(nullptr), _plotters(),
+    Plotter(),
+    _title( title ), 
+    _plotters(),
+    _update_axes_x( false ), _update_axes_y( false ),
     _draw_axes( true ),
     _axis_x( "X", x_range),
     _axis_y( "Y", y_range),
-    _text_list()
+    _text_list(),
+    _font( window._font ), _title_offset( 0.0 )
   {
-	// Create window _________________________________________________
-    glfwSetErrorCallback(error_callback);
-
-    if (!glfwInit())
-        exit(EXIT_FAILURE);
-
-    if( _offscreen) {
-      glfwWindowHint(GLFW_VISIBLE, false );
-    }
-    _window = glfwCreateWindow(_width, _height, _title.c_str(), NULL, NULL);
-    if (! _window ) {
-      glfwTerminate();
-      exit(EXIT_FAILURE);
-    }
-    glfwSetWindowPos( _window, posx, posy );
-    glfwMakeContextCurrent( _window );
-    // TODO can also be set to another DataStructure
-    glfwSetWindowUserPointer( _window, this);
-    glfwSetKeyCallback( _window, key_callback);
-
-    /** Init Fonts */
-    _font = new FTGLTextureFont( FONT_PATH );
-    if (! _font) {
-      std::cerr << "ERROR: Unable to open file " << FONT_PATH << std::endl;
-    }
-    else {
-      if (!_font->FaceSize(FONT_SIZE)) {
-	std::cerr << "ERROR: Unable to set font face size " << FONT_SIZE << std::endl;
-      }
-    }
-
-    /** offscreen => need RenderBuffer in FrameBufferObject */
-    if( _offscreen ) {
-      GLenum error = glewInit();
-      if (error != GLEW_OK) {
-	std::cout << "error with glew init() : " << glewGetErrorString(error) << std::endl;
-      } else {
-        std::cout << "glew is ok\n\n";
-      }
-      // std::cout << "__CREATE RenderBuffer" << std::endl;
-      glGenRenderbuffers( 1 /* nb buffer */, &_render_buf);
-      utils::gl::check_error();
-      glBindRenderbuffer( GL_RENDERBUFFER, _render_buf );
-      utils::gl::check_error();
-      glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB32F, width, height);
-      utils::gl::check_error();
-      glBindRenderbuffer( GL_RENDERBUFFER, 0 );
-      utils::gl::check_error();
-
-      // std::cout << "__CREATE FrameBufferObject"  << std::endl;
-      glGenFramebuffers(1 /* nb objects*/, &_fbo);
-      utils::gl::check_error();
-      glBindFramebuffer( GL_FRAMEBUFFER, _fbo );
-      utils::gl::check_error();
-      glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, /* attach point */
-				 GL_RENDERBUFFER, _render_buf );
-      utils::gl::check_error();
-      
-      // switch back to window-system-provided framebuffer
-      glBindFramebuffer(GL_FRAMEBUFFER, 0);
-      utils::gl::check_error();
-    }
   }
   // ***************************************************** Figure::destruction
   ~Figure()
   {
-    glfwSetWindowShouldClose(_window, GL_TRUE);
-    if(_window)
-      glfwDestroyWindow( _window);
-    if( _offscreen ) {
-      glDeleteRenderbuffers( 1, &_render_buf );
-      utils::gl::check_error();
-      glDeleteFramebuffers( 1, &_fbo );
-      utils::gl::check_error();
-    }
   }
   // ***************************************************** Figure::add_plotter
   PlotterPtr add_plotter( PlotterPtr plotter )
   {
-	_plotters.push_back( plotter );
-
-	return plotter;
+    _plotters.push_back( plotter );
+    
+    return plotter;
   }
   // *************************************************** Figure::set_draw_axes
   void set_draw_axes( bool draw_axes )
@@ -166,137 +65,114 @@ public:
   {
     _text_list.push_back( GraphicText{ x, y, msg } );
   }
-  // ************************************************************ Figure::save
-  void save( const std::string& filename )
+  // ********************************************************** Figure::update
+  BoundingBox get_innerbbox()
   {
-    // Make sure using current window
-    glfwMakeContextCurrent( _window );
-    // TODO can also be set to another DataStructure
-    glfwSetWindowUserPointer( _window, this);
-
-    if( _offscreen ) {
-      // set rendering destination to FBO
-      glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
-      utils::gl::check_error();
+    // Build proper axis by finding min/max on each axe
+    BoundingBox bbox{ std::numeric_limits<double>::max(),
+        (-std::numeric_limits<double>::max()),
+        std::numeric_limits<double>::max(),
+        -std::numeric_limits<double>::max() };
+    
+    for( const auto& plotter: _plotters ) {
+      auto b = plotter->get_bbox();
+      if( b.x_min < bbox.x_min ) bbox.x_min = b.x_min;
+      if( b.x_max > bbox.x_max ) bbox.x_max = b.x_max;
+      if( b.y_min < bbox.y_min ) bbox.y_min = b.y_min;
+      if( b.y_max > bbox.y_max ) bbox.y_max = b.y_max;
     }
-    utils::gl::to_png( filename );
 
+    return bbox;
   }
-  // ********************************************************** Figure::render
-  void render( bool update_axes_x=false, bool update_axes_y=false )
+  virtual void update_bbox()
   {
-    glfwMakeContextCurrent( _window );
-    // TODO can also be set to another DataStructure
-    glfwSetWindowUserPointer( _window, this);
+    auto innerbox = get_innerbbox();
+    // std::cout << "__UPD axes with bbox={" << innerbox.x_min << "; " << innerbox.x_max << "; " << innerbox.y_min << "; " << innerbox.y_max << "}" << std::endl;
+    _axis_x = Axis( "X", {innerbox.x_min, innerbox.x_max, 10, 2});
+    _axis_y = Axis( "Y", {innerbox.y_min, innerbox.y_max, 10, 2});
 
-    if( _offscreen ) {
-      // set rendering destination to FBO
-      glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
-      utils::gl::check_error();
+    // Some room for title
+    if (_title != "" ) {
+      innerbox.y_max += 0.1* (innerbox.y_max - innerbox.y_min);
+      auto titlebox = _font->BBox( _title.c_str() );
+      _title_offset = (titlebox.Upper().X() - titlebox.Lower().X()) / 2.0;
     }
     
-    if( update_axes_x || update_axes_y ) {
-      // Build proper axis by finding min/max on each axe
-      Plotter::BoundingBox bbox{ std::numeric_limits<double>::max(),
-	  (-std::numeric_limits<double>::max()),
-	  std::numeric_limits<double>::max(),
-	  -std::numeric_limits<double>::max() };
-      
-      for( const auto& plotter: _plotters ) {
-	auto b = plotter->get_bbox();
-	if( b.x_min < bbox.x_min ) bbox.x_min = b.x_min;
-	if( b.x_max > bbox.x_max ) bbox.x_max = b.x_max;
-	if( b.y_min < bbox.y_min ) bbox.y_min = b.y_min;
-	if( b.y_max > bbox.y_max ) bbox.y_max = b.y_max;
+    set_bbox( innerbox );
+    // std::cout << "  figure  = " << get_bbox() << std::endl;
+    // std::cout << "  offset = " << _title_offset << std::endl;
+  }
+  
+  // ********************************************************** Figure::render
+  virtual void render( float screen_ratio_x = 1.0, float screen_ratio_y = 1.0 )
+  {
+
+    if( _update_axes_x || _update_axes_y ) {
+      auto innerbox = get_innerbbox();
+
+      if( _update_axes_x) 
+        _axis_x = Axis( "X", {innerbox.x_min, innerbox.x_max, 10, 2});
+      if( _update_axes_y )
+        _axis_y = Axis( "Y", {innerbox.y_min, innerbox.y_max, 10, 2});
+      // Some room for title
+      if (_title != "" ) {
+        innerbox.y_max += 0.1* (innerbox.y_max - innerbox.y_min);
+        auto titlebox = _font->BBox( _title.c_str() );
+        _title_offset = (titlebox.Upper().X() - titlebox.Lower().X()) / 2.0;
       }
-      if( update_axes_x) 
-	_axis_x = Axis( "X", {bbox.x_min,bbox.x_max, 10, 2});
-      if( update_axes_y )
-	_axis_y = Axis( "Y", {bbox.y_min,bbox.y_max, 10, 2});
+
+      set_bbox( innerbox );
     }
     
-    // get window size
-    if( _offscreen ) {
-      glBindRenderbuffer( GL_RENDERBUFFER, _render_buf );
-      utils::gl::check_error();
-      glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &_width);
-      glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &_height);
-      utils::gl::check_error();
-      glBindRenderbuffer( GL_RENDERBUFFER, 0 );
-      utils::gl::check_error();
+
+    // All other objects
+    for( const auto& plotter: _plotters) {
+      plotter->render( screen_ratio_x, screen_ratio_y );
     }
-    else {
-      glfwGetFramebufferSize( _window, &_width, &_height);
+    
+    // Basic axes
+    if( _draw_axes ) {
+      _axis_x.render( screen_ratio_x, screen_ratio_y );
+      glPushMatrix(); // AXE_Y
+      glRotated( 90.0, 0.0, 0.0, 1.0 );
+      _axis_y.render( screen_ratio_y, screen_ratio_x);
+      glPopMatrix(); // AXE_Y
     }
-    // Info for scaling View and axes
-    auto x_min_win = _axis_x.get_range()._min
-      - 0.08 * (_axis_x.get_range()._max - _axis_x.get_range()._min);
-    auto x_max_win = _axis_x.get_range()._max
-      + 0.08 * (_axis_x.get_range()._max - _axis_x.get_range()._min);
-    auto ratio_x = (x_max_win-x_min_win) / (double) _width;
-    auto y_min_win = _axis_y.get_range()._min
-      - 0.08 * (_axis_y.get_range()._max - _axis_y.get_range()._min);
-    auto y_max_win = _axis_y.get_range()._max
-      + 0.08 * (_axis_y.get_range()._max - _axis_y.get_range()._min);
-    auto ratio_y = (y_max_win-y_min_win) / (double) _height;
 
-	glViewport(0, 0, _width, _height);
-	glClearColor( 1.0, 1.0, 1.0, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho( x_min_win, x_max_win, y_min_win, y_max_win, 1.f, -1.f);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	// All other objects
-	for( const auto& plotter: _plotters) {
-	  plotter->render( ratio_x, ratio_y );
-	}
-        
-	// Basic axes
-	if( _draw_axes ) {
-	  _axis_x.render( ratio_x, ratio_y );
-	  glPushMatrix(); // AXE_Y
-	  glRotated( 90.0, 0.0, 0.0, 1.0 );
-	  _axis_y.render( ratio_y, ratio_x);
-	  glPopMatrix(); // AXE_Y
-	}
-
-	// GraphicText
-	for( auto& txt: _text_list) {
-	  glPushMatrix(); {
-	    glTranslated( txt.x, txt.y, 0.0);
-	    glScaled( ratio_x, ratio_y, 1.0 );
-	    _font->Render( txt.msg.c_str() );
-	  } glPopMatrix();
-	}
-
-	if( not _offscreen ) {
-	  glfwSwapBuffers( _window );
-	  glfwPollEvents();
-	}
+    // GraphicText
+    for( auto& txt: _text_list) {
+      glPushMatrix(); {
+        glTranslated( txt.x, txt.y, 0.0);
+        glScaled( screen_ratio_x, screen_ratio_y, 1.0 );
+        _font->Render( txt.msg.c_str() );
+      } glPopMatrix();
+    }
+    // Title
+    if (_title != "") {
+      glPushMatrix(); {
+        glTranslated( (get_bbox().x_max - get_bbox().x_min) / 2.0 - (_title_offset*screen_ratio_x),
+                      (get_bbox().y_max - 0.05 * (get_bbox().y_max - get_bbox().y_min)),
+                      0.0 );
+        glScaled( screen_ratio_x, screen_ratio_y, 1.0 );
+        _font->Render( _title.c_str() );
+      } glPopMatrix();
+    }
   }
 
 public:
   // ******************************************************* Figure::attributs
   std::string _title;
-  int _width, _height;
-  bool _offscreen;
-  GLFWwindow* _window;
   /** All the plotters */
   PlotterList _plotters;
   /** X and Y axes*/
+  bool _update_axes_x, _update_axes_y;
   bool _draw_axes;
   Axis _axis_x, _axis_y;
   /** List of Graphictext */
   std::list<GraphicText> _text_list;
   /** Fonts to write text */
-  /*static*/ FTFont* _font;
-  /** GLew variables for FrameBufferObject, RenderBuffer */
-  GLuint _fbo, _render_buf;
-};
-
+  FTFont* _font;
+  double _title_offset;
+}; // class Figure
 
 #endif // FIGURE_HPP
