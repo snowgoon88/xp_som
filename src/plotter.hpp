@@ -6,6 +6,9 @@
 /** 
  * Basic characteristics of Plotter
  * _bbox
+ * PlotterLisy _plotters
+ *
+ * update_bbox()
  * render( ratio_x, ratio_y )
  */
 
@@ -24,15 +27,27 @@ public:
   //   double x_min, x_max, y_min, y_max;
   // };
   // ****************************************************** Plotter::creation
-  Plotter() : _bbox{0.0, 1.0, 0.0, 1.0}
+  Plotter() : _plotters(), _bbox{0.0, 1.0, 0.0, 1.0}
   {
   }
   Plotter( double x_min, double x_max, double y_min, double y_max) :
+    _plotters(),
     _bbox{x_min, x_max, y_min, y_max}
   {
   }
   virtual ~Plotter()
   {
+  }
+
+  // *************************************************** Plotter::add_plotters
+  /* Cannot add self */
+  virtual bool add_plotter( const PlotterPtr plotter )
+  {
+    if (plotter != this) {
+      _plotters.push_back( plotter );
+      return true;
+    }
+    return false;
   }
   // **************************************************** Plotter::update_bbox
   virtual void update_bbox()
@@ -49,6 +64,8 @@ public:
   const BoundingBox& get_bbox() const {return _bbox;}
   void set_bbox( const BoundingBox& bbox ) { _bbox = bbox; }
 
+  /** Other things to plot */
+  PlotterList _plotters;
   // TODO: private
   BoundingBox _bbox;
   

@@ -4,7 +4,7 @@
 #define FIGURE_HPP
 
 /** 
- * A Figure has Axes and is a Plotter which can containes Plotter.
+ * A Figure has Axes and is a Plotter (which can containes Plotter).
  * Can have a title.
  */
 
@@ -31,7 +31,6 @@ public:
 	  const Range& y_range = {-1.0, 1.0, 10, 2} ) :
     Plotter(),
     _title( title ), 
-    _plotters(),
     _update_axes_x( false ), _update_axes_y( false ),
     _draw_axes( true ),
     _axis_x( "X", x_range),
@@ -44,13 +43,7 @@ public:
   ~Figure()
   {
   }
-  // ***************************************************** Figure::add_plotter
-  PlotterPtr add_plotter( PlotterPtr plotter )
-  {
-    _plotters.push_back( plotter );
-    
-    return plotter;
-  }
+
   // *************************************************** Figure::set_draw_axes
   void set_draw_axes( bool draw_axes )
   {
@@ -162,8 +155,6 @@ public:
 public:
   // ******************************************************* Figure::attributs
   std::string _title;
-  /** All the plotters */
-  PlotterList _plotters;
   /** X and Y axes*/
   bool _update_axes_x, _update_axes_y;
   bool _draw_axes;

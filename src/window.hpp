@@ -4,7 +4,7 @@
 #define WINDOW_HPP
 
 /** 
- * A Window can host several Figure.
+ * A Window is Plotter.
  * Has its own font.
  * Can be rendered and saved OFFSCREEN.
  *
@@ -49,7 +49,7 @@ public:
     Plotter( -1.0, 2.0, -1.0, 2.0 ), // default _bbox
     _title( title ), _width(width), _height(height),
     _offscreen(offscreen),
-    _window(nullptr), _font(nullptr), _plotters()
+    _window(nullptr), _font(nullptr)
   {
     // Create window _________________________________________________
     glfwSetErrorCallback(error_callback);
@@ -70,7 +70,8 @@ public:
     // TODO can also be set to another DataStructure
     glfwSetWindowUserPointer( _window, this);
     glfwSetKeyCallback( _window, key_callback);
-
+    glfwSetWindowSizeCallback( _window, resize_callback );
+    
     /** Init Fonts */
     _font = new FTGLTextureFont( FONT_PATH );
     if (! _font) {
@@ -134,16 +135,6 @@ public:
     }
   }
 
-  // ******************************************************** Window::Plotters
-  /* Cannot add self */
-  bool add_plotter( const PlotterPtr plotter )
-  {
-    //if (plotter != this) {
-      _plotters.push_back( plotter );
-      return true;
-      //}
-      //return false;
-  }
   // ********************************************************** Window::update
   virtual void update_bbox()
   {
@@ -173,30 +164,17 @@ public:
   // ********************************************************** Window::render
   virtual void render( float screen_ratio_x = 1.0, float screen_ratio_y = 1.0 )
   {
+    // Make sure using current window
     glfwMakeContextCurrent( _window );
     // TODO can also be set to another DataStructure
     glfwSetWindowUserPointer( _window, this);
-
+    
     if( _offscreen ) {
       // set rendering destination to FBO
       glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
       utils::gl::check_error();
     }
 
-    // get window size
-    // TODO: could be done only when update or size change ?
-    if( _offscreen ) {
-      glBindRenderbuffer( GL_RENDERBUFFER, _render_buf );
-      utils::gl::check_error();
-      glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &_width);
-      glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &_height);
-      utils::gl::check_error();
-      glBindRenderbuffer( GL_RENDERBUFFER, 0 );
-      utils::gl::check_error();
-    }
-    else {
-      glfwGetFramebufferSize( _window, &_width, &_height);
-    }
     // screen ratio
     auto ratio_x = (_bbox.x_max-_bbox.x_min) / (double) _width;
     auto ratio_y = (_bbox.y_max-_bbox.y_min) / (double) _height;
@@ -211,15 +189,8 @@ public:
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    // TEST
-    // glColor3d( 0.0, 0.0, 0.0 ); // black
-    // glBegin(GL_LINE_STRIP); {
-    //   glVertex3d( 0.0, 0.0, 0.0);
-    //   glVertex3d( 1.0, 0.0, 0.0);
-    //   glVertex3d( 0.0, 1.0, 0.0);
-    //   glVertex3d( 0.0, 0.0, 0.0);
-    // }
-    // glEnd();
+    glClearColor( 1.0, 1.0, 1.0, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT);
     
     // Render Plots
     for( const auto& plotter: _plotters) {
@@ -254,10 +225,32 @@ public:
   GLFWwindow* _window;
   /** Fonts to write text */
   FTGLTextureFont* _font;
-  /** Other things to plot */
-  PlotterList _plotters;
   /** GLew variables for FrameBufferObject, RenderBuffer */
   GLuint _fbo, _render_buf;
+
+private:
+  // *************************************************** Window::GLFW callback
+  static void resize_callback( GLFWwindow* window, int width, int height )
+  {
+    // call Class method
+    ((Window *)glfwGetWindowUserPointer(window))->on_resized();
+  }
+  void on_resized()
+  {
+    // get window size
+    if( _offscreen ) {
+      glBindRenderbuffer( GL_RENDERBUFFER, _render_buf );
+      utils::gl::check_error();
+      glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &_width);
+      glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &_height);
+      utils::gl::check_error();
+      glBindRenderbuffer( GL_RENDERBUFFER, 0 );
+      utils::gl::check_error();
+    }
+    else {
+      glfwGetFramebufferSize( _window, &_width, &_height);
+    }
+  }
 }; // Window
 
 #endif // WINDOW_HPP
