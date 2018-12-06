@@ -12,7 +12,9 @@
 #define PNG_SKIP_SETJMP_CHECK    // see /usr/include/libpng12/pngconf.h:383
 #include <pngwriter.h>
 #include <GL/gl.h>               // OpenGL
-#include <utils.hpp>             // for make_unique
+
+#include <memory>                // std::unique_ptr, std::shared_ptr
+#include <limits>                // std::numeric_limits
 
 namespace utils {
 namespace gl {

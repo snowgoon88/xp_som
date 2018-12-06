@@ -125,7 +125,8 @@ def build( bld ):
         
     
     ##bld.recurse( 'xp' )
-    bld.recurse( 'test' )
-    bld.recurse( 'src/supelec' )
+    ##bld.recurse( 'test' )
+    bld.recurse( 'test/visugl' )
+    ##bld.recurse( 'src/supelec' )
     ##bld.recurse( 'test/dsom' )	    
     

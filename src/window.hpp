@@ -29,7 +29,6 @@
 #include <plotter.hpp>
 
 // ************************************************* MUST BE DEFINED SOMEWHERE
-static void error_callback(int error, const char* description );
 static void key_callback(GLFWwindow* window,
                          int key, int scancode, int action, int mods);
 // ***************************************************************************
@@ -250,6 +249,12 @@ private:
     else {
       glfwGetFramebufferSize( _window, &_width, &_height);
     }
+  }
+public:
+  static void error_callback(int error, const char* description)
+  {
+    std::cerr <<  description << std::endl;
+    //fputs(description, stderr);
   }
 }; // Window
 
