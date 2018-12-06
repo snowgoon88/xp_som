@@ -5,10 +5,10 @@
 
 #include <vector>
 #include <colormap.hpp>
-#include <plotter.hpp>      // for BoundingBox
+#include <plotter.hpp> 
 
 /** 
- * plot an image (and its Colormap) on screen.
+ * ¨Plotter : display an 2D image using the "veridis" Colormap. 
  */
 
 // ***************************************************************************
@@ -17,10 +17,6 @@
 template< typename TData >
 class ImgPlotter : public Plotter
 {
-  // /** Bounding box around data */
-  // using BoundingBox = struct {
-  //   double x_min, x_max, y_min, y_max;
-  // };
 public:
   // **************************************************** ImgPlotter::creation
   ImgPlotter( TData& data, unsigned int width, unsigned int height,
@@ -58,10 +54,8 @@ public:
   unsigned int _img_width, _img_height;
   
   Colormap _cmap;
-  std::vector<float> _img;
+  std::vector<float> _img;  // vector of RGB values
   
 }; // ImgPlotter
-
-
 
 #endif // IMG_PLOTTER_HPP

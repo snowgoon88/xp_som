@@ -113,7 +113,7 @@ int main( int argc, char *argv[] )
                                                       -0.5, 0.8, 0.0, 0.6);
   _fig->add_plotter( _img_plotter );
 
-  _cmap_plotter = new ColormapPlotter<std::vector<double>>( *_img_plotter );
+  _cmap_plotter = new ColormapPlotter<std::vector<double>>( *_win, *_img_plotter );
   _win->add_plotter( _cmap_plotter );
   std::cout << "__UPD_BBOX" << std::endl;
   _win->update_bbox();

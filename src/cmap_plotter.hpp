@@ -19,20 +19,11 @@ class ColormapPlotter : public Plotter
 {
 public:
   // *********************************************** ColormapPlotter::creation
-  ColormapPlotter( ImgPlotter<TData>& img_plotter ) :
-    Plotter(), _plt(img_plotter)
+  ColormapPlotter( const Window& window,
+                   ImgPlotter<TData>& img_plotter ) :
+    Plotter(), _plt(img_plotter),
+    _font( window._font )
   {
-    // TODO: use font from windiow
-    _font = new FTGLTextureFont( FONT_PATH );
-    if (! _font) {
-      std::cerr << "ERROR: Unable to open file " << FONT_PATH << std::endl;
-    }
-    else {
-      if (!_font->FaceSize(FONT_SIZE)) {
-	std::cerr << "ERROR: Unable to set font face size " << FONT_SIZE << std::endl;
-      }
-    }
-    
     // create cmap_data to be displayed
     _cmap_data.clear();
     for( unsigned int i = 0; i < _plt._cmap._veridis_cmap.size(); ++i) {
@@ -42,6 +33,7 @@ public:
     // compute bounding box
     update_bbox();
 
+    // as a 2Dimage of size 1 x size_of_colorma
     _cmap_plotter = new ImgPlotter<std::vector<double>>
       ( _cmap_data,
         1, _plt._cmap._veridis_cmap.size(),
@@ -77,14 +69,11 @@ public:
     _cmap_plotter->render( screen_ratio_x, screen_ratio_y );
 
     // Print CMAP min,max
-    // glEnable(GL_TEXTURE_2D);
-    // glEnable(GL_BLEND);
-    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
     std::stringstream min_str, max_str;
     min_str << std::setprecision(2) << _min_cmap;
     max_str << std::setprecision(2) << _max_cmap;
 
+    glColor3f( 0.f, 0.f, 0.f ); // TODO: black but _fg_color ?
     glPushMatrix(); {
       glTranslated( _bbox.x_max + 0.08 * (_bbox.x_max - _bbox.x_min),
                     _bbox.y_min,
@@ -108,10 +97,8 @@ public:
   ImgPlotter<std::vector<double>>* _cmap_plotter;
   double _min_cmap, _max_cmap;
   /** Fonts for text */
-  /*static*/ FTFont* _font;
+  FTFont* _font;
   
 }; // ColormapPlotter
-
-
 
 #endif // CMAP_PLOTTER_HPP

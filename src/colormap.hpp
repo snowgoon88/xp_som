@@ -5,11 +5,13 @@
 
 #include <vector>
 #include <algorithm>    // std::minmax
-//#include <iostream>     // std::cout
 #include <math.h>       // floor
+
 /** 
  * Defintion and usage of Colormap.
  * Most often Colormap.apply( to_data )
+ *
+ * Current : can only use the "veridis" colormap
  */
 
 // ***************************************************************************
@@ -29,6 +31,10 @@ public:
   {
   }
   // ********************************************************* Colormap::apply
+  /**
+   * Eeach value of data is transformed to a ColorRGB value
+   * by normalizing and the looking for the nearest ColorRGB in Colormap
+   */
   ColorList apply( const std::vector<double>& data )
   {
     // To normalize data, need min and max
