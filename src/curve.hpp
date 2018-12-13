@@ -45,6 +45,7 @@ public:
 
 public:
   // ********************************************************* Curve::creation
+  // OK
   /** Creation */
   Curve() : Plotter(), _fg_col{1,0,0}, _line_width(1.f) // red,thin
   {}
@@ -54,6 +55,7 @@ public:
   };
 
   // ******************************************************Curve::copycreation
+  // OK
   Curve( const Curve& c)
     : Plotter( c._bbox.x_min, c._bbox.x_max, c._bbox.y_min, c._bbox.y_max ),
       _data(c._data),
@@ -61,12 +63,18 @@ public:
   {}
   
   // ************************************************************ Curve::clear
+  // OK
   void clear()
   {
     _data.clear();
     set_bbox( {0.0, 1.0, 0.0, 1.0} );
   }
   // ******************************************************* Curve::add_sample
+  /** 
+   * Add a point to the Curve and adjust _bbox 
+   * WARN : the new Sample x-coordinate must be bigger than previous Samples
+   */
+  // OK
   template<typename Itr>
   void add_sample( const Itr& x_data_begin, const Itr& x_data_end,
 		   const Itr& y_data_begin, const Itr& y_data_end )
@@ -80,7 +88,11 @@ public:
 	  add_sample( {*it_x, *it_y, 0.0} );
 	}
   }
-  /** Add a point to the Curve and adjust _bbox */
+  /** 
+   * Add a point to the Curve and adjust _bbox 
+   * WARN : the new Sample x-coordinate must be bigger than previous Samples
+   */
+  // OK
   virtual void add_sample( const Sample sample)
   {
     //std::cout << "Curve::add_sample" << std::endl;
@@ -105,7 +117,8 @@ public:
       }
     }
   }
-  /** Add any data (not as atime serie) to Curve and adust _bbox */
+  /** Add any data (not as a time serie) to Curve and adust _bbox */
+  // OK
   virtual void add_data( const Sample sample)
   {
     //std::cout << "Curve::add_data" << std::endl;
@@ -122,7 +135,7 @@ public:
       //std::cout << "add_sample : ADD" << std::endl;
       _data.push_back( sample );
       
-      // Check it is after the last point
+      // Adjust BBox
       if (sample.x > get_bbox().x_max) _bbox.x_max = sample.x;
       if (sample.x < get_bbox().x_min) _bbox.x_min = sample.x;
       if (sample.y > get_bbox().y_max) _bbox.y_max = sample.y;
@@ -130,28 +143,32 @@ public:
     }
   }
   // *************************************************** Curve::add_time_serie
+  // OK
   template<typename Itr>
   void add_time_serie( const Itr& data_begin, const Itr& data_end )
   {
     auto it = data_begin;
     for (auto t_data=0.0; it != data_end; ++it, t_data+=1.0) {
-	  const Sample s = {t_data, it, 0.0};
+	  const Sample s = {t_data, *it, 0.0};
       add_sample( s );
     }
   }
 
   // ******************************************************** Curve::set_color
   void set_color( const Color& col )
+  // OK
   {
     _fg_col = col;
   }
   // ******************************************************** Curve::set_width
   void set_width( const GLfloat& width )
+  // OK
   {
 	_line_width = width;
   }
   // *********************************************************** Curve::render
   /** Draw curve with OpenGL */
+  // OK
   virtual void render( float screen_ratio_x = 1.0, float screen_ratio_y = 1.0 )
   {
     //std::cout << "  Curve::render" << std::endl;
@@ -182,31 +199,29 @@ public:
 protected:
   /** Data are a list of Samples*/
   std::list<Sample> _data;
-  /** Bounding box around Data */
-  //BoundingBox _bbox;
   /** Color for the Curve */
   Color _fg_col;
   /** Line Width */
   GLfloat _line_width;
   
-public:
-  /** Create artificial data y=sin(x) pour x=[0,2PI[ */
-  void create_data()
-  {
-    const unsigned int _nb_data = 100;
+// public:
+//   /** Create artificial data y=sin(x) pour x=[0,2PI[ */
+//   void create_data()
+//   {
+//     const unsigned int _nb_data = 100;
 	
-    std::cout << "Create_data nb=" << _nb_data << std::endl;
-    for( unsigned int i=0; i < _nb_data; ++i) {
-      Sample pt;
-      pt.x = 2.0 * M_PI * i / _nb_data;
-      pt.y = sin( pt.x );
-      pt.z = 0.0;      
-      _data.push_back( pt );
-    }
-    set_bbox( {0.0, 2.0 * M_PI, -1.0, 1.0} );
-    std::cout << "Curve  size(data)=" << _data.size() << std::endl;
-    std::cout << "bbox = " << get_bbox() << std::endl;
-  }
+//     std::cout << "Create_data nb=" << _nb_data << std::endl;
+//     for( unsigned int i=0; i < _nb_data; ++i) {
+//       Sample pt;
+//       pt.x = 2.0 * M_PI * i / _nb_data;
+//       pt.y = sin( pt.x );
+//       pt.z = 0.0;      
+//       _data.push_back( pt );
+//     }
+//     set_bbox( {0.0, 2.0 * M_PI, -1.0, 1.0} );
+//     std::cout << "Curve  size(data)=" << _data.size() << std::endl;
+//     std::cout << "bbox = " << get_bbox() << std::endl;
+//   }
 };
 // ***************************************************************************
 

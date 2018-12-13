@@ -5,7 +5,9 @@
  *
  * Full VisuGL example.
  * Window + Figure with title
- *   + Curve as example
+ *   + Curve1 as example
+ *   + Curve2 as a copy of Curve1 with added Samples
+ *   + Curve3 fed with Collections of double.
  * 
  * 'S' or 's' -> save drawing as "001-curve.png"
  */
@@ -14,6 +16,8 @@
 #include <stdlib.h>
 #include <iostream>
 
+#include <vector>
+
 #include <window.hpp>
 #include <figure.hpp>
 #include <curve.hpp>
@@ -21,7 +25,10 @@
 /** Window, Figure and Plotters */
 Window* _win;
 Figure* _fig;
-Curve*  _curve;
+Curve*  _curve1;
+Curve*  _curve2;
+Curve*  _curve3;
+Curve*  _curve4;
 
 /** Parameters */
 double time_glfw = 0;
@@ -79,8 +86,8 @@ int main( int argc, char *argv[] )
 {
   // A static Curve
   std::cout << "__CURVE" << std::endl;
-  _curve = new Curve(); // default is red thin line
-  _curve->clear();
+  _curve1 = new Curve(); // default is red thin line
+  _curve1->clear();
   
   const unsigned int _nb_data = 100;
   for( unsigned int i=0; i < _nb_data; ++i) {
@@ -88,17 +95,56 @@ int main( int argc, char *argv[] )
       pt.x = 2.0 * M_PI * i / _nb_data;
       pt.y = sin( pt.x );
       pt.z = 0.0;      
-      _curve->add_sample( pt );
+      _curve1->add_sample( pt );
   }
 
+  // Copy to which we change points, and "go back"
+  _curve2 = new Curve( *_curve1 );
+  _curve2->set_color( {0.0, 0.1, 1.0} ); // blue line
+  _curve2->set_width( 3.f );             // thicker
+  // inverse points
+  // get_samples (a COPY) , inverse, and copy back to curve2
+  auto samples2 = _curve2->get_samples(); // a COPY
+  _curve2->clear();                       // can clear without fear
+  for( auto& pt: samples2) {
+    pt.y = -pt.y;
+    _curve2->add_sample( pt );
+  }
+  // then add some "weird" points
+  _curve2->add_sample( {3.14, 0.4, 0.0} ); // NOT working (because inside bbox)
+  _curve2->add_data( {3.14, -0.4, 0.0} );  // working (even inside bbox)
+
+  // Set up data using Collections
+  std::vector<double> cx;
+  std::vector<double> cy;
+  for( unsigned int idc = 0; idc < 16; ++idc) {
+    auto angle = double(idc) / 15.0 * 2.0 * M_PI;
+    cx.push_back( 2.0 + 0.4 * angle );
+    cy.push_back( 0.2 + 0.4 * sin( angle ));
+  }
+  _curve3 = new Curve();
+  _curve3->set_color( {0.0, 1.0, 0.0} );
+  _curve3->add_sample( cx.begin(), cx.end(), cy.begin(), cy.end() );
+
+  // Can also create "time serie" where implicitely, x is in range[0, size(y)]
+  std::vector<double> ty;
+  for( unsigned int i = 0; i < 7; ++i) {
+    ty.push_back( -0.5 + 0.1 * double(i));
+  }
+  _curve4 = new Curve();
+  _curve4->set_color( {0.0, 1.0, 1.0} );
+  _curve4->add_time_serie( ty.begin(), ty.end() );
   
   // ****** GRAPHIC ********
   init_glfw();
   std::cout << "__WINDOW and FIGURE" << std::endl;
   _win = new Window( "Top Window", 600, 600 );
-  _fig = new Figure( *_win, "sin( 2 * \\pi * x )     [ESC:quit, S:save as 001-curve.png]" );
+  _fig = new Figure( *_win, "Several Curves          [ESC:quit, S:save as 001-curve.png]" );
   _win->add_plotter( _fig );
-  _fig->add_plotter( _curve );
+  _fig->add_plotter( _curve1 );
+  _fig->add_plotter( _curve2 );
+  _fig->add_plotter( _curve3 );
+  _fig->add_plotter( _curve4 );
 
   _win->update_bbox();
   
@@ -106,7 +152,10 @@ int main( int argc, char *argv[] )
   render();
 
   std::cout << "__END" << std::endl;
-  delete _curve;
+  delete _curve1;
+  delete _curve2;
+  delete _curve3;
+  delete _curve4;
   delete _fig;
   delete _win;
 
