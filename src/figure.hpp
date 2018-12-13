@@ -54,9 +54,9 @@ public:
   {
     _text_list.clear();
   }
-  void add_text( const std::string msg, double x=0.0, double y=0.0 )
+  void add_text( const std::string msg, double x=0.0, double y=0.0, Color col={0.0,0.0,0.0} )
   {
-    _text_list.push_back( GraphicText{ x, y, msg } );
+    _text_list.push_back( GraphicText{ x, y, msg, col } );
   }
   // ********************************************************** Figure::update
   BoundingBox get_innerbbox()
@@ -134,6 +134,7 @@ public:
 
     // GraphicText
     for( auto& txt: _text_list) {
+      glColor3d( txt.col.r, txt.col.g, txt.col.b );
       glPushMatrix(); {
         glTranslated( txt.x, txt.y, 0.0);
         glScaled( screen_ratio_x, screen_ratio_y, 1.0 );
@@ -142,6 +143,7 @@ public:
     }
     // Title
     if (_title != "") {
+      glColor3d( 0.0, 0.0, 0.0 );
       glPushMatrix(); {
         glTranslated( (get_bbox().x_max - get_bbox().x_min) / 2.0 - (_title_offset*screen_ratio_x),
                       (get_bbox().y_max - 0.05 * (get_bbox().y_max - get_bbox().y_min)),

@@ -9,9 +9,15 @@
 
 #include <list>
 // ******************************************************************* TypeDef
-using GraphicText = struct {
+using Color = struct {
+    double r,g,b;
+  };
+using GraphicText = struct gt {
+  gt(double x, double y, const std::string msg, Color col) :
+    x(x), y(y), msg(msg), col(col) {};
   double x, y;
   const std::string msg;
+  Color col = {0.0, 0.0, 0.0};
 };
 using BoundingBox = struct {
   double x_min, x_max, y_min, y_max;

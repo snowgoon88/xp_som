@@ -7,7 +7,9 @@
  * Window + Figure with title
  *   + Curve1 as example
  *   + Curve2 as a copy of Curve1 with added Samples
- *   + Curve3 fed with Collections of double.
+ *   + Curve3 fed with Collections of double
+ *   + Curve4 fed with "time serie" (Collection of Y)
+ *   + text to label the Curves
  * 
  * 'S' or 's' -> save drawing as "001-curve.png"
  */
@@ -142,10 +144,14 @@ int main( int argc, char *argv[] )
   _fig = new Figure( *_win, "Several Curves          [ESC:quit, S:save as 001-curve.png]" );
   _win->add_plotter( _fig );
   _fig->add_plotter( _curve1 );
+  _fig->add_text("curve1", 2.0, 0.95, {1.0,0.0,0.0});
   _fig->add_plotter( _curve2 );
+  _fig->add_text("curve2", 5.2, 0.95, {0.0,0.0,1.0});
   _fig->add_plotter( _curve3 );
+  _fig->add_text("curve3", 4.0, 0.2, {0.0,1.0,0.0});
   _fig->add_plotter( _curve4 );
-
+  _fig->add_text("curve4", 1.0, -0.35, {0.0,1.0,1.0});
+  
   _win->update_bbox();
   
   std::cout << "__RENDER" << std::endl;
