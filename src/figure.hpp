@@ -119,8 +119,19 @@ public:
     
 
     // All other objects
+    GLenum err;
+    while ((err = glGetError()) != GL_NO_ERROR) {
+        std::cerr << "STARTOpenGL error: " << err << std::endl;
+    }
+    
+    unsigned int nb_plot = 0;
     for( const auto& plotter: _plotters) {
       plotter->render( screen_ratio_x, screen_ratio_y );
+    
+      while ((err = glGetError()) != GL_NO_ERROR) {
+        std::cerr << "PLOT " << nb_plot << " OpenGL error: " << err << std::endl;
+      }
+      nb_plot++;
     }
     
     // Basic axes

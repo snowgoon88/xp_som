@@ -24,6 +24,7 @@
 #define FONT_SCALE ((1.0 - -1.0) / 800.0)
 
 #include <gl_utils.hpp>              // utils::gl::to_png, error
+#include <algorithm>
 
 #include <visugl.hpp>
 #include <plotter.hpp>
@@ -147,9 +148,9 @@ public:
       plotter->update_bbox();
       auto b = plotter->get_bbox();
       if( b.x_min < bbox.x_min ) bbox.x_min = b.x_min;
-      if( b.x_max > bbox.x_max ) bbox.x_max = b.x_max;
+      if( b.x_max > bbox.x_max ) bbox.x_max = std::max( b.x_max, b.x_min+0.1 );
       if( b.y_min < bbox.y_min ) bbox.y_min = b.y_min;
-      if( b.y_max > bbox.y_max ) bbox.y_max = b.y_max;
+      if( b.y_max > bbox.y_max ) bbox.y_max = std::max( b.y_max, b.y_min+0.1 );
     }
     auto range_x = bbox.x_max - bbox.x_min;
     bbox.x_min = bbox.x_min - 0.05 * range_x;
@@ -158,11 +159,17 @@ public:
     bbox.y_min = bbox.y_min - 0.05 * range_y;
     bbox.y_max = bbox.y_max + 0.05 * range_y;
     set_bbox( bbox );
-    std::cout << "  window  = " << get_bbox() << std::endl;
+    
+    std::cout << "__UPD BBOX WIN window  = " << get_bbox() << std::endl;
   }
   // ********************************************************** Window::render
   virtual void render( float screen_ratio_x = 1.0, float screen_ratio_y = 1.0 )
   {
+    GLenum err;
+    while ((err = glGetError()) != GL_NO_ERROR) {
+        std::cerr << "WIN RENDER OpenGL error: " << err << std::endl;
+    }
+    
     // Make sure using current window
     glfwMakeContextCurrent( _window );
     // TODO can also be set to another DataStructure
@@ -178,19 +185,50 @@ public:
     auto ratio_x = (_bbox.x_max-_bbox.x_min) / (double) _width;
     auto ratio_y = (_bbox.y_max-_bbox.y_min) / (double) _height;
 
+    while ((err = glGetError()) != GL_NO_ERROR) {
+        std::cerr << "WIN before glVieport OpenGL error: " << err << std::endl;
+    }
     glViewport(0, 0, _width, _height);
+    while ((err = glGetError()) != GL_NO_ERROR) {
+        std::cerr << "WIN after glViewport OpenGL error: " << err << std::endl;
+    }
     glClearColor( 1.0, 1.0, 1.0, 1.0);
+    while ((err = glGetError()) != GL_NO_ERROR) {
+        std::cerr << "WIN glClearColor glViewport OpenGL error: " << err << std::endl;
+    }
     glClear(GL_COLOR_BUFFER_BIT);
+    while ((err = glGetError()) != GL_NO_ERROR) {
+        std::cerr << "WIN glClear OpenGL error: " << err << std::endl;
+    }
+    
     
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
+    while ((err = glGetError()) != GL_NO_ERROR) {
+        std::cerr << "WIN PROJECTION OpenGL error: " << err << std::endl;
+    }
     glOrtho( _bbox.x_min, _bbox.x_max, _bbox.y_min, _bbox.y_max, 1.f, -1.f);
+    while ((err = glGetError()) != GL_NO_ERROR) {
+      std::cout << "W=" << _width << "H=" << _height << std::endl;
+      std::cerr << _bbox << std::endl;
+      std::cerr << "WIN ORTHO OpenGL error: " << err << std::endl;
+    }
     glMatrixMode(GL_MODELVIEW);
+    while ((err = glGetError()) != GL_NO_ERROR) {
+        std::cerr << "WIN MODELVIEW OpenGL error: " << err << std::endl;
+    }
     glLoadIdentity();
 
+    while ((err = glGetError()) != GL_NO_ERROR) {
+        std::cerr << "WIN glLoadIdentity OpenGL error: " << err << std::endl;
+    }
+    
     glClearColor( 1.0, 1.0, 1.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
-    
+
+    while ((err = glGetError()) != GL_NO_ERROR) {
+        std::cerr << "WIN Plot OpenGL error: " << err << std::endl;
+    }
     // Render Plots
     for( const auto& plotter: _plotters) {
       plotter->render( ratio_x, ratio_y );
@@ -204,6 +242,7 @@ public:
   // ************************************************************ Window::save
   void save( const std::string& filename )
   {
+    std::cout << "__SAVE" << std::endl;
     // Make sure using current window
     glfwMakeContextCurrent( _window );
     // TODO can also be set to another DataStructure
@@ -214,7 +253,10 @@ public:
       glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
       utils::gl::check_error();
     }
+    // debug
+    std::cout << "  before" << std::endl;
     utils::gl::to_png( filename );
+    std::cout << "  after" << std::endl;
   }
 
   // ******************************************************* Window::attributs
@@ -236,6 +278,7 @@ private:
   }
   void on_resized()
   {
+    std::cout << "__RESIZE" << std::endl;
     // get window size
     if( _offscreen ) {
       glBindRenderbuffer( GL_RENDERBUFFER, _render_buf );
