@@ -160,7 +160,7 @@ public:
     bbox.y_max = bbox.y_max + 0.05 * range_y;
     set_bbox( bbox );
     
-    //std::cout << "__UPD BBOX WIN window  = " << get_bbox() << std::endl;
+    // std::cout << "__UPD BBOX WIN window  = " << get_bbox() << std::endl;
   }
   // ********************************************************** Window::render
   virtual void render( float screen_ratio_x = 1.0, float screen_ratio_y = 1.0 )

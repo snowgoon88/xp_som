@@ -122,7 +122,7 @@ int main( int argc, char *argv[] )
   _fig = new Figure( *_win, "sin( 10 (x^2 + y^2)= + noise    [ESC:quit]" );
   // VisuGL elements
   _img_plotter = new ImgPlotter<std::vector<double>>( data, 200, 100,
-                                                      -0.2, 0.8, -0.2, 0.8);
+                                                      -0.8, 0.2, -0.2, 0.8);
   _cmap_plotter = new ColormapPlotter<std::vector<double>>( *_win,
                                                             *_img_plotter );
   
