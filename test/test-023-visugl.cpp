@@ -106,7 +106,15 @@ int main( int argc, char *argv[] )
   _win->add_plotter( _fig );
   
   _curve_example = new Curve();
-  _curve_example->create_data();
+  // _curve_example->create_data();
+  const unsigned int _nb_data = 100;
+    for( unsigned int i=0; i < _nb_data; ++i) {
+      Curve::Sample pt;
+      pt.x = 2.0 * M_PI * i / _nb_data;
+      pt.y = sin( pt.x );
+      pt.z = 0.0;      
+      _curve_example->add_sample( pt );
+    }
   _fig->add_plotter( _curve_example );
   //_fig->update_axes(); // explicitely or set _fig->_update_axes_x/y
   _img_plotter = new ImgPlotter<std::vector<double>>( data, 200, 100,

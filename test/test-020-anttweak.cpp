@@ -124,7 +124,15 @@ int main(int argc, char *argv[])
   // Curves
   std::cout << "__Curves" << std::endl;
   _c_sin = new Curve();
-  _c_sin->create_data();
+  //_c_sin->create_data();
+  const unsigned int _nb_data = 100;
+  for( unsigned int i=0; i < _nb_data; ++i) {
+    Curve::Sample pt;
+    pt.x = 2.0 * M_PI * i / _nb_data;
+    pt.y = sin( pt.x );
+    pt.z = 0.0;      
+    _c_sin->add_sample( pt );
+  }
   _fig->add_curve( _c_sin );
   // ScatterPlotter
   _scatter = new ScatterPlotter( *_c_sin );

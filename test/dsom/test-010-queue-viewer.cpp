@@ -68,17 +68,19 @@ int main(int argc, char *argv[])
   c_inp.update();
 
   // Create a Figure
-  Figure fig = Figure( "QueueViewer", 800, 600, false /* offscreen */,
-		       -1, -1,
-		       {0.0, 20.0, 10, 2}, {0.0, 20.0, 10, 2});
+  Window win = Window( "QueueViewer", 800, 600, false /* offscreen */,
+		       -1, -1 );
+  Figure fig = Figure( win, "Queue", {0.0, 20.0, 10, 2}, {0.0, 20.0, 10, 2});
+  win.add_plotter( &fig );
 
   // Curve
-  fig.add_curve( &c_win );
+  fig.add_plotter( &c_win );
   c_inp.set_color( {0.0, 1.0, 0.0} );
-  fig.add_curve( &c_inp );
-
+  fig.add_plotter( &c_inp );
+  win.update_bbox();
+  
   while(not _end_render) {
-    fig.render();
+    win.render();
   }
   
   return 0;

@@ -96,21 +96,21 @@ def configure( conf ):
     conf.find_file( conf.env.LIB_PNGWRITER[0]+'.h', conf.env.INCLUDES_PNGWRITER )
     conf.find_file( 'lib'+conf.env.LIB_PNGWRITER[0]+'.so', conf.env.LIBPATH_PNGWRITER )
 
-    # ## Require AntTweakBar upper in the hierarchy
-    # print( "Looking for AntTweak" )
-    # #print( "path="+conf.path.name )
-    # antnode = conf.path.find_node( '../AntTweakBar' );
-    # if not antnode :
-    #     from waflib.Errors import ConfigurationError
-    #     raise ConfigurationError( msg='AntTweakBar not fount in '+conf.path.parent.abspath() )
-    # print( "  AntPath="+antnode.abspath() )
-    # conf.env.LIB_ANTTWEAKBAR = ['AntTweakBar']
-    # conf.env.INCLUDES_ANTTWEAKBAR  = [antnode.abspath()+'/include']
-    # conf.env.LIBPATH_ANTTWEAKBAR = [antnode.abspath()+'/lib']
-    # conf.find_file( conf.env.LIB_ANTTWEAKBAR[0]+'.h',
-    #                 conf.env.INCLUDES_ANTTWEAKBAR)
-    # conf.find_file( 'lib'+conf.env.LIB_ANTTWEAKBAR[0]+'.so',
-    #                 conf.env.LIBPATH_ANTTWEAKBAR )
+    ## Require AntTweakBar upper in the hierarchy
+    print( "Looking for AntTweak" )
+    #print( "path="+conf.path.name )
+    antnode = conf.path.find_node( '../AntTweakBar' );
+    if not antnode :
+        from waflib.Errors import ConfigurationError
+        raise ConfigurationError( msg='AntTweakBar not fount in '+conf.path.parent.abspath() )
+    print( "  AntPath="+antnode.abspath() )
+    conf.env.LIB_ANTTWEAKBAR = ['AntTweakBar']
+    conf.env.INCLUDES_ANTTWEAKBAR  = [antnode.abspath()+'/include']
+    conf.env.LIBPATH_ANTTWEAKBAR = [antnode.abspath()+'/lib']
+    conf.find_file( conf.env.LIB_ANTTWEAKBAR[0]+'.h',
+                    conf.env.INCLUDES_ANTTWEAKBAR)
+    conf.find_file( 'lib'+conf.env.LIB_ANTTWEAKBAR[0]+'.so',
+                    conf.env.LIBPATH_ANTTWEAKBAR )
     
 # ******************************************************************** CMD build
 def build( bld ):
@@ -124,9 +124,9 @@ def build( bld ):
     print( bld.env['CXXFLAGS'] )
         
     
-    ##bld.recurse( 'xp' )
-    ##bld.recurse( 'test' )
+    bld.recurse( 'xp' )
+    bld.recurse( 'test' )
     bld.recurse( 'test/visugl' )
-    ##bld.recurse( 'src/supelec' )
-    ##bld.recurse( 'test/dsom' )	    
+    bld.recurse( 'src/supelec' )
+    bld.recurse( 'test/dsom' )	    
     

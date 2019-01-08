@@ -6,6 +6,7 @@
  * Multi-windows with adaptive DynCurves ?
  */
 
+#include <window.hpp>
 #include <figure.hpp>
 #include <curve.hpp>
 #include <axis.hpp>
@@ -24,7 +25,9 @@
 #include <dsom/r_network.hpp>
 using namespace Model::DSOM;
 RNetwork* _rdsom;
+Window* _w_weight;
 Figure* _f_weight;
+Window* _w_rweight;
 Figure* _f_rweight;
 Curve* _c_weight;
 CurveDyn<RNetwork::Similarities> *_c_sim_input;
@@ -70,47 +73,55 @@ void init_data()
   _rdsom = new RNetwork( 1, 100, -1 );
   std::cout << "__CREATION" << std::endl << _rdsom->str_dump() << std::endl;
 
-  _f_weight = new Figure( "Input/Weights", 800, 600, false, -1, -1,
-						  {0.0,100.0,10,2}, {0.0, 1.0, 10, 2} );
+  _w_weight = new Window( "Input/Weights", 800, 600, false, -1, -1 );
+  _f_weight = new Figure( *_w_weight, "Input/weights", {0.0,100.0,10,2}, {0.0, 1.0, 10, 2} );
+  _w_weight->add_plotter( _f_weight );
+  
   // Weights
   _c_weight = new Curve();
   _c_weight->set_color( {0.0, 0.0, 0.0} );
   _c_weight->set_width( 3 );
-  _f_weight->add_curve( _c_weight );
+  _f_weight->add_plotter( _c_weight );
   // Input Similarities
   _c_sim_input = new CurveDyn<RNetwork::Similarities>( _rdsom->_sim_w );
   _c_sim_input->set_color( {1.0, 0.0, 0.0} );
-  _f_weight->add_curve( _c_sim_input );
+  _f_weight->add_plotter( _c_sim_input );
   // Merged Similarities
   _c_sim_merged = new CurveDyn<RNetwork::Similarities>( _rdsom->_sim_merged );
   _c_sim_merged->set_color( {0.0, 0.0, 1.0} );
   _c_sim_convol = new CurveDyn<RNetwork::Similarities>( _rdsom->_sim_convol );
   _c_sim_convol->set_color( {0.0, 0.0, 1.0} );
   _c_sim_convol->set_width( 2 );
-  _f_weight->add_curve( _c_sim_merged );
-  _f_weight->add_curve( _c_sim_convol );
+  _f_weight->add_plotter( _c_sim_merged );
+  _f_weight->add_plotter( _c_sim_convol );
   _c_sim_hh_dist = new CurveDyn<RNetwork::Similarities>( _rdsom->_sim_hn_dist );
   _c_sim_hh_dist->set_color( {0.0, 1.0, 0.0} );
   _c_sim_hh_dist->set_width( 3 );
-  _f_weight->add_curve( _c_sim_hh_dist );
+  _f_weight->add_plotter( _c_sim_hh_dist );
+  _w_weight->update_bbox();
+
   
-  _f_rweight = new Figure( "Recurrent/RWeights", 800, 600, false, -1, -1,
-						   {0.0,100.0,10,2}, {0.0, 1.0, 10, 2} );
+  _w_rweight = new Window( "Recurrent/RWeights", 800, 600, false, -1, -1 );
+  _f_rweight = new Figure( *_w_rweight, "Recurrent/RWeights",
+                           {0.0,100.0,10,2}, {0.0, 1.0, 10, 2} );
+  _w_rweight->add_plotter( _f_rweight );
+  
   _c_rweight = new Curve();
   _c_rweight->set_color( {0.0, 0.0, 0.0} );
   _c_rweight->set_width( 3 );
   // Rec Similarities
   _c_sim_rec = new CurveDyn<RNetwork::Similarities>( _rdsom->_sim_rec );
   _c_sim_rec->set_color( {1.0, 0.0, 0.0} );
-  _f_rweight->add_curve( _c_sim_rec );
-  _f_rweight->add_curve( _c_sim_merged );
-  _f_rweight->add_curve( _c_sim_convol );
+  _f_rweight->add_plotter( _c_sim_rec );
+  _f_rweight->add_plotter( _c_sim_merged );
+  _f_rweight->add_plotter( _c_sim_convol );
   _c_sim_hh_rec = new CurveDyn<RNetwork::Similarities>( _rdsom->_sim_hn_rec );
   _c_sim_hh_rec->set_color( {0.0, 1.0, 0.0} );
   _c_sim_hh_rec->set_width( 3 );
-  _f_rweight->add_curve( _c_sim_hh_rec );
+  _f_rweight->add_plotter( _c_sim_hh_rec );
 
-  _f_rweight->add_curve( _c_rweight );
+  _f_rweight->add_plotter( _c_rweight );
+  _w_rweight->update_bbox();
 }
 void step_data()
 {
@@ -137,6 +148,8 @@ void update_data()
   _c_sim_convol->update();
   _c_sim_hh_dist->update();
   _c_sim_hh_rec->update();
+
+  //_w_weight->update_bbox();
 }
 void end_data()
 {
@@ -145,10 +158,12 @@ void end_data()
   delete _c_sim_merged;
   delete _c_sim_convol;
   delete _f_weight;
+  delete _w_weight;
 
   delete _c_rweight;
   delete _c_sim_rec;
   delete _f_rweight;
+  delete _w_rweight;
 }
 
 // ***************************************************************************
@@ -170,8 +185,8 @@ void init_glfw()
 void render() {
   while( not _end_render ) {
 	update_data();
-	_f_weight->render();
-	_f_rweight->render();
+	_w_weight->render();
+	_w_rweight->render();
   }
 }
 void glfw_end()
