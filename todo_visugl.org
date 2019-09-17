@@ -17,10 +17,15 @@ Quatre Curve dans Figure dans Window
 *** 002-dyncurve
 Deux courbes dynamiques, avec adaptation uniquement selon l'axe des X.
 Courbe est le 'Mean' de l'autre
+*** 003-staticwin
+Montre la différence entre Double et Single Buffer quand on ne fait des courbes qui se contentent d'ajouterde l'info. 
+ATTENTION : il faut avoir des Plotters avec render_last() implémenté !
+- affiche trajectoire aléatoire dans monde avec rebonds
 ** BBox
 Window et Figure ont un BBox par défaut.
 Window->add_plotter met à jour (update) BBox pour englober plotter
 Window->update_bbox() force le recalcul du BBbox pour englober tous les Plotters
+Curve->clear() met Bbox à {0.0, 1.0, 0.0, 1.0}
 *** Option : update peut commencer avec les axes par défaut
 Lors du premier update d'une Figure, pourrait englober au moins les axes, si ces derniers sont fournis ?
 *** DONE Option : un switch pour BBox
@@ -68,7 +73,7 @@ a priori ça marche si on a ajouté dans .emacs
 Et ca clignote avec test-020-anttweak (car utilise Figure ??)
 *** DONE Xlib error => 2> /dev/null
 *** Tester avec Figure
-* [6/15] Afficher Graphe : OLD classic/legacy OpenGL
+* [8/15] Afficher Graphe : OLD classic/legacy OpenGL
 ** TODO Afficher Grille
 ** DONE [4/4] Afficher Axes avec ticks et range
 *** DONE Label
@@ -95,8 +100,8 @@ textures https://www.glprogramming.com/red/chapter09.html
 ** TODO Scatter avec variance verticale   
 ** TODO Faire module indépendant
 ** TODO Callback pour Window resize [[file:src/window.hpp::70]]
-** TODO update bbox (or not) when adding plotter in Figure
-** TODO Data vs Time Serie
+** DONE update bbox (or not) when adding plotter in Figure
+** DONE Data vs Time Serie
 Actuellement, Curve est implicitement une TimeSerie => un nouveau point n'est accepté par 'add_sample' que si x > xmax.
 ** TODO séparer données (DataSet, TimeSerie) et Plotter
 ** TODO Plot dans Figure : par exemple, séparer Img de CmapPlot

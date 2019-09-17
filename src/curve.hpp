@@ -60,13 +60,16 @@ public:
     : Plotter( c._bbox.x_min, c._bbox.x_max, c._bbox.y_min, c._bbox.y_max ),
       _data(c._data),
       _fg_col( c._fg_col ), _line_width( c._line_width )
-  {}
+  {
+    _last_sample = _data.begin();
+  }
   
   // ************************************************************ Curve::clear
   // OK
   void clear()
   {
     _data.clear();
+    _last_sample = _data.begin();
     set_bbox( {0.0, 1.0, 0.0, 1.0} );
   }
   // ******************************************************* Curve::add_sample
@@ -100,6 +103,8 @@ public:
     if (_data.size() == 0 ) {
       //std::cout << "add_sample : NEW" << std::endl;
       _data.push_back( sample );
+      _last_sample = _data.begin();
+      
       _bbox.x_min = sample.x;
       _bbox.x_max = sample.x;
       _bbox.y_min = sample.y;
@@ -126,6 +131,8 @@ public:
     if (_data.size() == 0 ) {
       //std::cout << "add_sample : NEW" << std::endl;
       _data.push_back( sample );
+      _last_sample = _data.begin();
+      
       _bbox.x_min = sample.x;
       _bbox.x_max = sample.x;
       _bbox.y_min = sample.y;
@@ -190,8 +197,37 @@ public:
       glVertex3d( pt.x, pt.y, pt.z );
     }
     glEnd();
-    
+
+    if (_data.empty() ) {
+        _last_sample = _data.begin();
+      }
+    else {
+      _last_sample = _data.end();
+      _last_sample--;
+    }
   }
+  /** Only render from _last to end */
+  virtual void render_last( float screen_ratio_x = 1.0,
+                            float screen_ratio_y = 1.0 )
+  {
+    // Color
+    glColor4d( _fg_col.r, _fg_col.g, _fg_col.b, 1.0);
+    // -------------------------------------------------------------------------
+    //  Rendering using GL_LINE_STRIP
+    // -------------------------------------------------------------------------
+    glEnable (GL_BLEND);
+    glEnable (GL_LINE_SMOOTH);
+    glLineWidth( _line_width );
+
+    glBegin(GL_LINE_STRIP);
+    for( auto its = _last_sample; its != _data.end(); ++its) {
+      // std::cout << "  pt= " << its->x << ", " << its->y << ", " << its->z<<std::endl;
+      glVertex3d( its->x, its->y, its->z );
+    }
+    glEnd();
+    _last_sample--;
+  }
+
   // ******************************************************** Curve::attributs
   std::list<Sample> get_samples() const { return _data; }
   Color get_color() const { return _fg_col; }
@@ -203,6 +239,8 @@ protected:
   Color _fg_col;
   /** Line Width */
   GLfloat _line_width;
+  /** Iterator to the last sample plotted */
+  std::list<Sample>::iterator _last_sample;
   
 // public:
 //   /** Create artificial data y=sin(x) pour x=[0,2PI[ */
