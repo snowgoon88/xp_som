@@ -6,6 +6,8 @@
 ** BOOST - Boost::program_options
 * TODO CURRENT : [[Plotfig][Plot dans Figure]]
 * TODO CURRENT : tester sur des séquences stochastiques (Fork)
+* [0/1] CURRENT : Independant VisuGL
+** TODO Bbox strange dans 001-curve
 * DONE [3/3] Fenêtre GLFW version 3 
 ** DONE CMake pour GLFW
 ** DONE C++ pour GLFW
@@ -1011,10 +1013,14 @@ sig_som=0.07, sigc=0.005 : ça marche bien, mais la position se déstabilise d'u
 
 
 
-* [2/3] Visualisation
+* [2/4] Visualisation
 ** DONE Ecrire du texte n'importe où 
 ** TODO Classe[Container] avec 2 membres "one", "two"
 *** itérer sur la Classe et appliquer une fonction (ou une classe) pour récupérer l'un des deux membres
 *** A tester 
 ** DONE Class avec un membre qui est un Container[double] => OK
+** TODO ADDED
+*** Plotters
+*** _render_flag dans Window
+*** WindowStatic and render_last
    
