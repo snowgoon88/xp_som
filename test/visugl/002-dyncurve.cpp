@@ -137,7 +137,7 @@ int main( int argc, char *argv[] )
   _win = new Window( "Top Window", 600, 600 );
   _fig = new Figure( *_win, "Dyn Curve    [ESC:quit, W:Mean ON/OFF, S:save as 002-dyncurve.png; D:info]" );
   _fig->_update_axes_x = true;
-  _fig->_update_axes_y = true;
+  //_fig->_update_axes_y = true;
   _win->add_plotter( _fig );
   _fig->add_plotter( _curve_mean );
   _fig->add_plotter( _curve );      // will overwrite other curve if identical

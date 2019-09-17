@@ -13,6 +13,7 @@
 
 #include <plotter.hpp>
 #include <window.hpp>
+#include <window_static.hpp>
 #include <axis.hpp>
 #include <gl_utils.hpp>              // utils::gl::to_png
 #include <visugl.hpp>
@@ -29,8 +30,8 @@ public:
           std::string title = "",
 	  const Range& x_range = {-1.0, 1.0, 10, 2},
 	  const Range& y_range = {-1.0, 1.0, 10, 2} ) :
-    Plotter(),
-    _title( title ), 
+    Plotter( x_range._min, x_range._max, y_range._min, y_range._max ),
+    _title( title ), _should_render(true),
     _update_axes_x( false ), _update_axes_y( false ),
     _draw_axes( true ),
     _axis_x( "X", x_range),
@@ -38,6 +39,22 @@ public:
     _text_list(),
     _font( window._font ), _title_offset( 0.0 )
   {
+    _axis_x.set_hpos( _hpos );
+  }
+  Figure( const WindowStatic& window,
+          std::string title = "",
+	  const Range& x_range = {-1.0, 1.0, 10, 2},
+	  const Range& y_range = {-1.0, 1.0, 10, 2} ) :
+    Plotter( x_range._min, x_range._max, y_range._min, y_range._max ),
+    _title( title ), _should_render(true),
+    _update_axes_x( false ), _update_axes_y( false ),
+    _draw_axes( true ),
+    _axis_x( "X", x_range),
+    _axis_y( "Y", y_range),
+    _text_list(),
+    _font( window._font ), _title_offset( 0.0 )
+  {
+    _axis_x.set_hpos( _hpos );
   }
   // ***************************************************** Figure::destruction
   ~Figure()
@@ -66,13 +83,21 @@ public:
         (-std::numeric_limits<double>::max()),
         std::numeric_limits<double>::max(),
         -std::numeric_limits<double>::max() };
-    
+
+    // start from axes
+    // BoundingBox bbox{ _axis_x.get_range()._min, _axis_x.get_range()._max,
+    //     _axis_y.get_range()._min, _axis_y.get_range()._max };
+    // and try to find if exceeds...
     for( const auto& plotter: _plotters ) {
       auto b = plotter->get_bbox();
-      if( b.x_min < bbox.x_min ) bbox.x_min = b.x_min;
-      if( b.x_max > bbox.x_max ) bbox.x_max = b.x_max;
-      if( b.y_min < bbox.y_min ) bbox.y_min = b.y_min;
-      if( b.y_max > bbox.y_max ) bbox.y_max = b.y_max;
+      //if (_update_axes_x) {
+        if( b.x_min < bbox.x_min ) bbox.x_min = b.x_min;
+        if( b.x_max > bbox.x_max ) bbox.x_max = b.x_max;
+        //}
+        //if (_update_axes_y) {
+        if( b.y_min < bbox.y_min ) bbox.y_min = b.y_min;
+        if( b.y_max > bbox.y_max ) bbox.y_max = b.y_max;
+        //}
     }
 
     return bbox;
@@ -99,12 +124,16 @@ public:
   // ********************************************************** Figure::render
   virtual void render( float screen_ratio_x = 1.0, float screen_ratio_y = 1.0 )
   {
+    if (not _should_render) return;
 
     if( _update_axes_x || _update_axes_y ) {
       auto innerbox = get_innerbbox();
-
-      if( _update_axes_x) 
+ 
+      // TODO: only update, NOT recreate !!!
+      if( _update_axes_x) {
         _axis_x = Axis( "X", {innerbox.x_min, innerbox.x_max, 10, 2});
+        _axis_x.set_hpos( _hpos );
+      }
       if( _update_axes_y )
         _axis_y = Axis( "Y", {innerbox.y_min, innerbox.y_max, 10, 2});
       // Some room for title
@@ -164,10 +193,30 @@ public:
       } glPopMatrix();
     }
   }
-
-public:
+   /** Only render from _last to end */
+  virtual void render_last( float screen_ratio_x = 1.0,
+                            float screen_ratio_y = 1.0 )
+  {
+    GLenum err;
+    unsigned int nb_plot = 0;
+    for( const auto& plotter: _plotters) {
+      plotter->render_last( screen_ratio_x, screen_ratio_y );
+      
+      while ((err = glGetError()) != GL_NO_ERROR) {
+        std::cerr << "PLOT_LAST " << nb_plot << " OpenGL error: " << err << std::endl;
+      }
+      nb_plot++;
+    }
+  }
   // ******************************************************* Figure::attributs
+  void set_hpos( double val )
+  {
+    _hpos = val;
+    _axis_x.set_hpos( _hpos );
+  }
+public:
   std::string _title;
+  bool _should_render;
   /** X and Y axes*/
   bool _update_axes_x, _update_axes_y;
   bool _draw_axes;
@@ -177,6 +226,9 @@ public:
   /** Fonts to write text */
   FTFont* _font;
   double _title_offset;
+protected:
+  // TODO: vertical position of XAxis
+  double _hpos = 0.0;
 }; // class Figure
 
 #endif // FIGURE_HPP

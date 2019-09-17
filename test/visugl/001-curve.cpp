@@ -99,6 +99,7 @@ int main( int argc, char *argv[] )
       pt.z = 0.0;      
       _curve1->add_sample( pt );
   }
+  std::cout << "  c1 bbox=" << _curve1->get_bbox() << std::endl;
 
   // Copy to which we change points, and "go back"
   _curve2 = new Curve( *_curve1 );
@@ -115,7 +116,8 @@ int main( int argc, char *argv[] )
   // then add some "weird" points
   _curve2->add_sample( {3.14, 0.4, 0.0} ); // NOT working (because inside bbox)
   _curve2->add_data( {3.14, -0.4, 0.0} );  // working (even inside bbox)
-
+  std::cout << "  c2 bbox=" << _curve2->get_bbox() << std::endl;
+  
   // Set up data using Collections
   std::vector<double> cx;
   std::vector<double> cy;
@@ -127,7 +129,8 @@ int main( int argc, char *argv[] )
   _curve3 = new Curve();
   _curve3->set_color( {0.0, 1.0, 0.0} );
   _curve3->add_sample( cx.begin(), cx.end(), cy.begin(), cy.end() );
-
+  std::cout << "  c3 bbox=" << _curve3->get_bbox() << std::endl;
+  
   // Can also create "time serie" where implicitely, x is in range[0, size(y)]
   std::vector<double> ty;
   for( unsigned int i = 0; i < 7; ++i) {
@@ -136,12 +139,14 @@ int main( int argc, char *argv[] )
   _curve4 = new Curve();
   _curve4->set_color( {0.0, 1.0, 1.0} );
   _curve4->add_time_serie( ty.begin(), ty.end() );
+  std::cout << "  c4 bbox=" << _curve4->get_bbox() << std::endl;
   
   // ****** GRAPHIC ********
   init_glfw();
   std::cout << "__WINDOW and FIGURE" << std::endl;
   _win = new Window( "Top Window", 600, 600 );
   _fig = new Figure( *_win, "Several Curves          [ESC:quit, S:save as 001-curve.png]" );
+
   _win->add_plotter( _fig );
   _fig->add_plotter( _curve1 );
   _fig->add_text("curve1", 2.0, 0.95, {1.0,0.0,0.0});

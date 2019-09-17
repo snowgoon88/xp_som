@@ -6,8 +6,26 @@
 ** BOOST - Boost::program_options
 * TODO CURRENT : [[Plotfig][Plot dans Figure]]
 * TODO CURRENT : tester sur des séquences stochastiques (Fork)
-* [0/1] CURRENT : Independant VisuGL
-** TODO Bbox strange dans 001-curve
+* [0/0] CURRENT : Independant VisuGL
+** Demo
+*** 001-curve
+Quatre Curve dans Figure dans Window
+- _curve1 : add point avec progression dans l'axe X. function classique
+- _curve2 : copie inversée de _curve1, plus différence entre add_sample et add_data
+- _cruve3 : add_sample avec une Collection
+- _curve4 : ajout d'une série temporelle
+*** 002-dyncurve
+Deux courbes dynamiques, avec adaptation uniquement selon l'axe des X.
+Courbe est le 'Mean' de l'autre
+** BBox
+Window et Figure ont un BBox par défaut.
+Window->add_plotter met à jour (update) BBox pour englober plotter
+Window->update_bbox() force le recalcul du BBbox pour englober tous les Plotters
+*** Option : update peut commencer avec les axes par défaut
+Lors du premier update d'une Figure, pourrait englober au moins les axes, si ces derniers sont fournis ?
+*** DONE Option : un switch pour BBox
+Pour savoir si un BBox a été modifié depuis dernière demande (gagner du temps)
+
 * DONE [3/3] Fenêtre GLFW version 3 
 ** DONE CMake pour GLFW
 ** DONE C++ pour GLFW

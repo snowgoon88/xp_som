@@ -48,8 +48,9 @@ public:
           const int posx=-1, const int posy = -1 ) :
     Plotter( -1.0, 2.0, -1.0, 2.0 ), // default _bbox
     _title( title ), _width(width), _height(height),
-    _offscreen(offscreen),
-    _window(nullptr), _font(nullptr)
+    _offscreen(offscreen), 
+    _window(nullptr), _should_redraw(false),
+    _font(nullptr)
   {
     // Create window _________________________________________________
     glfwSetErrorCallback(error_callback);
@@ -117,6 +118,8 @@ public:
       glBindFramebuffer(GL_FRAMEBUFFER, 0);
       utils::gl::check_error();
     }
+
+    std::cout << "  created WIN with bbox= " << get_bbox() << std::endl;
     
   }
   // ****************************************************** Window::destructor
@@ -134,7 +137,18 @@ public:
       utils::gl::check_error();
     }
   }
+  // ***************************************************** Window::add_plotter
+  virtual bool add_plotter( const PlotterPtr plotter )
+  {
+    bool res = Plotter::add_plotter( plotter );
 
+    // update bbox to new plotter
+    set_bbox( plotter->get_bbox() );
+
+    std::cout << "  updated WIN with bbox= " << get_bbox() << std::endl;
+    
+    return res;
+  }
   // ********************************************************** Window::update
   virtual void update_bbox()
   {
@@ -160,7 +174,7 @@ public:
     bbox.y_max = bbox.y_max + 0.05 * range_y;
     set_bbox( bbox );
     
-    std::cout << "__UPD BBOX WIN window  = " << get_bbox() << std::endl;
+    //std::cout << "__UPD BBOX WIN window  = " << get_bbox() << std::endl;
   }
   // ********************************************************** Window::render
   virtual void render( float screen_ratio_x = 1.0, float screen_ratio_y = 1.0 )
@@ -174,6 +188,11 @@ public:
     glfwMakeContextCurrent( _window );
     // TODO can also be set to another DataStructure
     glfwSetWindowUserPointer( _window, this);
+
+    if (not _should_render) {
+      glfwPollEvents();
+      return;
+    }
     
     if( _offscreen ) {
       // set rendering destination to FBO
@@ -186,26 +205,26 @@ public:
     auto ratio_y = (_bbox.y_max-_bbox.y_min) / (double) _height;
 
     while ((err = glGetError()) != GL_NO_ERROR) {
-        std::cerr << "WIN before glVieport OpenGL error: " << err << std::endl;
+      std::cerr << "WIN before glVieport OpenGL error: " << err << std::endl;
     }
     glViewport(0, 0, _width, _height);
     while ((err = glGetError()) != GL_NO_ERROR) {
-        std::cerr << "WIN after glViewport OpenGL error: " << err << std::endl;
+      std::cerr << "WIN after glViewport OpenGL error: " << err << std::endl;
     }
     glClearColor( 1.0, 1.0, 1.0, 1.0);
     while ((err = glGetError()) != GL_NO_ERROR) {
-        std::cerr << "WIN glClearColor glViewport OpenGL error: " << err << std::endl;
+      std::cerr << "WIN glClearColor glViewport OpenGL error: " << err << std::endl;
     }
     glClear(GL_COLOR_BUFFER_BIT);
     while ((err = glGetError()) != GL_NO_ERROR) {
-        std::cerr << "WIN glClear OpenGL error: " << err << std::endl;
+      std::cerr << "WIN glClear OpenGL error: " << err << std::endl;
     }
     
     
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     while ((err = glGetError()) != GL_NO_ERROR) {
-        std::cerr << "WIN PROJECTION OpenGL error: " << err << std::endl;
+      std::cerr << "WIN PROJECTION OpenGL error: " << err << std::endl;
     }
     glOrtho( _bbox.x_min, _bbox.x_max, _bbox.y_min, _bbox.y_max, 1.f, -1.f);
     while ((err = glGetError()) != GL_NO_ERROR) {
@@ -215,25 +234,25 @@ public:
     }
     glMatrixMode(GL_MODELVIEW);
     while ((err = glGetError()) != GL_NO_ERROR) {
-        std::cerr << "WIN MODELVIEW OpenGL error: " << err << std::endl;
+      std::cerr << "WIN MODELVIEW OpenGL error: " << err << std::endl;
     }
     glLoadIdentity();
 
     while ((err = glGetError()) != GL_NO_ERROR) {
-        std::cerr << "WIN glLoadIdentity OpenGL error: " << err << std::endl;
+      std::cerr << "WIN glLoadIdentity OpenGL error: " << err << std::endl;
     }
     
     glClearColor( 1.0, 1.0, 1.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
 
     while ((err = glGetError()) != GL_NO_ERROR) {
-        std::cerr << "WIN Plot OpenGL error: " << err << std::endl;
+      std::cerr << "WIN Plot OpenGL error: " << err << std::endl;
     }
     // Render Plots
     for( const auto& plotter: _plotters) {
       plotter->render( ratio_x, ratio_y );
     }
-    
+
     if( not _offscreen ) {
       glfwSwapBuffers( _window );
       glfwPollEvents();
@@ -264,6 +283,7 @@ public:
   int _width, _height;
   bool _offscreen;
   GLFWwindow* _window;
+  bool _should_redraw;
   /** Fonts to write text */
   FTGLTextureFont* _font;
   /** GLew variables for FrameBufferObject, RenderBuffer */
