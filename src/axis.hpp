@@ -93,7 +93,9 @@ public:
   Axis( const std::string& title,
 	const Range& range= {-1.0, 1.0, 2, 10} ) :
     _title(title),
-    _range(range) { init_font(); };
+    _range(range),
+    _hpos( 0.0 )
+  { init_font(); };
 
   /** Init Fonts */
   void init_font()
@@ -118,7 +120,7 @@ public:
 
     // Position (-1, 0, 0)
     glPushMatrix(); // POS 
-    //glTranslated( -1.0, 0.0, 0.0);
+    glTranslated( 0.0, _hpos, 0.0);
 
     // Axis (SIZE_X)
     glLineWidth(2.0f);
@@ -182,8 +184,10 @@ public:
     glPopMatrix(); // POS
   }
 
+  // ********************************************************* Axis::attributs
+  void set_hpos( double val ) { _hpos = val; }
   /** get Range */
-  Range& get_range() {return _range;}; 
+  Range& get_range() {return _range;}
 private:
   /** Titre de l'axe */
   std::string _title;
@@ -191,6 +195,8 @@ private:
   Range _range;
   /** Des Fontes pour écrire */
   /*static*/ FTFont* _font;
+  /** Position along perpendicular axis */
+  double _hpos;
 };
 // ******************************************************************** STATIC
 //FTFont* Axis::_font = new FTGLTextureFont( FONT_PATH );

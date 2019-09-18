@@ -18,7 +18,7 @@ Quatre Curve dans Figure dans Window
 Deux courbes dynamiques, avec adaptation uniquement selon l'axe des X.
 Courbe est le 'Mean' de l'autre
 *** 003-staticwin
-Montre la différence entre Double et Single Buffer quand on ne fait des courbes qui se contentent d'ajouterde l'info. 
+Montre la différence entre Double et Single Buffer quand on ne fait des courbes qui se contentent d'ajouter de l'info. 
 ATTENTION : il faut avoir des Plotters avec render_last() implémenté !
 - affiche trajectoire aléatoire dans monde avec rebonds
 ** BBox

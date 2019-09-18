@@ -27,12 +27,13 @@ public:
   //   double x_min, x_max, y_min, y_max;
   // };
   // ****************************************************** Plotter::creation
-  Plotter() : _plotters(), _bbox{0.0, 1.0, 0.0, 1.0}
+  Plotter() : _plotters(), _bbox{0.0, 1.0, 0.0, 1.0}, _should_render(true)
   {
   }
   Plotter( double x_min, double x_max, double y_min, double y_max) :
     _plotters(),
-    _bbox{x_min, x_max, y_min, y_max}
+    _bbox{x_min, x_max, y_min, y_max},
+    _should_render(true)
   {
   }
   virtual ~Plotter()
@@ -59,6 +60,11 @@ public:
   {
     std::cout << "__Plotter::render: TO IMPLEMENT" << std::endl;
   }
+  virtual void render_last( float screen_ratio_x = 1.0,
+                            float screen_ratio_y = 1.0 )
+  {
+    std::cout << "__Plotter::render_last: TO IMPLEMENT IF POSSIBLE" << std::endl;
+  }
   // ****************************************************** Plotter::attributs
   /** get BoundingBox */
   const BoundingBox& get_bbox() const {return _bbox;}
@@ -68,6 +74,7 @@ public:
   PlotterList _plotters;
   // TODO: private
   BoundingBox _bbox;
+  bool _should_render;
   
 }; // Plotter
 
