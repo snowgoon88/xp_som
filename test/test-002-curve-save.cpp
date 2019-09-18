@@ -27,7 +27,15 @@ public:
    */
   Window(const std::string& title = "GLFW Window", int width=640, int height=400)
   {
-    _curve.create_data();
+    // create_data 
+    const unsigned int _nb_data = 100;
+    for( unsigned int i=0; i < _nb_data; ++i) {
+      Curve::Sample pt;
+      pt.x = 2.0 * M_PI * i / _nb_data;
+      pt.y = sin( pt.x );
+      pt.z = 0.0;      
+      _curve.add_sample( pt );
+    }
     std::cout << "Window creation" << std::endl;
 
     glfwSetErrorCallback(error_callback);

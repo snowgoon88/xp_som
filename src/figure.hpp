@@ -105,7 +105,7 @@ public:
   virtual void update_bbox()
   {
     auto innerbox = get_innerbbox();
-    // std::cout << "__UPD axes with bbox={" << innerbox.x_min << "; " << innerbox.x_max << "; " << innerbox.y_min << "; " << innerbox.y_max << "}" << std::endl;
+    //std::cout << "__UPD axes with bbox={" << innerbox.x_min << "; " << innerbox.x_max << "; " << innerbox.y_min << "; " << innerbox.y_max << "}" << std::endl;
     _axis_x = Axis( "X", {innerbox.x_min, innerbox.x_max, 10, 2});
     _axis_y = Axis( "Y", {innerbox.y_min, innerbox.y_max, 10, 2});
 
@@ -146,7 +146,6 @@ public:
       set_bbox( innerbox );
     }
     
-
     // All other objects
     GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR) {
@@ -185,7 +184,7 @@ public:
     if (_title != "") {
       glColor3d( 0.0, 0.0, 0.0 );
       glPushMatrix(); {
-        glTranslated( (get_bbox().x_max - get_bbox().x_min) / 2.0 - (_title_offset*screen_ratio_x),
+        glTranslated( get_bbox().x_min + (get_bbox().x_max - get_bbox().x_min) / 2.0 - (_title_offset*screen_ratio_x),
                       (get_bbox().y_max - 0.05 * (get_bbox().y_max - get_bbox().y_min)),
                       0.0 );
         glScaled( screen_ratio_x, screen_ratio_y, 1.0 );

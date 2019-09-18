@@ -3,6 +3,7 @@
 #ifndef CMAP_PLOTTER_HPP
 #define CMAP_PLOTTER_HPP
 
+#include <sstream>
 #include <iomanip>
 #include <FTGL/ftgl.h>       // Fontes dans OpenGL
 #define FONT_PATH "ressources/Consolas.ttf"
@@ -53,7 +54,7 @@ public:
     auto x_max = x_min + 0.05 * (plt_bbox.x_max - plt_bbox.x_min);
     // y : same as plt_bbox
     set_bbox( {x_min, x_max, plt_bbox.y_min, plt_bbox.y_max} );
-    std::cout << "  cmap    = " << get_bbox() << std::endl;
+    // std::cout << "  cmap    = " << get_bbox() << std::endl;
 
     // Need also minmax of data
     auto minmax = std::minmax_element( _plt._data.begin(), _plt._data.end() );

@@ -4,7 +4,7 @@
 ** FTGL - Draw text with OpenGL and FreeType2
 ** GSL - Gnu Scientific Library
 ** BOOST - Boost::program_options
-* TODO CURRENT : [[Plotfig][Plot dans Figure]]
+* TODO CURRENT : compatibilité avec nouveau visuGL
 * TODO CURRENT : tester sur des séquences stochastiques (Fork)
 * [0/0] CURRENT : Independant VisuGL
 ** Demo
@@ -73,8 +73,8 @@ a priori ça marche si on a ajouté dans .emacs
 Et ca clignote avec test-020-anttweak (car utilise Figure ??)
 *** DONE Xlib error => 2> /dev/null
 *** Tester avec Figure
-* [8/15] Afficher Graphe : OLD classic/legacy OpenGL
-** TODO Afficher Grille
+* [9/11] Afficher Graphe : OLD classic/legacy OpenGL
+** Afficher Grille
 ** DONE [4/4] Afficher Axes avec ticks et range
 *** DONE Label
  => Attention, le fait de scaler par rapport au glOrtho fait que les lettres ne sont pas jolie.
@@ -86,8 +86,8 @@ Et ca clignote avec test-020-anttweak (car utilise Figure ??)
 ** DONE Taille du texte en fonction de la taille de la fenêtre (ratio).
 ** DONE Position du texte en fonction de la taille de la fenètre (ratio)
 ** DONE Afficher Courbe
-** DONE [1/2] Image
-*** TODO Cmap 0,1 -> R,G,B,A
+** DONE [1/1] Image
+*** Cmap 0,1 -> R,G,B,A
 **** list de couleur (rgba) et on map entre 0,1 et 0,N
 **** fabriquer à partir de LinearSegmentedColormap
  https://matplotlib.org/api/_as_gen/matplotlib.colors.LinearSegmentedColormap.html#matplotlib.colors.LinearSegmentedColormap
@@ -96,15 +96,19 @@ Et ca clignote avec test-020-anttweak (car utilise Figure ??)
 *** DONE Image as Texture or DrawPixel
 read/draw pixels https://www.glprogramming.com/red/chapter08.html
 textures https://www.glprogramming.com/red/chapter09.html
-** TODO Scatter + offset et stride
-** TODO Scatter avec variance verticale   
+** Scatter + offset et stride
+** Scatter avec variance verticale   
 ** TODO Faire module indépendant
 ** TODO Callback pour Window resize [[file:src/window.hpp::70]]
 ** DONE update bbox (or not) when adding plotter in Figure
 ** DONE Data vs Time Serie
+=======
+** update bbox (or not) when adding plotter in Figure
+** Data vs Time Serie
+>>>>>>> 1bb8206371e217bb67ac253a8f32817c12070c0d
 Actuellement, Curve est implicitement une TimeSerie => un nouveau point n'est accepté par 'add_sample' que si x > xmax.
-** TODO séparer données (DataSet, TimeSerie) et Plotter
-** TODO Plot dans Figure : par exemple, séparer Img de CmapPlot
+** séparer données (DataSet, TimeSerie) et Plotter
+** DONE Plot dans Figure : par exemple, séparer Img de CmapPlot
 #<<Plotfig>>
 * DONE [1/1] Constructeurs, Copy, Move
 ** DONE tester Copy pour Layer

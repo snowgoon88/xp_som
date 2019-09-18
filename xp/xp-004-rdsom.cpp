@@ -38,6 +38,7 @@
 #include <hmm_trajectory.hpp>
 #include <dsom/r_network.hpp>
 
+#include <window.hpp>
 #include <figure.hpp>
 #include <fixedqueue.hpp>
 #include <dsom/rdsom1D_viewer.hpp>
@@ -90,11 +91,15 @@ std::vector<double> _vl_in, _vl_winner_w_in, _vl_pred_winner_w, _vl_err_input, _
 std::vector<unsigned int> _vl_winner, _vl_pred_winner;
 
 // Graphic
+Window*                    _win_rdsom = nullptr;
 Figure*                    _fig_rdsom = nullptr;
 FixedQueue<unsigned int>*  _winner_queue = nullptr;
 RDSOMViewer*               _rdsom_viewer = nullptr;
+Window*                    _win_weight = nullptr;
 Figure*                    _fig_weight = nullptr;
+Window*                    _win_rweight = nullptr;
 Figure*                    _fig_rweight = nullptr;
+Window*                    _win_error = nullptr;
 Figure*                    _fig_error = nullptr;
 Curve* _c_weight;
 CurveDyn<RDSOM::Similarities> *_c_sim_input;
@@ -110,6 +115,7 @@ CurveMean* _c_error_pred;
 // Curve for history of activation
 FixedQueue<double>       *_act_queue;
 FixedQueue<double>       *_input_queue;
+Window*                    _win_hist = nullptr;
 Figure                    *_fig_hist;
 CurveDyn<FixedQueue<double>> *_c_hist_act;
 CurveDyn<FixedQueue<double>> *_c_hist_input;
@@ -289,11 +295,11 @@ void setup_options(int argc, char **argv)
 /**
  * Callback pour gérer les messages d'erreur de GLFW
  */
-static void error_callback(int error, const char* description)
-{
-  std::cerr <<  description << std::endl;
-  //fputs(description, stderr);
-}
+// static void error_callback(int error, const char* description)
+// {
+//   std::cerr <<  description << std::endl;
+//   //fputs(description, stderr);
+// }
 /**
  * Callback qui gère les événements 'key'
  */
@@ -411,6 +417,9 @@ void update_graphic()
   if( learn_length == 0 ) learn_length = 1;
   str << "Step=" << _nb_step << " (x" << learn_length << ")";
   _fig_rdsom->add_text( str.str(), 0.7, 0.1);
+
+  _win_hist->update_bbox();
+
 }
 // ***************************************************************** str_queue
 std::string str_queue()
@@ -548,16 +557,23 @@ void save_figseq( const std::string& filename,
     std::cout << "  Saving PNG file=" << filename << std::endl;
   }
 
-  Figure* fig_rdsom = new Figure( title, 450, 450, true /*offscreen */ );
+  Window* win_rdsom = new Window( title, 450, 450, true /*offscreen */ );
+  Figure* fig_rdsom = new Figure( *win_rdsom );
+  win_rdsom->add_plotter( fig_rdsom );
+  
   RDSOMViewer* rdsom_viewer = new RDSOMViewer( *_rdsom, *_winner_queue );
-  fig_rdsom->add_curve( rdsom_viewer );
+  fig_rdsom->add_plotter( rdsom_viewer );
   fig_rdsom->set_draw_axes( false );
-  fig_rdsom->render( true );
+  
+  win_rdsom->update_bbox();
+  win_rdsom->render();
   // std::this_thread::sleep_for(std::chrono::seconds(1));
-  fig_rdsom->save( filename );
+  win_rdsom->save( filename );
   // std::this_thread::sleep_for(std::chrono::seconds(5));
-  delete fig_rdsom;
   delete rdsom_viewer;
+  delete fig_rdsom;
+  delete win_rdsom;
+
 }
 /**
  * Save a PNJ image of the weights, input (black) and recurrent (blue).
@@ -568,9 +584,12 @@ void save_figweight( const std::string& filename,
                      const std::string& title,
                      bool verb)
 {
-  Figure* fig_weight = new Figure( title, 800, 350, true /*offscreen*/, 800, 50,
+  Window* win_weight = new Window( title, 800, 350, true /*offscreen*/, 800, 50 );
+  Figure* fig_weight = new Figure( *win_weight, "",
                                    {0.0, (double) _rdsom->v_neur.size(),10,2},
                                    {0.0, 1.0, 10, 2} );
+  win_weight->add_plotter( fig_weight );
+  
   Curve* c_weight = new Curve();
   c_weight->set_color( {0.0, 0.0, 0.0} );
   c_weight->set_width( 1 );
@@ -582,15 +601,17 @@ void save_figweight( const std::string& filename,
     c_rweight->add_sample( {(double)i, _rdsom->v_neur[i]->r_weights(0), 0.0} ); 
   }
 
-  fig_weight->add_curve( c_weight );
-  fig_weight->add_curve( c_rweight );
+  fig_weight->add_plotter( c_weight );
+  fig_weight->add_plotter( c_rweight );
 
-  fig_weight->render( true );
-  fig_weight->save( filename );
+  win_weight->update_bbox();
+  win_weight->render();
+  win_weight->save( filename );
 
   delete c_weight;
   delete c_rweight;
   delete fig_weight;
+  delete win_weight;
 }
 /**
  * Save a PNJ image of errors: input (black), recurrent (blue), pred(red).
@@ -601,9 +622,11 @@ void save_figerror( const std::string& filename,
                     const std::string& title,
                     bool verb)
 {
-  Figure* fig_error = new Figure( title, 800, 350, true /*offscreen*/, 400, 430,
+  Window* win_error = new Window( title, 800, 350, true /*offscreen*/, 400, 430 );
+  Figure* fig_error = new Figure( *win_error, "",
                                   {0.0, 100 ,10,2},
                                   {0.0, 1.2, 10, 2});
+  win_error->add_plotter( fig_error );
 
   CurveMean* c_error_input = new CurveMean( *_c_error_input );
   if( c_error_input->get_mean_mode() == false ) {
@@ -621,18 +644,20 @@ void save_figerror( const std::string& filename,
     c_error_pred->recompute_means();
   }
   
-  fig_error->add_curve( c_error_input );
-  fig_error->add_curve( c_error_rec );
-  fig_error->add_curve( c_error_pred );
+  fig_error->add_plotter( c_error_input );
+  fig_error->add_plotter( c_error_rec );
+  fig_error->add_plotter( c_error_pred );
 
-  fig_error->render( true );
+  win_error->update_bbox();
+  win_error->render();
   // std::this_thread::sleep_for(std::chrono::seconds(1));
-  fig_error->save( filename );
+  win_error->save( filename );
   // std::this_thread::sleep_for(std::chrono::seconds(5));
   delete c_error_input;
   delete c_error_rec;
   delete c_error_pred;
   delete fig_error;
+  delete win_error;
 }
 // ***************************************************************************
 // ********************************************************************* learn
@@ -917,78 +942,104 @@ int main(int argc, char *argv[])
     if( _opt_verb) {
       std::cout << "__INIT GRAPHIC with _opt_test=" << _opt_test << std::endl;
     }
-    _fig_rdsom = new Figure( "RDSOM: r-network", 450, 450, false, 340, 0 );
+    _win_rdsom = new Window( "RDSOM: r-network", 450, 450, false, 340, 0 );
+    _fig_rdsom = new Figure( *_win_rdsom, "" );
+    _win_rdsom->add_plotter( _fig_rdsom );
+    
     _rdsom_viewer = new RDSOMViewer( *_rdsom, *_winner_queue );
-    _fig_rdsom->add_curve( _rdsom_viewer );
+    _fig_rdsom->add_plotter( _rdsom_viewer );
     _fig_rdsom->set_draw_axes( false );
 
-    _fig_weight = new Figure( "Input/Weights", 800, 350, false, 800, 50,
+    _win_weight = new Window( "Input/Weights", 800, 350, false, 800, 50 );
+    _fig_weight = new Figure( *_win_weight, "", 
                               {0.0, (double) _rdsom->v_neur.size(),10,2},
                               {0.0, 1.0, 10, 2} );
+    _win_weight->add_plotter( _fig_weight );
+    
     // Weights
     _c_weight = new Curve();
     _c_weight->set_color( {0.0, 0.0, 0.0} );
     _c_weight->set_width( 3 );
-    _fig_weight->add_curve( _c_weight );
+    _fig_weight->add_plotter( _c_weight );
     // Input Similarities
     _c_sim_input = new CurveDyn<RDSOM::Similarities>( _rdsom->_sim_w );
     _c_sim_input->set_color( {1.0, 0.0, 0.0} );
-    _fig_weight->add_curve( _c_sim_input );
+    _fig_weight->add_plotter( _c_sim_input );
     // Merged Similarities
     _c_sim_merged = new CurveDyn<RDSOM::Similarities>( _rdsom->_sim_merged );
     _c_sim_merged->set_color( {0.0, 0.0, 1.0} );
     _c_sim_convol = new CurveDyn<RDSOM::Similarities>( _rdsom->_sim_convol );
     _c_sim_convol->set_color( {0.0, 0.0, 1.0} );
     _c_sim_convol->set_width( 2 );
-    _fig_weight->add_curve( _c_sim_merged );
-    _fig_weight->add_curve( _c_sim_convol );
+    _fig_weight->add_plotter( _c_sim_merged );
+    _fig_weight->add_plotter( _c_sim_convol );
     _c_sim_hh_dist = new CurveDyn<RDSOM::Similarities>( _rdsom->_sim_hn_dist );
     _c_sim_hh_dist->set_color( {0.0, 1.0, 0.0} );
     _c_sim_hh_dist->set_width( 3 );
-    _fig_weight->add_curve( _c_sim_hh_dist );
-  
-    _fig_rweight = new Figure( "Recurrent/RWeights", 800, 350, false, 800, 430,
+    _fig_weight->add_plotter( _c_sim_hh_dist );
+
+    _win_rweight = new Window( "Recurrent/RWeights", 800, 350, false, 800, 430 );
+    _fig_rweight = new Figure( *_win_rweight, "",
                                {0.0, (double) _rdsom->v_neur.size(),10,2},
                                {0.0, 1.0, 10, 2} );
+    _win_rweight->add_plotter( _fig_rweight );
+    
     _c_rweight = new Curve();
     _c_rweight->set_color( {0.0, 0.0, 0.0} );
     _c_rweight->set_width( 3 );
     // Rec Similarities
     _c_sim_rec = new CurveDyn<RDSOM::Similarities>( _rdsom->_sim_rec );
     _c_sim_rec->set_color( {1.0, 0.0, 0.0} );
-    _fig_rweight->add_curve( _c_sim_rec );
-    _fig_rweight->add_curve( _c_sim_merged );
-    _fig_rweight->add_curve( _c_sim_convol );
+    _fig_rweight->add_plotter( _c_sim_rec );
+    _fig_rweight->add_plotter( _c_sim_merged );
+    _fig_rweight->add_plotter( _c_sim_convol );
     _c_sim_hh_rec = new CurveDyn<RDSOM::Similarities>( _rdsom->_sim_hn_rec );
     _c_sim_hh_rec->set_color( {0.0, 1.0, 0.0} );
     _c_sim_hh_rec->set_width( 3 );
-    _fig_rweight->add_curve( _c_sim_hh_rec );
+    _fig_rweight->add_plotter( _c_sim_hh_rec );
 
-    _fig_rweight->add_curve( _c_rweight );
-
+    _fig_rweight->add_plotter( _c_rweight );
+    
     // History
-    _fig_hist = new Figure( "History", 800, 350, false, -1, -1,
+    _win_hist= new Window( "History", 800, 350, false, -1, -1 ); 
+    _fig_hist = new Figure( *_win_hist, "",
                             {0.0, (double) _opt_hist_size * 1.1, 10, 2},
                             {0.0, (double) _rdsom->get_size_grid() * 1.1, 10, 2} );
+    _win_hist->add_plotter( _fig_hist );
+    
     _c_hist_act = new CurveDyn<FixedQueue<double>>( *_act_queue );
     _c_hist_input = new CurveDyn<FixedQueue<double>>( *_input_queue );
     _c_hist_input->set_color( {0.0, 1.0, 0.0} );
-    _fig_hist->add_curve( _c_hist_act );
-    _fig_hist->add_curve( _c_hist_input );
-     
-    _fig_rdsom->render( true );
-    _fig_weight->render();
-    _fig_rweight->render();
-    _fig_hist->render();
+    _fig_hist->add_plotter( _c_hist_act );
+    _fig_hist->add_plotter( _c_hist_input );
+    
+
+    _win_rdsom->update_bbox();    
+    _win_rdsom->render();
+
+    _win_weight->update_bbox();
+    _win_weight->render();
+    
+    _win_rweight->update_bbox();
+    _win_rweight->render();
+
+    _win_hist->update_bbox();    
+    _win_hist->render();
 
     // Errors
-    _fig_error = new Figure( "Error", 800, 350, false, 400, 430,
+    _win_error = new Window( "Error", 800, 350, false, 400, 430 );
+    _fig_error = new Figure( *_win_error, "",
                              {0.0, 100 ,10,2},
                              {0.0, 1.2, 10, 2});
-    _fig_error->add_curve( _c_error_input );
-    _fig_error->add_curve( _c_error_rec );
-    _fig_error->add_curve( _c_error_pred );
-     
+    _win_error->add_plotter( _fig_error );
+    _fig_error->_update_axes_x = true;
+    _fig_error->_update_axes_x = false;
+    
+    _fig_error->add_plotter( _c_error_input );
+    _fig_error->add_plotter( _c_error_rec );
+    _fig_error->add_plotter( _c_error_pred );
+    _win_error->update_bbox();
+    
     _ite_cur = 0;
     while( not _end_render ) {
       // update if _run_updata
@@ -1001,13 +1052,22 @@ int main(int argc, char *argv[])
         _ite_cur += learn_length;
 
         update_graphic();
-      }       
-      _fig_rdsom->render();
-      _fig_weight->render();
-      _fig_rweight->render();
-      _fig_error->render( true, false ); // Update axes x, y
-      _fig_hist->render();
+      }
+      _win_rdsom->update_bbox();
+      _win_weight->update_bbox();
+      _win_rweight->update_bbox();
+      _win_error->update_bbox();
+      _win_hist->update_bbox();
+      
+      _win_rdsom->render();
+      _win_weight->render();
+      _win_rweight->render();
+      _win_error->render();
+      _win_hist->render();
+      
     }
+    // Should clean
+    
   }
   else if( !_opt_test ) {
     // Learn_________________________

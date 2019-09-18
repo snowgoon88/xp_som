@@ -67,7 +67,7 @@ public:
     
   }
   // ***************************************************** RDSomviewer::render
-  void render()
+  void render( float screen_ratio_x = 1.0, float screen_ratio_y = 1.0 )
   {
     //std::cout << "  RDSOMViewer::draw_back()" << std::endl;
     draw_back( _radius );

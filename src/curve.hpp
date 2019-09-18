@@ -272,11 +272,12 @@ protected:
  * it equals _mean_length.
  */
 class CurveMean : public Curve
+// OK
 {
 public:
   // *******************************************************CuveMean::creation
   CurveMean() : Curve (), _mean_mode(false),
-				_mean_length(0), _mean_nb_point(0), _mean_x(0.0), _mean_y(0.0)
+                _mean_length(0), _mean_nb_point(0), _mean_x(0.0), _mean_y(0.0)
   {
   }
   // ******************************************************Curve::copycreation
@@ -288,7 +289,7 @@ public:
   // ************************************************** CurveMean::switch_mode
   void set_mean_mode( bool mode )
   {
-	_mean_mode = mode;
+    _mean_mode = mode;
   }
   bool get_mean_mode() { return _mean_mode; }
   // ********************************************** CurveMean::recompute_means
